@@ -449,14 +449,33 @@ hr{border:none;border-top:1px solid var(--border);margin:.75rem 0}
           <button class="tab active" onclick="switchTab('prog2','poids')">Poids</button>
           <button class="tab" onclick="switchTab('prog2','muscu')">Muscu</button>
           <button class="tab" onclick="switchTab('prog2','course')">Course</button>
+          <button class="tab" onclick="switchTab('prog2','forme')">Forme</button>
         </div>
         <div id="prog2-tab-poids" class="tab-content active">
           <div class="flex justify-between items-center mb-12"><span class="text-muted text-sm">Évolution</span><button class="btn btn-primary btn-sm" onclick="openWeightModal()">+ Ajouter</button></div>
           <div class="card mb-12"><canvas id="weight-chart" height="120"></canvas></div>
           <div class="card" id="weight-history"></div>
         </div>
-        <div id="prog2-tab-muscu" class="tab-content"><div id="muscu-records"></div></div>
-        <div id="prog2-tab-course" class="tab-content"><div id="course-history"></div></div>
+        <div id="prog2-tab-muscu" class="tab-content">
+        <div class="flex justify-between items-center mb-12">
+          <span class="text-muted text-sm">Records & progression</span>
+        </div>
+        <div id="muscu-records"></div>
+        <div id="muscu-chart-section" class="hidden">
+          <div class="card mt-12">
+            <div class="flex justify-between items-center mb-8">
+              <h3 id="muscu-chart-title" style="margin-bottom:0"></h3>
+              <button class="btn-icon" onclick="document.getElementById('muscu-chart-section').classList.add('hidden')">✕</button>
+            </div>
+            <canvas id="muscu-chart" height="140"></canvas>
+          </div>
+        </div>
+      </div>
+        <div id="prog2-tab-course" class="tab-content">
+        <div class="card mb-12" id="course-stats-card"></div>
+        <div id="course-history"></div>
+      </div>
+        <div id="prog2-tab-forme" class="tab-content"><div id="forme-content"></div></div>
       </div>
       <div id="plus-tab-profil" class="tab-content">
         <div class="card">
@@ -731,7 +750,7 @@ function switchTab(prefix,tab){
     if(t.getAttribute('onclick')===`switchTab('${prefix}','${tab}')`)t.classList.add('active');
     else if(t.getAttribute('onclick')&&t.getAttribute('onclick').startsWith(`switchTab('${prefix}'`))t.classList.remove('active');
   });
-  if(prefix==='prog2'){if(tab==='poids')renderWeightChart();else if(tab==='muscu')renderMuscu();else if(tab==='course')renderCourseHistory();}
+  if(prefix==='prog2'){if(tab==='poids')renderWeightChart();else if(tab==='muscu')renderMuscu();else if(tab==='course')renderCourseHistory();else if(tab==='forme')renderFormeScore();}
   if(prefix==='plus'){if(tab==='hydra')renderHydra();else if(tab==='sommeil')renderSommeil();else if(tab==='profil')renderProfil();}
 }
 
@@ -1212,13 +1231,176 @@ async function saveWeight(){
 async function deleteWeight(id){DB.weight=DB.weight.filter(w=>w.id!==id);await save();renderWeightChart()}
 function renderMuscu(){
   let records={};
-  DB.workoutHistory.forEach(w=>{(w.exercises||[]).forEach(ex=>{if(!records[ex.name])records[ex.name]={name:ex.name,best:0,last:null};ex.series.forEach(s=>{if(s.weight>records[ex.name].best)records[ex.name].best=s.weight});records[ex.name].last=w.date})});
+  DB.workoutHistory.forEach(w=>{
+    (w.exercises||[]).forEach(ex=>{
+      if(!records[ex.name])records[ex.name]={name:ex.name,id:ex.id,best:0,last:null,history:[]};
+      let maxW=Math.max(...ex.series.map(s=>s.weight||0));
+      if(maxW>records[ex.name].best)records[ex.name].best=maxW;
+      records[ex.name].last=w.date;
+      records[ex.name].history.push({date:w.date,weight:maxW,reps:ex.series[0]?.reps||0});
+    });
+  });
   let mr=document.getElementById('muscu-records');
-  if(mr)mr.innerHTML=Object.values(records).map(r=>`<div class="card"><div class="flex justify-between items-center"><div><div style="font-weight:700">${r.name}</div><div class="text-xs text-muted">${r.last}</div></div><div style="font-size:1.4rem;font-weight:800;color:var(--purple)">${r.best}kg</div></div></div>`).join('')||'<div class="text-muted text-sm">Aucun entraînement</div>';
+  if(!mr)return;
+  let list=Object.values(records);
+  if(!list.length){mr.innerHTML='<div class="text-muted text-sm">Aucun entraînement enregistré</div>';return;}
+  mr.innerHTML=list.map(r=>`
+    <div class="card" style="cursor:pointer" onclick="showMuscuChart('${r.name}')">
+      <div class="flex justify-between items-center">
+        <div>
+          <div style="font-weight:700">${r.name}</div>
+          <div class="text-xs text-muted">${r.last} · ${r.history.length} séance${r.history.length>1?'s':''}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:1.4rem;font-weight:800;color:var(--purple)">${r.best}kg</div>
+          <div class="text-xs text-muted">📈 voir progression</div>
+        </div>
+      </div>
+    </div>`).join('');
 }
-function renderCourseHistory(){
+function showMuscuChart(name){
+  let section=document.getElementById('muscu-chart-section');
+  section.classList.remove('hidden');
+  document.getElementById('muscu-chart-title').textContent='📈 '+name;
+  let data=[];
+  DB.workoutHistory.forEach(w=>{
+    let ex=(w.exercises||[]).find(e=>e.name===name);
+    if(ex){let maxW=Math.max(...ex.series.map(s=>s.weight||0));data.push({label:w.date.slice(5),val:maxW});}
+  });
+  data.sort((a,b)=>a.label.localeCompare(b.label));
+  setTimeout(()=>drawLineChart('muscu-chart',data,'kg','#7c6cf7'),50);
+  section.scrollIntoView({behavior:'smooth'});
+}
+function renderFormeScore(){
+  let days=last7Days();
+  // Score sur 100 basé sur 5 critères
+  let seances=Math.min(DB.workoutHistory.filter(w=>days.includes(w.date)).length,5);
+  let scoreSeances=Math.round(seances/5*20);
+  let calDays=days.filter(d=>(DB.journal[d]||[]).length>0).length;
+  let scoreNutri=Math.round(calDays/7*20);
+  let waterDays=days.filter(d=>(DB.water[d]||0)>=DB.goals.eau).length;
+  let scoreEau=Math.round(waterDays/7*20);
+  let sleepDays=DB.sleep.filter(s=>days.includes(s.date));
+  let avgSleep=sleepDays.length?sleepDays.reduce((a,s)=>a+calcSleepDurNum(s.bed,s.wake),0)/sleepDays.length:0;
+  let scoreSommeil=Math.round(Math.min(avgSleep/8,1)*20);
+  let lastWeight=DB.weight.slice(-2);
+  let scorePoids=20;
+  if(lastWeight.length===2){
+    let obj=DB.profile?.objectif;
+    let diff=lastWeight[1].val-lastWeight[0].val;
+    if(obj==='perte'&&diff<=0)scorePoids=20;
+    else if(obj==='masse'&&diff>=0)scorePoids=20;
+    else if(obj==='maintien'&&Math.abs(diff)<0.5)scorePoids=20;
+    else scorePoids=10;
+  }
+  let total=scoreSeances+scoreNutri+scoreEau+scoreSommeil+scorePoids;
+  let color=total>=80?'var(--green)':total>=60?'var(--orange)':'var(--red)';
+  let emoji=total>=80?'🏆':total>=60?'💪':'📈';
+  let fc=document.getElementById('forme-content');
+  if(!fc)return;
+  fc.innerHTML=`
+    <div class="card" style="text-align:center;margin-bottom:12px">
+      <div style="font-size:3rem;margin-bottom:8px">${emoji}</div>
+      <div style="font-size:3rem;font-weight:800;color:${color}">${total}</div>
+      <div class="text-muted text-sm">Score de forme / 100</div>
+      <div style="margin-top:12px;height:10px;background:var(--el);border-radius:5px;overflow:hidden">
+        <div style="height:100%;width:${total}%;background:${color};border-radius:5px;transition:.5s"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div style="font-weight:600;margin-bottom:12px">Détail des 7 derniers jours</div>
+      ${[
+        {label:'🏋️ Entraînements',score:scoreSeances,max:20,detail:`${seances}/5 séances`},
+        {label:'🍽️ Nutrition',score:scoreNutri,max:20,detail:`${calDays}/7 jours journalisés`},
+        {label:'💧 Hydratation',score:scoreEau,max:20,detail:`${waterDays}/7 jours objectif atteint`},
+        {label:'😴 Sommeil',score:scoreSommeil,max:20,detail:`${avgSleep?avgSleep.toFixed(1)+'h moy.':'aucune donnée'}`},
+        {label:'⚖️ Poids',score:scorePoids,max:20,detail:`cohérence avec l'objectif`},
+      ].map(c=>`
+        <div style="margin-bottom:12px">
+          <div class="flex justify-between text-sm mb-4">
+            <span>${c.label}</span>
+            <span style="font-weight:700;color:${c.score>=16?'var(--green)':c.score>=10?'var(--orange)':'var(--red)'}">${c.score}/${c.max}</span>
+          </div>
+          <div class="prog-bar"><div class="prog-fill" style="width:${c.score/c.max*100}%;background:${c.score>=16?'var(--green)':c.score>=10?'var(--orange)':'var(--red)'}"></div></div>
+          <div class="text-xs text-muted mt-4">${c.detail}</div>
+        </div>`).join('')}
+    </div>
+    <div class="card">
+      <div style="font-weight:600;margin-bottom:8px">📊 Corrélation poids / calories</div>
+      ${renderCorrelChart()}
+    </div>`;
+}
+function renderCorrelChart(){
+  if(DB.weight.length<3)return '<div class="text-muted text-sm">Pas assez de données (besoin de 3+ pesées)</div>';
+  let points=DB.weight.slice(-14).map(w=>{
+    let foods=DB.journal[w.date]||[];
+    let cal=foods.reduce((s,f)=>s+f.cal,0);
+    return{date:w.date.slice(5),weight:w.val,cal};
+  }).filter(p=>p.cal>0);
+  if(points.length<2)return '<div class="text-muted text-sm">Journalisez vos repas pour voir la corrélation</div>';
+  return `<canvas id="correl-chart" height="120"></canvas><script>
+    setTimeout(()=>{
+      let c=document.getElementById('correl-chart');if(!c)return;
+      let ctx=c.getContext('2d'),W=c.offsetWidth||300,H=120;
+      c.width=W;ctx.clearRect(0,0,W,H);
+      let pts=${JSON.stringify(points)};
+      let maxCal=Math.max(...pts.map(p=>p.cal)),minW=Math.min(...pts.map(p=>p.weight)),maxW=Math.max(...pts.map(p=>p.weight));
+      // Barres calories
+      let bw=(W-40)/pts.length-2;
+      pts.forEach((p,i)=>{
+        let x=40+i*((W-40)/pts.length);
+        let h=p.cal/maxCal*(H-30);
+        ctx.fillStyle='#f59e4233';ctx.fillRect(x,H-20-h,bw,h);
+      });
+      // Ligne poids
+      let wPts=pts.map((p,i)=>({x:40+i*((W-40)/pts.length)+bw/2,y:H-20-(p.weight-minW)/(maxW-minW||1)*(H-30)}));
+      ctx.beginPath();ctx.strokeStyle='#7c6cf7';ctx.lineWidth=2;ctx.lineJoin='round';
+      wPts.forEach((p,i)=>i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));ctx.stroke();
+      wPts.forEach(p=>{ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fillStyle='#7c6cf7';ctx.fill();});
+      pts.forEach((p,i)=>{if(i%2===0){ctx.fillStyle='#666';ctx.font='9px system-ui';ctx.fillText(p.date,40+i*((W-40)/pts.length),H-4);}});
+    },100);
+  <\/script><div class="flex gap-12 mt-8 text-xs text-muted"><span>🟧 Calories</span><span style="color:var(--purple)">— Poids</span></div>`;
+}
+  let courses=DB.workoutHistory.filter(w=>w.type==='course');
   let ch=document.getElementById('course-history');
-  if(ch)ch.innerHTML=DB.workoutHistory.filter(w=>w.type==='course').slice().reverse().map(c=>`<div class="card"><div class="flex justify-between items-center"><div><div style="font-weight:700">${c.sessionName}</div><div class="text-xs text-muted">${c.date}</div></div><div style="text-align:right"><div style="font-weight:800;color:var(--green)">${c.dist||0}km</div><div class="text-xs text-muted">${c.dur||0}min</div></div></div></div>`).join('')||'<div class="text-muted text-sm">Aucune course</div>';
+  // Stats globales
+  let statsEl=document.getElementById('course-stats-card');
+  if(statsEl&&courses.length){
+    let totalDist=courses.reduce((s,c)=>s+(c.dist||0),0);
+    let totalTime=courses.reduce((s,c)=>s+(c.dur||0),0);
+    let bestDist=Math.max(...courses.map(c=>c.dist||0));
+    let avgAllure=courses.filter(c=>c.allure>0).reduce((s,c,_,a)=>s+c.allure/a.length,0);
+    statsEl.innerHTML=`
+      <div style="font-weight:600;margin-bottom:10px">🏃 Stats course</div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
+        <div style="background:var(--el);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:1.3rem;font-weight:800;color:var(--green)">${totalDist.toFixed(1)}km</div>
+          <div class="text-xs text-muted">distance totale</div>
+        </div>
+        <div style="background:var(--el);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:1.3rem;font-weight:800;color:var(--blue)">${Math.floor(totalTime/60)}h${totalTime%60}min</div>
+          <div class="text-xs text-muted">temps total</div>
+        </div>
+        <div style="background:var(--el);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:1.3rem;font-weight:800;color:var(--orange)">${bestDist}km</div>
+          <div class="text-xs text-muted">meilleure distance</div>
+        </div>
+        <div style="background:var(--el);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:1.3rem;font-weight:800;color:var(--purple)">${avgAllure?avgAllure.toFixed(1)+'min/km':'—'}</div>
+          <div class="text-xs text-muted">allure moyenne</div>
+        </div>
+      </div>`;
+  }else if(statsEl){statsEl.innerHTML=''}
+  if(ch)ch.innerHTML=courses.slice().reverse().map(c=>`
+    <div class="card">
+      <div class="flex justify-between items-center">
+        <div><div style="font-weight:700">${c.sessionName}</div><div class="text-xs text-muted">${c.date}</div></div>
+        <div style="text-align:right">
+          <div style="font-weight:800;color:var(--green)">${c.dist||0}km</div>
+          <div class="text-xs text-muted">${c.dur||0}min${c.allure?' · '+c.allure+'min/km':''}</div>
+        </div>
+      </div>
+    </div>`).join('')||'<div class="text-muted text-sm">Aucune course</div>';
 }
 
 // ── PROFIL ──
