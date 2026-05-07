@@ -776,10 +776,21 @@ async function authSubmit(){
 
 async function afterLogin(){
   document.getElementById('auth-screen').classList.add('hidden');
-  notif('Chargement...');
+  notif('Chargement des données...');
   await load();
   let sd=document.getElementById('sleep-date');if(sd)sd.value=todayStr();
   if(!DB.profile){showSetup()}else{initApp()}
+}
+async function debugLoad(){
+  let info=`user_id: ${currentUser?.user?.id}\n`;
+  try{
+    let r=await supaFetch(`/rest/v1/fittrack_data?select=user_id,data&limit=5`);
+    let rows=await r.json();
+    info+=`Rows found: ${rows.length}\n`;
+    if(rows.length)info+=`First row user_id: ${rows[0].user_id}\nMatch: ${rows[0].user_id===currentUser?.user?.id}`;
+    else info+=`Aucune ligne trouvée`;
+  }catch(e){info+='Erreur: '+e.message}
+  alert(info);
 }
 
 window.onload=async function(){
