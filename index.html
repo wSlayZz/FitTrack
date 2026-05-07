@@ -1329,6 +1329,7 @@ function renderFormeScore(){
       <div style="font-weight:600;margin-bottom:8px">📊 Corrélation poids / calories</div>
       ${renderCorrelChart()}
     </div>`;
+  setTimeout(()=>drawCorrelChart(),100);
 }
 function renderCorrelChart(){
   if(DB.weight.length<3)return '<div class="text-muted text-sm">Pas assez de données (besoin de 3+ pesées)</div>';
@@ -1338,28 +1339,27 @@ function renderCorrelChart(){
     return{date:w.date.slice(5),weight:w.val,cal};
   }).filter(p=>p.cal>0);
   if(points.length<2)return '<div class="text-muted text-sm">Journalisez vos repas pour voir la corrélation</div>';
-  return `<canvas id="correl-chart" height="120"></canvas><script>
-    setTimeout(()=>{
-      let c=document.getElementById('correl-chart');if(!c)return;
-      let ctx=c.getContext('2d'),W=c.offsetWidth||300,H=120;
-      c.width=W;ctx.clearRect(0,0,W,H);
-      let pts=${JSON.stringify(points)};
-      let maxCal=Math.max(...pts.map(p=>p.cal)),minW=Math.min(...pts.map(p=>p.weight)),maxW=Math.max(...pts.map(p=>p.weight));
-      // Barres calories
-      let bw=(W-40)/pts.length-2;
-      pts.forEach((p,i)=>{
-        let x=40+i*((W-40)/pts.length);
-        let h=p.cal/maxCal*(H-30);
-        ctx.fillStyle='#f59e4233';ctx.fillRect(x,H-20-h,bw,h);
-      });
-      // Ligne poids
-      let wPts=pts.map((p,i)=>({x:40+i*((W-40)/pts.length)+bw/2,y:H-20-(p.weight-minW)/(maxW-minW||1)*(H-30)}));
-      ctx.beginPath();ctx.strokeStyle='#7c6cf7';ctx.lineWidth=2;ctx.lineJoin='round';
-      wPts.forEach((p,i)=>i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));ctx.stroke();
-      wPts.forEach(p=>{ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fillStyle='#7c6cf7';ctx.fill();});
-      pts.forEach((p,i)=>{if(i%2===0){ctx.fillStyle='#666';ctx.font='9px system-ui';ctx.fillText(p.date,40+i*((W-40)/pts.length),H-4);}});
-    },100);
-  <\/script><div class="flex gap-12 mt-8 text-xs text-muted"><span>🟧 Calories</span><span style="color:var(--purple)">— Poids</span></div>`;
+  // Stocker les points pour le canvas
+  window._correlPoints=points;
+  return `<canvas id="correl-chart" height="120"></canvas><div class="flex gap-12 mt-8 text-xs text-muted"><span>🟧 Calories</span><span style="color:var(--purple)">— Poids</span></div>`;
+}
+function drawCorrelChart(){
+  let c=document.getElementById('correl-chart');if(!c||!window._correlPoints)return;
+  let pts=window._correlPoints;
+  let ctx=c.getContext('2d'),W=c.offsetWidth||300,H=120;
+  c.width=W;ctx.clearRect(0,0,W,H);
+  let maxCal=Math.max(...pts.map(p=>p.cal)),minW=Math.min(...pts.map(p=>p.weight)),maxW=Math.max(...pts.map(p=>p.weight));
+  let bw=(W-40)/pts.length-2;
+  pts.forEach((p,i)=>{
+    let x=40+i*((W-40)/pts.length);
+    let h=p.cal/maxCal*(H-30);
+    ctx.fillStyle='#f59e4233';ctx.fillRect(x,H-20-h,bw,h);
+  });
+  let wPts=pts.map((p,i)=>({x:40+i*((W-40)/pts.length)+bw/2,y:H-20-(p.weight-minW)/(maxW-minW||1)*(H-30)}));
+  ctx.beginPath();ctx.strokeStyle='#7c6cf7';ctx.lineWidth=2;ctx.lineJoin='round';
+  wPts.forEach((p,i)=>i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));ctx.stroke();
+  wPts.forEach(p=>{ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fillStyle='#7c6cf7';ctx.fill();});
+  pts.forEach((p,i)=>{if(i%2===0){ctx.fillStyle='#666';ctx.font='9px system-ui';ctx.fillText(p.date,40+i*((W-40)/pts.length),H-4);}});
 }
   let courses=DB.workoutHistory.filter(w=>w.type==='course');
   let ch=document.getElementById('course-history');
