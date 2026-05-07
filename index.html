@@ -7,6 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="FitTrack">
 <meta name="theme-color" content="#0f0f13">
+<meta name="color-scheme" content="dark light">
 <title>FitTrack</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -15,6 +16,10 @@
   --purple:#7c6cf7;--green:#3dba7a;--orange:#f59e42;--red:#e85555;--blue:#378add;
   --text:#e8e8f0;--muted:#8888a0;--text2:#c0c0d0;
   --safe-top:env(safe-area-inset-top,0px);--safe-bot:env(safe-area-inset-bottom,0px);
+}
+body.light{
+  --bg:#f4f4f8;--card:#ffffff;--el:#eaeaf0;--border:#d0d0e0;
+  --text:#1a1a2e;--muted:#7070a0;--text2:#4a4a6a;
 }
 html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:-apple-system,system-ui,sans-serif}
 .hidden{display:none!important}
@@ -214,6 +219,7 @@ hr{border:none;border-top:1px solid var(--border);margin:.75rem 0}
   <div id="topbar">
     <span id="topbar-logo">⚡</span>
     <span id="topbar-title">Dashboard</span>
+    <button onclick="toggleTheme()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;margin-left:auto" id="theme-btn">☀️</button>
   </div>
   <div id="content">
 
@@ -228,7 +234,10 @@ hr{border:none;border-top:1px solid var(--border);margin:.75rem 0}
           <canvas id="macro-pie" width="80" height="80" style="flex-shrink:0"></canvas>
           <div style="flex:1">
             <div class="flex justify-between items-center mb-4"><span class="text-muted text-sm">Calories</span><span id="cal-goal-display" class="text-xs text-muted"></span></div>
-            <div id="cal-display" style="font-size:1.6rem;font-weight:800;color:var(--orange)" class="mb-8"></div>
+            <div class="flex items-center gap-8 mb-8">
+              <div id="cal-display" style="font-size:1.6rem;font-weight:800;color:var(--orange)"></div>
+              <div id="cal-remaining-wrap" style="flex:1;text-align:right"></div>
+            </div>
             <div class="flex justify-between text-xs mb-4"><span class="text-muted">P</span><span id="d-prot"></span></div>
             <div class="prog-bar mb-8"><div class="prog-fill" id="pb-prot" style="background:var(--blue);width:0%"></div></div>
             <div class="flex justify-between text-xs mb-4"><span class="text-muted">G</span><span id="d-gluc"></span></div>
@@ -262,6 +271,8 @@ hr{border:none;border-top:1px solid var(--border);margin:.75rem 0}
         <div class="card"><h3>Aujourd'hui</h3><div id="dash-sessions"></div></div>
       </div>
       <div class="tip-box mt-12" id="dash-tip"></div>
+      <!-- RESUME SEMAINE -->
+      <div class="card mt-12" id="dash-week-summary"></div>
     </div>
 
     <!-- NUTRITION -->
@@ -278,7 +289,10 @@ hr{border:none;border-top:1px solid var(--border);margin:.75rem 0}
           <button class="tag" onclick="setMeal('dîner',this)">🌙 Dîner</button>
           <button class="tag" onclick="setMeal('collation',this)">🍎 Collation</button>
         </div>
-        <input class="search-bar" placeholder="🔍 Rechercher un aliment..." id="food-search" oninput="searchFoods(this.value)">
+        <div class="flex gap-8 mb-12">
+          <input class="search-bar" placeholder="🔍 Rechercher un aliment..." id="food-search" oninput="searchFoods(this.value)" style="margin-bottom:0;flex:1">
+          <button class="btn btn-secondary btn-sm" onclick="openCopyDayModal()" style="white-space:nowrap">📋 Copier jour</button>
+        </div>
         <div id="food-results"></div>
         <div id="food-add-form" class="hidden">
           <div class="card">
@@ -607,6 +621,7 @@ function defaultFoods(){return[
 // ── INIT ──
 window.onload=async function(){
   document.getElementById('sleep-date').value=todayStr();
+  applyTheme();
   setInterval(()=>save(),30000);
   let ok=await restoreSession();
   if(ok){
@@ -736,6 +751,15 @@ function renderDashboard(){
   let tCal=dayFoods.reduce((s,f)=>s+f.cal,0),tProt=dayFoods.reduce((s,f)=>s+f.prot,0),tGluc=dayFoods.reduce((s,f)=>s+f.gluc,0),tLip=dayFoods.reduce((s,f)=>s+f.lip,0);
   document.getElementById('cal-display').textContent=Math.round(tCal);
   document.getElementById('cal-goal-display').textContent=`/ ${DB.goals.cal} kcal`;
+  let remaining=DB.goals.cal-Math.round(tCal);
+  let remEl=document.getElementById('cal-remaining-wrap');
+  if(remaining>0){
+    remEl.innerHTML=`<span style="color:var(--green);font-size:.85rem;font-weight:600">−${remaining} restantes</span>`;
+  }else if(remaining<0){
+    remEl.innerHTML=`<span style="color:var(--red);font-size:.85rem;font-weight:600">+${Math.abs(remaining)} dépassées</span>`;
+  }else{
+    remEl.innerHTML=`<span style="color:var(--purple);font-size:.85rem;font-weight:600">Objectif atteint ✓</span>`;
+  }
   document.getElementById('d-prot').textContent=`${Math.round(tProt)}/${DB.goals.prot}g`;
   document.getElementById('d-gluc').textContent=`${Math.round(tGluc)}/${DB.goals.gluc}g`;
   document.getElementById('d-lip').textContent=`${Math.round(tLip)}/${DB.goals.lip}g`;
@@ -752,6 +776,40 @@ function renderDashboard(){
   document.getElementById('dash-sessions').innerHTML=todaySessions.length?todaySessions.map(e=>`<div class="text-sm mb-4">${e.name}</div><button class="btn btn-primary btn-sm" onclick="launchSession('${e.sessionId}')">▶</button>`).join(''):'<div class="text-muted text-sm">Aucune séance</div>';
   let tips=[`Buvez ${DB.goals.eau}ml d'eau aujourd'hui.`,'Dormez 7à 9h pour récupérer.',`Cible : ${DB.goals.prot}g de protéines.`,'Échauffez-vous avant chaque séance.','Variez vos exercices pour progresser.'];
   document.getElementById('dash-tip').innerHTML='💡 '+tips[now.getDay()%tips.length];
+  renderWeekSummary();
+}
+function renderWeekSummary(){
+  let days=last7Days();
+  let seances=DB.workoutHistory.filter(w=>days.includes(w.date)).length;
+  let avgCal=Math.round(days.reduce((s,d)=>{let foods=DB.journal[d]||[];return s+foods.reduce((a,f)=>a+f.cal,0)},0)/7);
+  let avgSleep=0,sleepCount=0;
+  days.forEach(d=>{let n=DB.sleep.find(s=>s.date===d);if(n){avgSleep+=calcSleepDurNum(n.bed,n.wake);sleepCount++;}});
+  avgSleep=sleepCount?Math.round(avgSleep/sleepCount*10)/10:0;
+  let avgWater=Math.round(days.reduce((s,d)=>s+(DB.water[d]||0),0)/7);
+  let streak=0;
+  for(let i=days.length-1;i>=0;i--){if(DB.workoutHistory.find(w=>w.date===days[i]))streak++;else break;}
+  document.getElementById('dash-week-summary').innerHTML=`
+    <div style="font-weight:600;margin-bottom:10px">📊 Résumé de la semaine</div>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
+      <div style="background:var(--el);border-radius:10px;padding:10px;text-align:center">
+        <div style="font-size:1.4rem;font-weight:800;color:var(--purple)">${seances}</div>
+        <div class="text-xs text-muted">séances</div>
+      </div>
+      <div style="background:var(--el);border-radius:10px;padding:10px;text-align:center">
+        <div style="font-size:1.4rem;font-weight:800;color:var(--orange)">${avgCal}</div>
+        <div class="text-xs text-muted">kcal/jour moy.</div>
+      </div>
+      <div style="background:var(--el);border-radius:10px;padding:10px;text-align:center">
+        <div style="font-size:1.4rem;font-weight:800;color:var(--blue)">${avgWater}</div>
+        <div class="text-xs text-muted">ml eau/jour moy.</div>
+      </div>
+      <div style="background:var(--el);border-radius:10px;padding:10px;text-align:center">
+        <div style="font-size:1.4rem;font-weight:800;color:var(--green)">${avgSleep?avgSleep+'h':'—'}</div>
+        <div class="text-xs text-muted">sommeil moy.</div>
+      </div>
+    </div>
+    ${streak>0?`<div class="mt-8" style="text-align:center;color:var(--orange);font-size:.85rem;font-weight:600">🔥 Streak : ${streak} jour${streak>1?'s':''} d'entraînement consécutif${streak>1?'s':''}</div>`:''}
+  `;
 }
 function drawMacroPie(prot,gluc,lip){
   let c=document.getElementById('macro-pie');if(!c)return;
@@ -796,7 +854,44 @@ function drawMacroPie(prot,gluc,lip){
   ctx.fillStyle=gCenter;ctx.fill();
 }
 
-// ── EAU ──
+// ── THEME ──
+function toggleTheme(){
+  document.body.classList.toggle('light');
+  let isLight=document.body.classList.contains('light');
+  document.getElementById('theme-btn').textContent=isLight?'🌙':'☀️';
+  localStorage.setItem('fittrack_theme',isLight?'light':'dark');
+}
+function applyTheme(){
+  let t=localStorage.getItem('fittrack_theme');
+  if(t==='light'){document.body.classList.add('light');document.getElementById('theme-btn').textContent='🌙';}
+}
+
+// ── COPY DAY ──
+function openCopyDayModal(){
+  let days=Object.keys(DB.journal).filter(d=>d!==todayStr()&&DB.journal[d]?.length>0).sort().reverse().slice(0,10);
+  if(!days.length){notif('Aucun jour avec des données');return}
+  document.getElementById('modal-content').innerHTML=`<h2>📋 Copier un jour</h2>
+    <div class="text-muted text-sm mb-12">Choisissez un jour à copier dans le journal d'aujourd'hui</div>
+    ${days.map(d=>{
+      let foods=DB.journal[d];
+      let cal=foods.reduce((s,f)=>s+f.cal,0);
+      return `<div class="food-item" onclick="copyDayJournal('${d}')">
+        <span class="food-emoji">📅</span>
+        <div><div class="text-sm">${d}</div>
+        <div class="text-xs text-muted">${foods.length} aliments · ${Math.round(cal)} kcal</div></div>
+      </div>`;
+    }).join('')}
+    <button class="btn btn-secondary mt-12" onclick="closeModal()">Annuler</button>`;
+  showModal();
+}
+async function copyDayJournal(fromDate){
+  let today=todayStr();
+  if(!DB.journal[today])DB.journal[today]=[];
+  let copied=DB.journal[fromDate].map(f=>({...f,id:Date.now()+Math.random()+''}));
+  DB.journal[today]=[...DB.journal[today],...copied];
+  await save();closeModal();renderJournal();renderDashboard();
+  notif(`Journal du ${fromDate} copié ✓`);
+}
 function calcWaterNeeds(p){
   if(!p)return 2000;
   let base=p.poids*35;
@@ -949,7 +1044,8 @@ function removeNewEx(i){newExercises.splice(i,1);renderNewExercisesList()}
 async function saveNewSession(){
   let name=document.getElementById('new-session-name').value;if(!name){notif('Donnez un nom à la séance');return}
   let type=document.getElementById('new-session-type').value,cat=document.getElementById('new-session-cat').value;
-  let session={id:'s'+Date.now(),name,type,cat,exercises:type==='musculation'?newExercises.map(e=>({...e,series:[...e.series]})):[]};
+  let restTime=parseInt(document.getElementById('new-rest-time').value)||60;
+  let session={id:'s'+Date.now(),name,type,cat,restTime,exercises:type==='musculation'?newExercises.map(e=>({...e,series:[...e.series]})):[]};
   if(type==='course'){session.courseType=document.getElementById('course-type-sel').value;session.dist=document.getElementById('course-dist').value;session.dur=document.getElementById('course-dur').value;}
   DB.sessions.push(session);await save();newExercises=[];
   document.getElementById('new-session-name').value='';renderNewExercisesList();
@@ -967,7 +1063,7 @@ function launchSession(id){
     (s.exercises||[]).forEach((ex,i)=>{
       let lp=findLastPerf(ex.id);
       h+=`<div class="exercise-card"><div style="font-weight:700;margin-bottom:.5rem">${ex.emoji} ${ex.name}</div>${lp?`<div class="text-xs text-muted mb-8">Dernière : ${lp}</div>`:''}`
-      ex.series.forEach((s2,si)=>{h+=`<div class="series-row"><span class="text-muted text-xs" style="width:24px">S${si+1}</span><input type="number" id="wm-w-${i}-${si}" class="series-input" placeholder="kg" value="${s2.weight}" inputmode="decimal"><span class="text-xs text-muted">×</span><input type="number" id="wm-r-${i}-${si}" class="series-input" placeholder="reps" value="${s2.reps}" inputmode="numeric"><button class="btn btn-secondary btn-sm" onclick="startRestTimer(60)">⏱</button></div>`});
+      ex.series.forEach((s2,si)=>{h+=`<div class="series-row"><span class="text-muted text-xs" style="width:24px">S${si+1}</span><input type="number" id="wm-w-${i}-${si}" class="series-input" placeholder="kg" value="${s2.weight}" inputmode="decimal"><span class="text-xs text-muted">×</span><input type="number" id="wm-r-${i}-${si}" class="series-input" placeholder="reps" value="${s2.reps}" inputmode="numeric"><button class="btn btn-secondary btn-sm" onclick="startRestTimer(${s.restTime||60})">⏱</button></div>`});
       h+=`</div>`;
     });
   }else{
