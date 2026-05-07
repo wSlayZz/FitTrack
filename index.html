@@ -7,7 +7,6 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="FitTrack">
 <meta name="theme-color" content="#0f0f13">
-<meta name="color-scheme" content="dark light">
 <title>FitTrack</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -55,7 +54,6 @@ select option{background:var(--card)}
 .nav-btn.active svg{stroke-width:2.2}
 .page{display:none;padding:1rem}
 .page.active{display:block}
-.page-title{font-size:1.4rem;font-weight:700;margin-bottom:1rem}
 .card{background:var(--card);border-radius:16px;padding:1.1rem;border:1px solid var(--border);margin-bottom:12px}
 .card h3{font-size:.9rem;font-weight:600;margin-bottom:.85rem;color:var(--text2)}
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -111,12 +109,14 @@ hr{border:none;border-top:1px solid var(--border);margin:.75rem 0}
 .cal-day.today{border:1.5px solid var(--purple)}
 .cal-day.other-month{opacity:.3}
 .cal-day-num{font-size:.7rem;color:var(--muted);margin-bottom:3px;text-align:center}
-.cal-event{background:var(--purple)33;border-radius:4px;padding:2px 3px;font-size:.6rem;color:var(--purple);margin-bottom:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.cal-event{background:var(--purple)33;border-radius:4px;padding:2px 3px;font-size:.6rem;color:var(--purple);margin-bottom:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer}
 .cal-event.green{background:var(--green)33;color:var(--green)}
 #auth-screen{position:fixed;inset:0;background:var(--bg);z-index:2000;display:flex;align-items:center;justify-content:center;padding:1.5rem;overflow-y:auto}
 .auth-box{width:100%;max-width:380px}
 .auth-err{background:var(--red)22;border:1px solid var(--red)44;color:var(--red);padding:10px 14px;border-radius:10px;font-size:.9rem;margin-bottom:12px}
 .auth-ok{background:var(--green)22;border:1px solid var(--green)44;color:var(--green);padding:10px 14px;border-radius:10px;font-size:.9rem;margin-bottom:12px;text-align:center}
+.score-bar{height:10px;background:var(--el);border-radius:5px;overflow:hidden;margin-top:6px}
+.score-fill{height:100%;border-radius:5px;transition:width .5s}
 </style>
 </head>
 <body>
@@ -161,7 +161,7 @@ hr{border:none;border-top:1px solid var(--border);margin:.75rem 0}
     <div id="auth-success" class="auth-ok hidden"></div>
     <div class="form-group"><label>Email</label><input type="email" id="auth-email" placeholder="vous@email.com" autocomplete="email" inputmode="email"></div>
     <div class="form-group"><label>Mot de passe</label><input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password"></div>
-    <div id="auth-confirm-wrap" class="form-group hidden"><label>Confirmer le mot de passe</label><input type="password" id="auth-confirm" placeholder="••••••••"></div>
+    <div id="auth-confirm-wrap" class="form-group hidden"><label>Confirmer</label><input type="password" id="auth-confirm" placeholder="••••••••"></div>
     <button class="btn btn-primary mt-8" id="auth-submit" onclick="authSubmit()">Se connecter</button>
   </div>
 </div>
@@ -174,7 +174,7 @@ hr{border:none;border-top:1px solid var(--border);margin:.75rem 0}
     <div class="step-ind"><div class="step-dot active" id="sd1"></div><div class="step-dot" id="sd2"></div></div>
     <div id="setup-step1">
       <div class="form-row">
-        <div class="form-group"><label>Prénom</label><input type="text" id="s-prenom" placeholder="Alex" autocomplete="given-name"></div>
+        <div class="form-group"><label>Prénom</label><input type="text" id="s-prenom" placeholder="Alex"></div>
         <div class="form-group"><label>Âge</label><input type="number" id="s-age" placeholder="25" inputmode="numeric"></div>
       </div>
       <div class="form-row">
@@ -188,7 +188,7 @@ hr{border:none;border-top:1px solid var(--border);margin:.75rem 0}
       <button class="btn btn-primary mt-16" onclick="setupStep2()">Suivant →</button>
     </div>
     <div id="setup-step2" class="hidden">
-      <div class="form-group"><label>Objectif principal</label>
+      <div class="form-group"><label>Objectif</label>
         <select id="s-objectif" onchange="calcGoals()">
           <option value="masse">💪 Prise de masse</option><option value="perte">🔥 Perte de poids</option>
           <option value="maintien" selected>⚖️ Maintien</option><option value="renforcement">🏋️ Renforcement</option>
@@ -219,7 +219,7 @@ hr{border:none;border-top:1px solid var(--border);margin:.75rem 0}
   <div id="topbar">
     <span id="topbar-logo">⚡</span>
     <span id="topbar-title">Dashboard</span>
-    <button onclick="toggleTheme()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;margin-left:auto" id="theme-btn">☀️</button>
+    <button onclick="toggleTheme()" id="theme-btn" style="background:none;border:none;font-size:1.3rem;cursor:pointer;margin-left:auto;padding:4px">☀️</button>
   </div>
   <div id="content">
 
@@ -236,7 +236,7 @@ hr{border:none;border-top:1px solid var(--border);margin:.75rem 0}
             <div class="flex justify-between items-center mb-4"><span class="text-muted text-sm">Calories</span><span id="cal-goal-display" class="text-xs text-muted"></span></div>
             <div class="flex items-center gap-8 mb-8">
               <div id="cal-display" style="font-size:1.6rem;font-weight:800;color:var(--orange)"></div>
-              <div id="cal-remaining-wrap" style="flex:1;text-align:right"></div>
+              <div id="cal-remaining" style="flex:1;text-align:right;font-size:.85rem;font-weight:600"></div>
             </div>
             <div class="flex justify-between text-xs mb-4"><span class="text-muted">P</span><span id="d-prot"></span></div>
             <div class="prog-bar mb-8"><div class="prog-fill" id="pb-prot" style="background:var(--blue);width:0%"></div></div>
@@ -266,13 +266,12 @@ hr{border:none;border-top:1px solid var(--border);margin:.75rem 0}
           </div>
         </div>
       </div>
-      <div class="grid-2">
+      <div class="grid-2 mb-12">
         <div class="card"><h3>Nuit</h3><div id="dash-sleep"></div></div>
         <div class="card"><h3>Aujourd'hui</h3><div id="dash-sessions"></div></div>
       </div>
-      <div class="tip-box mt-12" id="dash-tip"></div>
-      <!-- RESUME SEMAINE -->
-      <div class="card mt-12" id="dash-week-summary"></div>
+      <div class="tip-box mb-12" id="dash-tip"></div>
+      <div class="card" id="dash-week-summary"></div>
     </div>
 
     <!-- NUTRITION -->
@@ -289,9 +288,9 @@ hr{border:none;border-top:1px solid var(--border);margin:.75rem 0}
           <button class="tag" onclick="setMeal('dîner',this)">🌙 Dîner</button>
           <button class="tag" onclick="setMeal('collation',this)">🍎 Collation</button>
         </div>
-        <div class="flex gap-8 mb-12">
-          <input class="search-bar" placeholder="🔍 Rechercher un aliment..." id="food-search" oninput="searchFoods(this.value)" style="margin-bottom:0;flex:1">
-          <button class="btn btn-secondary btn-sm" onclick="openCopyDayModal()" style="white-space:nowrap">📋 Copier jour</button>
+        <div class="flex gap-8 mb-12 items-center">
+          <input class="search-bar" placeholder="🔍 Rechercher..." id="food-search" oninput="searchFoods(this.value)" style="margin-bottom:0;flex:1">
+          <button class="btn btn-secondary btn-sm" onclick="openCopyDayModal()">📋 Copier</button>
         </div>
         <div id="food-results"></div>
         <div id="food-add-form" class="hidden">
@@ -343,10 +342,16 @@ hr{border:none;border-top:1px solid var(--border);margin:.75rem 0}
       <div id="prog-tab-seances" class="tab-content active"><div id="prog-seances-list"></div></div>
       <div id="prog-tab-creer" class="tab-content">
         <div class="card">
-          <div class="form-group"><label>Nom de la séance</label><input type="text" id="new-session-name" placeholder="Ex: Full Body Lundi"></div>
+          <div class="form-group"><label>Nom</label><input type="text" id="new-session-name" placeholder="Ex: Full Body Lundi"></div>
           <div class="form-row">
             <div class="form-group"><label>Type</label><select id="new-session-type" onchange="onSessionTypeChange()"><option value="musculation">💪 Muscu</option><option value="course">🏃 Course</option></select></div>
             <div class="form-group"><label>Catégorie</label><select id="new-session-cat"><option value="full-body">Full Body</option><option value="haut">Haut</option><option value="bas">Bas</option><option value="push">Push</option><option value="pull">Pull</option><option value="core">Core</option></select></div>
+          </div>
+          <div class="form-group"><label>Repos par défaut</label>
+            <select id="new-rest-time">
+              <option value="30">30s</option><option value="45">45s</option><option value="60" selected>60s</option>
+              <option value="90">90s</option><option value="120">2 min</option><option value="180">3 min</option>
+            </select>
           </div>
         </div>
         <div id="new-session-muscu">
@@ -418,7 +423,7 @@ hr{border:none;border-top:1px solid var(--border);margin:.75rem 0}
           <div class="flex gap-8 items-center">
             <input type="number" id="custom-water" placeholder="ml" inputmode="numeric" style="flex:1;background:var(--el);border:1.5px solid var(--border);color:var(--text);padding:10px;border-radius:10px;font-size:1rem">
             <button class="btn btn-primary btn-sm" onclick="addCustomWater()">+</button>
-            <button class="btn btn-secondary btn-sm" onclick="removeWater(250)">-250</button>
+            <button class="btn btn-secondary btn-sm" onclick="removeWater(250)" style="color:var(--red)">-250</button>
           </div>
         </div>
         <div class="card"><h3>Verres (250ml)</h3><div id="water-glasses" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;text-align:center;font-size:1.6rem"></div></div>
@@ -433,9 +438,10 @@ hr{border:none;border-top:1px solid var(--border);margin:.75rem 0}
           </div>
           <div class="form-group"><label>Date</label><input type="date" id="sleep-date"></div>
           <div class="form-group"><label>Qualité</label>
-            <div class="stars" id="sleep-quality-stars">
+            <div class="stars">
               <span class="star active" onclick="setSleepQuality(1)">★</span><span class="star active" onclick="setSleepQuality(2)">★</span>
-              <span class="star active" onclick="setSleepQuality(3)">★</span><span class="star" onclick="setSleepQuality(4)">★</span><span class="star" onclick="setSleepQuality(5)">★</span>
+              <span class="star active" onclick="setSleepQuality(3)">★</span><span class="star" onclick="setSleepQuality(4)">★</span>
+              <span class="star" onclick="setSleepQuality(5)">★</span>
             </div>
           </div>
           <div class="form-group"><label>Notes</label><input type="text" id="sleep-notes" placeholder="Ex: nuit agitée..."></div>
@@ -457,24 +463,21 @@ hr{border:none;border-top:1px solid var(--border);margin:.75rem 0}
           <div class="card" id="weight-history"></div>
         </div>
         <div id="prog2-tab-muscu" class="tab-content">
-        <div class="flex justify-between items-center mb-12">
-          <span class="text-muted text-sm">Records & progression</span>
-        </div>
-        <div id="muscu-records"></div>
-        <div id="muscu-chart-section" class="hidden">
-          <div class="card mt-12">
-            <div class="flex justify-between items-center mb-8">
-              <h3 id="muscu-chart-title" style="margin-bottom:0"></h3>
-              <button class="btn-icon" onclick="document.getElementById('muscu-chart-section').classList.add('hidden')">✕</button>
+          <div id="muscu-records"></div>
+          <div id="muscu-chart-section" class="hidden">
+            <div class="card mt-12">
+              <div class="flex justify-between items-center mb-8">
+                <h3 id="muscu-chart-title" style="margin-bottom:0"></h3>
+                <button class="btn-icon" onclick="document.getElementById('muscu-chart-section').classList.add('hidden')">✕</button>
+              </div>
+              <canvas id="muscu-chart" height="140"></canvas>
             </div>
-            <canvas id="muscu-chart" height="140"></canvas>
           </div>
         </div>
-      </div>
         <div id="prog2-tab-course" class="tab-content">
-        <div class="card mb-12" id="course-stats-card"></div>
-        <div id="course-history"></div>
-      </div>
+          <div class="card mb-12" id="course-stats-card"></div>
+          <div id="course-history"></div>
+        </div>
         <div id="prog2-tab-forme" class="tab-content"><div id="forme-content"></div></div>
       </div>
       <div id="plus-tab-profil" class="tab-content">
@@ -533,16 +536,12 @@ hr{border:none;border-top:1px solid var(--border);margin:.75rem 0}
 <script>
 const SUPA_URL='https://yvkcoyofnllawjfvlthz.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2a2NveW9mbmxsYXdqZnZsdGh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxMjQ2MzksImV4cCI6MjA5MzcwMDYzOX0.TmqANNlMVWO25zf658gjpRLmvfGucURtCec7oK7MzdA';
-let currentUser=null;
-let DB={};
-let currentMeal='petit-déjeuner';
-let selectedFood=null;
-let foodFilter='all';
+let currentUser=null,DB={};
+let currentMeal='petit-déjeuner',selectedFood=null,foodFilter='all';
 let newExercises=[];
 let timerInterval=null,timerSeconds=0;
 let workoutTimer=null,workoutSeconds=0,currentWorkout=null;
-let calWeekOffset=0,calMonthOffset=0;
-let sleepQuality=3;
+let calWeekOffset=0,calMonthOffset=0,sleepQuality=3;
 
 // ── SUPABASE ──
 async function supaFetch(path,opts={}){
@@ -550,22 +549,16 @@ async function supaFetch(path,opts={}){
   if(currentUser?.access_token)headers['Authorization']='Bearer '+currentUser.access_token;
   return fetch(SUPA_URL+path,{...opts,headers});
 }
-
-// ── AUTH ──
 async function signUp(email,password){
   let r=await supaFetch('/auth/v1/signup',{method:'POST',body:JSON.stringify({email,password})});
-  let d=await r.json();
-  if(d.error)throw new Error(d.error.message||d.msg||'Erreur inscription');
-  return d;
+  let d=await r.json();if(d.error)throw new Error(d.error.message||'Erreur inscription');return d;
 }
 async function signIn(email,password){
   let r=await supaFetch('/auth/v1/token?grant_type=password',{method:'POST',body:JSON.stringify({email,password})});
   let d=await r.json();
-  if(d.error||d.error_description)throw new Error(d.error_description||d.error_code||'Email ou mot de passe incorrect');
+  if(d.error||d.error_description)throw new Error(d.error_description||'Email ou mot de passe incorrect');
   if(!d.access_token)throw new Error('Email ou mot de passe incorrect');
-  currentUser=d;
-  localStorage.setItem('fittrack_session',JSON.stringify(d));
-  return d;
+  currentUser=d;localStorage.setItem('fittrack_session',JSON.stringify(d));return d;
 }
 async function signOut(){
   try{await supaFetch('/auth/v1/logout',{method:'POST'})}catch(e){}
@@ -573,56 +566,37 @@ async function signOut(){
 }
 async function restoreSession(){
   try{
-    let s=localStorage.getItem('fittrack_session');
-    if(!s)return false;
-    let session=JSON.parse(s);
-    if(!session.refresh_token)return false;
+    let s=localStorage.getItem('fittrack_session');if(!s)return false;
+    let session=JSON.parse(s);if(!session.refresh_token)return false;
     let r=await supaFetch('/auth/v1/token?grant_type=refresh_token',{method:'POST',body:JSON.stringify({refresh_token:session.refresh_token})});
-    let d=await r.json();
-    if(!d.access_token)return false;
-    currentUser=d;
-    localStorage.setItem('fittrack_session',JSON.stringify(d));
-    return true;
+    let d=await r.json();if(!d.access_token)return false;
+    currentUser=d;localStorage.setItem('fittrack_session',JSON.stringify(d));return true;
   }catch(e){return false;}
 }
-
-// ── STORAGE ──
 async function save(){
   if(!currentUser?.user?.id)return;
   try{
-    let r=await supaFetch('/rest/v1/fittrack_data',{
-      method:'POST',
-      headers:{'Prefer':'return=minimal,resolution=merge-duplicates'},
-      body:JSON.stringify({user_id:currentUser.user.id,data:DB,updated_at:new Date().toISOString()})
-    });
-    if(!r.ok){let t=await r.text();console.error('Save error:',r.status,t);}
-  }catch(e){console.error('Save exception:',e)}
+    let r=await supaFetch('/rest/v1/fittrack_data',{method:'POST',headers:{'Prefer':'return=minimal,resolution=merge-duplicates'},body:JSON.stringify({user_id:currentUser.user.id,data:DB,updated_at:new Date().toISOString()})});
+    if(!r.ok){let t=await r.text();console.error('Save:',r.status,t);}
+  }catch(e){console.error('Save:',e)}
 }
 async function load(){
   if(!currentUser?.user?.id)return;
   DB={};
   try{
-    let uid=currentUser.user.id;
-    let r=await supaFetch(`/rest/v1/fittrack_data?user_id=eq.${uid}&select=data&limit=1`);
-    let text=await r.text();
-    let rows=JSON.parse(text);
-    if(Array.isArray(rows)&&rows.length>0&&rows[0]?.data){
-      DB=rows[0].data;
-    }
-  }catch(e){console.error('Load error:',e)}
+    let r=await supaFetch(`/rest/v1/fittrack_data?user_id=eq.${currentUser.user.id}&select=data&limit=1`);
+    let rows=await r.json();
+    if(Array.isArray(rows)&&rows.length&&rows[0]?.data)DB=rows[0].data;
+  }catch(e){console.error('Load:',e)}
   initDefaults();
 }
 function initDefaults(){
   if(!DB.goals)DB.goals={cal:2000,eau:2000,prot:150,gluc:250,lip:70};
   if(!DB.foods)DB.foods=defaultFoods();
-  if(!DB.recipes)DB.recipes=[];
-  if(!DB.sessions)DB.sessions=[];
-  if(!DB.journal)DB.journal={};
-  if(!DB.water)DB.water={};
-  if(!DB.sleep)DB.sleep=[];
-  if(!DB.weight)DB.weight=[];
-  if(!DB.planning)DB.planning=[];
-  if(!DB.workoutHistory)DB.workoutHistory=[];
+  if(!DB.recipes)DB.recipes=[];if(!DB.sessions)DB.sessions=[];
+  if(!DB.journal)DB.journal={};if(!DB.water)DB.water={};
+  if(!DB.sleep)DB.sleep=[];if(!DB.weight)DB.weight=[];
+  if(!DB.planning)DB.planning=[];if(!DB.workoutHistory)DB.workoutHistory=[];
 }
 function defaultFoods(){return[
   {id:'f1',name:'Blanc de poulet',emoji:'🍗',cat:'viande',cal:165,prot:31,gluc:0,lip:3.6,unit:'g'},
@@ -646,16 +620,26 @@ window.onload=async function(){
   if(ok){
     document.getElementById('auth-screen').classList.add('hidden');
     await load();
-    if(!DB.profile){showSetup()}else{initApp()}
+    if(!DB.profile)showSetup();else initApp();
   }
 }
-
 function todayStr(){return new Date().toISOString().split('T')[0]}
 function showSetup(){document.getElementById('setup').classList.remove('hidden')}
 function hideSetup(){document.getElementById('setup').classList.add('hidden')}
-function initApp(){
-  document.getElementById('app').classList.remove('hidden');
-  renderDashboard();
+function initApp(){document.getElementById('app').classList.remove('hidden');renderDashboard();}
+
+// ── THEME ──
+function toggleTheme(){
+  document.body.classList.toggle('light');
+  let light=document.body.classList.contains('light');
+  document.getElementById('theme-btn').textContent=light?'🌙':'☀️';
+  localStorage.setItem('fittrack_theme',light?'light':'dark');
+}
+function applyTheme(){
+  if(localStorage.getItem('fittrack_theme')==='light'){
+    document.body.classList.add('light');
+    let btn=document.getElementById('theme-btn');if(btn)btn.textContent='🌙';
+  }
 }
 
 // ── AUTH UI ──
@@ -672,51 +656,52 @@ function authTab(mode){
 async function authSubmit(){
   let email=document.getElementById('auth-email').value.trim();
   let pass=document.getElementById('auth-password').value;
-  let errEl=document.getElementById('auth-error');
-  let okEl=document.getElementById('auth-success');
+  let errEl=document.getElementById('auth-error'),okEl=document.getElementById('auth-success');
   errEl.classList.add('hidden');okEl.classList.add('hidden');
   if(!email||!pass){errEl.textContent='Remplissez tous les champs';errEl.classList.remove('hidden');return}
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){errEl.textContent='Email invalide';errEl.classList.remove('hidden');return}
   if(pass.length<6){errEl.textContent='Mot de passe : 6 caractères minimum';errEl.classList.remove('hidden');return}
-  let btn=document.getElementById('auth-submit');
-  btn.textContent='...';btn.disabled=true;
+  let btn=document.getElementById('auth-submit');btn.textContent='...';btn.disabled=true;
   try{
     if(authMode==='signup'){
       let conf=document.getElementById('auth-confirm').value;
       if(pass!==conf)throw new Error('Les mots de passe ne correspondent pas');
       await signUp(email,pass);
-      okEl.textContent='Compte créé ! Connectez-vous maintenant.';
-      okEl.classList.remove('hidden');
+      okEl.textContent='Compte créé ! Connectez-vous maintenant.';okEl.classList.remove('hidden');
       authTab('login');
     }else{
       await signIn(email,pass);
       document.getElementById('auth-screen').classList.add('hidden');
       await load();
-      if(!DB.profile){showSetup()}else{initApp()}
+      if(!DB.profile)showSetup();else initApp();
     }
-  }catch(e){
-    errEl.textContent=e.message||'Erreur de connexion';
-    errEl.classList.remove('hidden');
-  }
-  btn.textContent=authMode==='login'?'Se connecter':'Créer mon compte';
-  btn.disabled=false;
+  }catch(e){errEl.textContent=e.message||'Erreur';errEl.classList.remove('hidden');}
+  btn.textContent=authMode==='login'?'Se connecter':'Créer mon compte';btn.disabled=false;
 }
 
 // ── SETUP ──
-function calcBMR(s){return s.sexe==='h'?88.36+(13.4*s.poids)+(4.8*s.taille)-(5.7*s.age):447.6+(9.2*s.poids)+(3.1*s.taille)-(4.3*s.age)}
+function calcBMR(p){return p.sexe==='h'?88.36+(13.4*p.poids)+(4.8*p.taille)-(5.7*p.age):447.6+(9.2*p.poids)+(3.1*p.taille)-(4.3*p.age)}
 function calcGoals(){
   let p={age:parseInt(document.getElementById('s-age').value)||25,sexe:document.getElementById('s-sexe').value,taille:parseInt(document.getElementById('s-taille').value)||170,poids:parseFloat(document.getElementById('s-poids').value)||70,activite:parseFloat(document.getElementById('s-activite').value)||1.55};
   let obj=document.getElementById('s-objectif').value;
   let tdee=Math.round(calcBMR(p)*p.activite);
   let cal=obj==='masse'?tdee+300:obj==='perte'?tdee-400:tdee;
-  let prot=Math.round(p.poids*2),lip=Math.round(cal*0.25/9),gluc=Math.round((cal-prot*4-lip*9)/4),eau=Math.round(p.poids*35);
-  document.getElementById('g-cal').value=cal;document.getElementById('g-prot').value=prot;document.getElementById('g-gluc').value=gluc;document.getElementById('g-lip').value=lip;document.getElementById('g-eau').value=eau;
+  let prot=Math.round(p.poids*2),lip=Math.round(cal*0.25/9),gluc=Math.round((cal-prot*4-lip*9)/4);
+  let eau=calcWaterNeeds(p);
+  document.getElementById('g-cal').value=cal;document.getElementById('g-prot').value=prot;
+  document.getElementById('g-gluc').value=gluc;document.getElementById('g-lip').value=lip;document.getElementById('g-eau').value=eau;
+}
+function calcWaterNeeds(p){
+  let base=p.poids*35;
+  let bonus={1.2:0,1.375:200,1.55:400,1.725:600,1.9:800};
+  base+=bonus[String(p.activite)]||bonus[p.activite]||0;
+  if(p.taille>180)base+=200;else if(p.taille<160)base-=100;
+  return Math.round(base/50)*50;
 }
 function setupStep2(){
   if(!document.getElementById('s-prenom').value){notif('Entrez votre prénom');return}
   document.getElementById('setup-step1').classList.add('hidden');document.getElementById('setup-step2').classList.remove('hidden');
-  document.getElementById('sd1').classList.remove('active');document.getElementById('sd2').classList.add('active');
-  calcGoals();
+  document.getElementById('sd1').classList.remove('active');document.getElementById('sd2').classList.add('active');calcGoals();
 }
 function setupBack(){
   document.getElementById('setup-step2').classList.add('hidden');document.getElementById('setup-step1').classList.remove('hidden');
@@ -725,8 +710,7 @@ function setupBack(){
 async function setupFinish(){
   DB.profile={prenom:document.getElementById('s-prenom').value,age:parseInt(document.getElementById('s-age').value)||25,sexe:document.getElementById('s-sexe').value,taille:parseInt(document.getElementById('s-taille').value)||170,poids:parseFloat(document.getElementById('s-poids').value)||70,activite:parseFloat(document.getElementById('s-activite').value)||1.55,objectif:document.getElementById('s-objectif').value};
   DB.goals={cal:parseInt(document.getElementById('g-cal').value)||2000,prot:parseInt(document.getElementById('g-prot').value)||150,gluc:parseInt(document.getElementById('g-gluc').value)||250,lip:parseInt(document.getElementById('g-lip').value)||70,eau:parseInt(document.getElementById('g-eau').value)||2000};
-  await save();
-  hideSetup();initApp();
+  await save();hideSetup();initApp();
 }
 
 // ── NAV ──
@@ -744,14 +728,24 @@ function nav(page){
   else if(page==='plus'){renderHydra();renderSommeil();renderProfil();}
 }
 function switchTab(prefix,tab){
-  document.querySelectorAll(`[id^="${prefix}-tab-"]`).forEach(c=>c.classList.remove('active'));
-  let el=document.getElementById(`${prefix}-tab-${tab}`);if(el)el.classList.add('active');
+  document.querySelectorAll('[id^="'+prefix+'-tab-"]').forEach(c=>c.classList.remove('active'));
+  let el=document.getElementById(prefix+'-tab-'+tab);if(el)el.classList.add('active');
   document.querySelectorAll('.tab').forEach(t=>{
-    if(t.getAttribute('onclick')===`switchTab('${prefix}','${tab}')`)t.classList.add('active');
-    else if(t.getAttribute('onclick')&&t.getAttribute('onclick').startsWith(`switchTab('${prefix}'`))t.classList.remove('active');
+    if(t.getAttribute('onclick')==='switchTab(\''+prefix+'\',\''+tab+'\')')t.classList.add('active');
+    else if(t.getAttribute('onclick')&&t.getAttribute('onclick').startsWith('switchTab(\''+prefix+'\''))t.classList.remove('active');
   });
-  if(prefix==='prog2'){if(tab==='poids')renderWeightChart();else if(tab==='muscu')renderMuscu();else if(tab==='course')renderCourseHistory();else if(tab==='forme')renderFormeScore();}
-  if(prefix==='plus'){if(tab==='hydra')renderHydra();else if(tab==='sommeil')renderSommeil();else if(tab==='profil')renderProfil();}
+  if(prefix==='prog2'){
+    if(tab==='poids')renderWeightChart();
+    else if(tab==='muscu')renderMuscu();
+    else if(tab==='course')renderCourseHistory();
+    else if(tab==='forme')renderFormeScore();
+  }
+  if(prefix==='plus'){
+    if(tab==='hydra')renderHydra();
+    else if(tab==='sommeil')renderSommeil();
+    else if(tab==='profil')renderProfil();
+    else if(tab==='progres')renderWeightChart();
+  }
 }
 
 // ── DASHBOARD ──
@@ -760,8 +754,8 @@ function renderDashboard(){
   let now=new Date();
   let days=['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
   let months=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
-  document.getElementById('dash-greeting').textContent=`Bonjour, ${p.prenom} 👋`;
-  document.getElementById('dash-date').textContent=`${days[now.getDay()]} ${now.getDate()} ${months[now.getMonth()]}`;
+  document.getElementById('dash-greeting').textContent='Bonjour, '+p.prenom+' 👋';
+  document.getElementById('dash-date').textContent=days[now.getDay()]+' '+now.getDate()+' '+months[now.getMonth()];
   let today=todayStr();
   let todaySessions=DB.planning.filter(e=>e.type==='seance'&&e.date===today);
   let ns=document.getElementById('dash-next-session');
@@ -769,19 +763,17 @@ function renderDashboard(){
   let dayFoods=DB.journal[today]||[];
   let tCal=dayFoods.reduce((s,f)=>s+f.cal,0),tProt=dayFoods.reduce((s,f)=>s+f.prot,0),tGluc=dayFoods.reduce((s,f)=>s+f.gluc,0),tLip=dayFoods.reduce((s,f)=>s+f.lip,0);
   document.getElementById('cal-display').textContent=Math.round(tCal);
-  document.getElementById('cal-goal-display').textContent=`/ ${DB.goals.cal} kcal`;
-  let remaining=DB.goals.cal-Math.round(tCal);
-  let remEl=document.getElementById('cal-remaining-wrap');
-  if(remaining>0){
-    remEl.innerHTML=`<span style="color:var(--green);font-size:.85rem;font-weight:600">−${remaining} restantes</span>`;
-  }else if(remaining<0){
-    remEl.innerHTML=`<span style="color:var(--red);font-size:.85rem;font-weight:600">+${Math.abs(remaining)} dépassées</span>`;
-  }else{
-    remEl.innerHTML=`<span style="color:var(--purple);font-size:.85rem;font-weight:600">Objectif atteint ✓</span>`;
+  document.getElementById('cal-goal-display').textContent='/ '+DB.goals.cal+' kcal';
+  let rem=DB.goals.cal-Math.round(tCal);
+  let remEl=document.getElementById('cal-remaining');
+  if(remEl){
+    if(rem>0)remEl.innerHTML='<span style="color:var(--green)">−'+rem+' restantes</span>';
+    else if(rem<0)remEl.innerHTML='<span style="color:var(--red)">+'+Math.abs(rem)+' dépassées</span>';
+    else remEl.innerHTML='<span style="color:var(--purple)">Objectif ✓</span>';
   }
-  document.getElementById('d-prot').textContent=`${Math.round(tProt)}/${DB.goals.prot}g`;
-  document.getElementById('d-gluc').textContent=`${Math.round(tGluc)}/${DB.goals.gluc}g`;
-  document.getElementById('d-lip').textContent=`${Math.round(tLip)}/${DB.goals.lip}g`;
+  document.getElementById('d-prot').textContent=Math.round(tProt)+'/'+DB.goals.prot+'g';
+  document.getElementById('d-gluc').textContent=Math.round(tGluc)+'/'+DB.goals.gluc+'g';
+  document.getElementById('d-lip').textContent=Math.round(tLip)+'/'+DB.goals.lip+'g';
   document.getElementById('pb-prot').style.width=Math.min(100,tProt/DB.goals.prot*100)+'%';
   document.getElementById('pb-gluc').style.width=Math.min(100,tGluc/DB.goals.gluc*100)+'%';
   document.getElementById('pb-lip').style.width=Math.min(100,tLip/DB.goals.lip*100)+'%';
@@ -789,144 +781,60 @@ function renderDashboard(){
   let w=DB.water[today]||0,pct=Math.min(1,w/DB.goals.eau);
   document.getElementById('hydro-val').textContent=w;
   document.getElementById('hydro-circle').style.strokeDashoffset=201-(201*pct);
-  document.getElementById('hydro-goal-disp').textContent=`/ ${DB.goals.eau} ml`;
+  document.getElementById('hydro-goal-disp').textContent='/ '+DB.goals.eau+' ml';
   let lastSleep=DB.sleep.length?DB.sleep[DB.sleep.length-1]:null;
-  document.getElementById('dash-sleep').innerHTML=lastSleep?`<div style="font-size:1.3rem;font-weight:800;color:var(--purple)">${calcSleepDur(lastSleep.bed,lastSleep.wake)}</div><div class="text-xs text-muted">${'★'.repeat(lastSleep.quality)}</div>`:'<div class="text-muted text-sm">—</div>';
-  document.getElementById('dash-sessions').innerHTML=todaySessions.length?todaySessions.map(e=>`<div class="text-sm mb-4">${e.name}</div><button class="btn btn-primary btn-sm" onclick="launchSession('${e.sessionId}')">▶</button>`).join(''):'<div class="text-muted text-sm">Aucune séance</div>';
-  let tips=[`Buvez ${DB.goals.eau}ml d'eau aujourd'hui.`,'Dormez 7à 9h pour récupérer.',`Cible : ${DB.goals.prot}g de protéines.`,'Échauffez-vous avant chaque séance.','Variez vos exercices pour progresser.'];
+  document.getElementById('dash-sleep').innerHTML=lastSleep?'<div style="font-size:1.3rem;font-weight:800;color:var(--purple)">'+calcSleepDur(lastSleep.bed,lastSleep.wake)+'</div><div class="text-xs text-muted">'+'★'.repeat(lastSleep.quality)+'</div>':'<div class="text-muted text-sm">—</div>';
+  document.getElementById('dash-sessions').innerHTML=todaySessions.length?todaySessions.map(e=>'<div class="text-sm mb-4">'+e.name+'</div><button class="btn btn-primary btn-sm" onclick="launchSession(\''+e.sessionId+'\')">▶</button>').join(''):'<div class="text-muted text-sm">Aucune séance</div>';
+  let tips=['Buvez '+DB.goals.eau+'ml d\'eau aujourd\'hui.','Dormez 7 à 9h pour récupérer.','Cible : '+DB.goals.prot+'g de protéines.','Échauffez-vous avant chaque séance.','Variez vos exercices pour progresser.'];
   document.getElementById('dash-tip').innerHTML='💡 '+tips[now.getDay()%tips.length];
   renderWeekSummary();
 }
+
 function renderWeekSummary(){
-  let days=last7Days();
-  let seances=DB.workoutHistory.filter(w=>days.includes(w.date)).length;
-  let avgCal=Math.round(days.reduce((s,d)=>{let foods=DB.journal[d]||[];return s+foods.reduce((a,f)=>a+f.cal,0)},0)/7);
-  let avgSleep=0,sleepCount=0;
-  days.forEach(d=>{let n=DB.sleep.find(s=>s.date===d);if(n){avgSleep+=calcSleepDurNum(n.bed,n.wake);sleepCount++;}});
-  avgSleep=sleepCount?Math.round(avgSleep/sleepCount*10)/10:0;
-  let avgWater=Math.round(days.reduce((s,d)=>s+(DB.water[d]||0),0)/7);
+  let days7=last7Days();
+  let seances=DB.workoutHistory.filter(w=>days7.includes(w.date)).length;
+  let avgCal=Math.round(days7.reduce((s,d)=>{let f=DB.journal[d]||[];return s+f.reduce((a,x)=>a+x.cal,0)},0)/7);
+  let avgWater=Math.round(days7.reduce((s,d)=>s+(DB.water[d]||0),0)/7);
+  let sleepArr=DB.sleep.filter(s=>days7.includes(s.date));
+  let avgSleep=sleepArr.length?Math.round(sleepArr.reduce((s,n)=>s+calcSleepDurNum(n.bed,n.wake),0)/sleepArr.length*10)/10:0;
   let streak=0;
-  for(let i=days.length-1;i>=0;i--){if(DB.workoutHistory.find(w=>w.date===days[i]))streak++;else break;}
-  document.getElementById('dash-week-summary').innerHTML=`
-    <div style="font-weight:600;margin-bottom:10px">📊 Résumé de la semaine</div>
-    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
-      <div style="background:var(--el);border-radius:10px;padding:10px;text-align:center">
-        <div style="font-size:1.4rem;font-weight:800;color:var(--purple)">${seances}</div>
-        <div class="text-xs text-muted">séances</div>
-      </div>
-      <div style="background:var(--el);border-radius:10px;padding:10px;text-align:center">
-        <div style="font-size:1.4rem;font-weight:800;color:var(--orange)">${avgCal}</div>
-        <div class="text-xs text-muted">kcal/jour moy.</div>
-      </div>
-      <div style="background:var(--el);border-radius:10px;padding:10px;text-align:center">
-        <div style="font-size:1.4rem;font-weight:800;color:var(--blue)">${avgWater}</div>
-        <div class="text-xs text-muted">ml eau/jour moy.</div>
-      </div>
-      <div style="background:var(--el);border-radius:10px;padding:10px;text-align:center">
-        <div style="font-size:1.4rem;font-weight:800;color:var(--green)">${avgSleep?avgSleep+'h':'—'}</div>
-        <div class="text-xs text-muted">sommeil moy.</div>
-      </div>
-    </div>
-    ${streak>0?`<div class="mt-8" style="text-align:center;color:var(--orange);font-size:.85rem;font-weight:600">🔥 Streak : ${streak} jour${streak>1?'s':''} d'entraînement consécutif${streak>1?'s':''}</div>`:''}
-  `;
+  for(let i=days7.length-1;i>=0;i--){if(DB.workoutHistory.find(w=>w.date===days7[i]))streak++;else break;}
+  let el=document.getElementById('dash-week-summary');if(!el)return;
+  el.innerHTML='<div style="font-weight:600;margin-bottom:10px">📊 Résumé de la semaine</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">'
+    +'<div style="background:var(--el);border-radius:10px;padding:10px;text-align:center"><div style="font-size:1.4rem;font-weight:800;color:var(--purple)">'+seances+'</div><div class="text-xs text-muted">séances</div></div>'
+    +'<div style="background:var(--el);border-radius:10px;padding:10px;text-align:center"><div style="font-size:1.4rem;font-weight:800;color:var(--orange)">'+avgCal+'</div><div class="text-xs text-muted">kcal/jour moy.</div></div>'
+    +'<div style="background:var(--el);border-radius:10px;padding:10px;text-align:center"><div style="font-size:1.4rem;font-weight:800;color:var(--blue)">'+avgWater+'</div><div class="text-xs text-muted">ml eau/jour moy.</div></div>'
+    +'<div style="background:var(--el);border-radius:10px;padding:10px;text-align:center"><div style="font-size:1.4rem;font-weight:800;color:var(--green)">'+(avgSleep?avgSleep+'h':'—')+'</div><div class="text-xs text-muted">sommeil moy.</div></div>'
+    +'</div>'
+    +(streak>0?'<div class="mt-8" style="text-align:center;color:var(--orange);font-size:.85rem;font-weight:600">🔥 Streak : '+streak+' jour'+(streak>1?'s':'')+' consécutif'+(streak>1?'s':'')+'</div>':'');
 }
+
 function drawMacroPie(prot,gluc,lip){
   let c=document.getElementById('macro-pie');if(!c)return;
-  let dpr=window.devicePixelRatio||1;
-  let size=80;
-  c.width=size*dpr;c.height=size*dpr;
-  c.style.width=size+'px';c.style.height=size+'px';
-  let ctx=c.getContext('2d');ctx.scale(dpr,dpr);
-  ctx.clearRect(0,0,size,size);
-  let cx=size/2,cy=size/2,r=34,ri=20;
-  let total=prot*4+gluc*4+lip*9;
-  if(total<1){
-    ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);
-    let g=ctx.createRadialGradient(cx,cy,ri,cx,cy,r);
-    g.addColorStop(0,'#2a2a3a');g.addColorStop(1,'#1a1a28');
-    ctx.fillStyle=g;ctx.fill();
-    ctx.beginPath();ctx.arc(cx,cy,ri,0,Math.PI*2);ctx.fillStyle='#1a1a24';ctx.fill();
-    return;
-  }
-  let slices=[
-    {v:prot*4,c:'#378add',label:'P'},
-    {v:gluc*4,c:'#f59e42',label:'G'},
-    {v:lip*9,c:'#3dba7a',label:'L'}
-  ];
-  let start=-Math.PI/2;
-  // Ombre douce
-  ctx.save();ctx.shadowColor='rgba(0,0,0,.4)';ctx.shadowBlur=8;
-  slices.forEach(s=>{
-    if(s.v<=0)return;
-    let a=s.v/total*Math.PI*2;
-    ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,start,start+a);ctx.closePath();
-    let g=ctx.createRadialGradient(cx,cy,0,cx,cy,r);
-    g.addColorStop(0,s.c+'cc');g.addColorStop(1,s.c);
-    ctx.fillStyle=g;ctx.fill();
-    start+=a;
-  });
-  ctx.restore();
-  // Trou central avec dégradé
-  ctx.beginPath();ctx.arc(cx,cy,ri,0,Math.PI*2);
-  let gCenter=ctx.createRadialGradient(cx-4,cy-4,2,cx,cy,ri);
-  gCenter.addColorStop(0,'#252535');gCenter.addColorStop(1,'#1a1a24');
-  ctx.fillStyle=gCenter;ctx.fill();
+  let dpr=window.devicePixelRatio||1,size=80;
+  c.width=size*dpr;c.height=size*dpr;c.style.width=size+'px';c.style.height=size+'px';
+  let ctx=c.getContext('2d');ctx.scale(dpr,dpr);ctx.clearRect(0,0,size,size);
+  let cx=40,cy=40,r=34,ri=20,total=prot*4+gluc*4+lip*9;
+  if(total<1){ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fillStyle='#22222f';ctx.fill();ctx.beginPath();ctx.arc(cx,cy,ri,0,Math.PI*2);ctx.fillStyle='#1a1a24';ctx.fill();return;}
+  let slices=[{v:prot*4,c:'#378add'},{v:gluc*4,c:'#f59e42'},{v:lip*9,c:'#3dba7a'}],start=-Math.PI/2;
+  slices.forEach(s=>{if(s.v<=0)return;let a=s.v/total*Math.PI*2;ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,start,start+a);ctx.closePath();ctx.fillStyle=s.c;ctx.fill();start+=a;});
+  let g=ctx.createRadialGradient(cx-4,cy-4,2,cx,cy,ri);g.addColorStop(0,'#252535');g.addColorStop(1,'#1a1a24');
+  ctx.beginPath();ctx.arc(cx,cy,ri,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
 }
 
-// ── THEME ──
-function toggleTheme(){
-  document.body.classList.toggle('light');
-  let isLight=document.body.classList.contains('light');
-  document.getElementById('theme-btn').textContent=isLight?'🌙':'☀️';
-  localStorage.setItem('fittrack_theme',isLight?'light':'dark');
-}
-function applyTheme(){
-  let t=localStorage.getItem('fittrack_theme');
-  if(t==='light'){document.body.classList.add('light');document.getElementById('theme-btn').textContent='🌙';}
-}
-
-// ── COPY DAY ──
-function openCopyDayModal(){
-  let days=Object.keys(DB.journal).filter(d=>d!==todayStr()&&DB.journal[d]?.length>0).sort().reverse().slice(0,10);
-  if(!days.length){notif('Aucun jour avec des données');return}
-  document.getElementById('modal-content').innerHTML=`<h2>📋 Copier un jour</h2>
-    <div class="text-muted text-sm mb-12">Choisissez un jour à copier dans le journal d'aujourd'hui</div>
-    ${days.map(d=>{
-      let foods=DB.journal[d];
-      let cal=foods.reduce((s,f)=>s+f.cal,0);
-      return `<div class="food-item" onclick="copyDayJournal('${d}')">
-        <span class="food-emoji">📅</span>
-        <div><div class="text-sm">${d}</div>
-        <div class="text-xs text-muted">${foods.length} aliments · ${Math.round(cal)} kcal</div></div>
-      </div>`;
-    }).join('')}
-    <button class="btn btn-secondary mt-12" onclick="closeModal()">Annuler</button>`;
-  showModal();
-}
-async function copyDayJournal(fromDate){
-  let today=todayStr();
-  if(!DB.journal[today])DB.journal[today]=[];
-  let copied=DB.journal[fromDate].map(f=>({...f,id:Date.now()+Math.random()+''}));
-  DB.journal[today]=[...DB.journal[today],...copied];
-  await save();closeModal();renderJournal();renderDashboard();
-  notif(`Journal du ${fromDate} copié ✓`);
-}
+// ── WATER ──
 function calcWaterNeeds(p){
-  if(!p)return 2000;
-  let base=p.poids*35;
-  // Bonus activité
-  let bonus={1.2:0,1.375:200,1.55:400,1.725:600,1.9:800};
-  base+=bonus[p.activite]||0;
-  // Bonus taille (personnes plus grandes = plus de besoin)
-  if(p.taille>180)base+=200;
-  else if(p.taille<160)base-=100;
-  return Math.round(base/50)*50; // arrondi à 50ml
+  let base=p.poids*35,bonus={1.2:0,1.375:200,1.55:400,1.725:600,1.9:800};
+  base+=bonus[String(p.activite)]||0;
+  if(p.taille>180)base+=200;else if(p.taille<160)base-=100;
+  return Math.round(base/50)*50;
 }
 function addWater(ml){
-  let today=todayStr();if(!DB.water[today])DB.water[today]=0;DB.water[today]+=ml;save();notif(`+${ml}ml 💧`);
+  let today=todayStr();if(!DB.water[today])DB.water[today]=0;DB.water[today]+=ml;save();notif('+'+ml+'ml 💧');
   renderDashboard();if(document.getElementById('page-plus').classList.contains('active'))renderHydra();
 }
-function removeWater(ml){let today=todayStr();DB.water[today]=Math.max(0,(DB.water[today]||0)-ml);save();renderDashboard();renderHydra();}
+function removeWater(ml){let today=todayStr();DB.water[today]=Math.max(0,(DB.water[today]||0)-ml);save();renderDashboard();if(document.getElementById('page-plus').classList.contains('active'))renderHydra();}
 function addCustomWater(){let v=parseInt(document.getElementById('custom-water').value)||0;if(v>0){addWater(v);document.getElementById('custom-water').value=''}}
 
 // ── NUTRITION ──
@@ -934,13 +842,13 @@ function setMeal(meal,el){currentMeal=meal;document.querySelectorAll('#nutri-tab
 function searchFoods(q){
   if(!q){document.getElementById('food-results').innerHTML='';return}
   let results=DB.foods.filter(f=>f.name.toLowerCase().includes(q.toLowerCase())).slice(0,5);
-  document.getElementById('food-results').innerHTML=results.map(f=>`<div class="food-item" onclick="selectFood('${f.id}')"><span class="food-emoji">${f.emoji}</span><div><div class="text-sm">${f.name}</div><div class="text-muted text-xs">${f.cal}kcal P:${f.prot}g G:${f.gluc}g L:${f.lip}g</div></div></div>`).join('');
+  document.getElementById('food-results').innerHTML=results.map(f=>'<div class="food-item" onclick="selectFood(\''+f.id+'\')"><span class="food-emoji">'+f.emoji+'</span><div><div class="text-sm">'+f.name+'</div><div class="text-muted text-xs">'+f.cal+'kcal P:'+f.prot+'g G:'+f.gluc+'g L:'+f.lip+'g</div></div></div>').join('');
 }
 function selectFood(id){
   selectedFood=DB.foods.find(f=>f.id===id);if(!selectedFood)return;
   document.getElementById('food-add-form').classList.remove('hidden');
-  document.getElementById('food-add-name').textContent=`${selectedFood.emoji} ${selectedFood.name}`;
-  document.getElementById('food-add-macros').textContent=`${selectedFood.cal} kcal / 100${selectedFood.unit}`;
+  document.getElementById('food-add-name').textContent=selectedFood.emoji+' '+selectedFood.name;
+  document.getElementById('food-add-macros').textContent=selectedFood.cal+' kcal / 100'+selectedFood.unit;
   document.getElementById('food-unit-disp').textContent=selectedFood.unit;
   document.getElementById('food-results').innerHTML='';document.getElementById('food-search').value='';
 }
@@ -951,6 +859,20 @@ async function addFoodToJournal(){
   DB.journal[today].push({id:Date.now()+'',name:selectedFood.name,emoji:selectedFood.emoji,meal:currentMeal,qty,unit:selectedFood.unit,cal:selectedFood.cal*ratio,prot:selectedFood.prot*ratio,gluc:selectedFood.gluc*ratio,lip:selectedFood.lip*ratio});
   await save();cancelFoodAdd();renderJournal();renderDashboard();notif('Ajouté ✓');
 }
+function openCopyDayModal(){
+  let days=Object.keys(DB.journal).filter(d=>d!==todayStr()&&(DB.journal[d]||[]).length>0).sort().reverse().slice(0,10);
+  if(!days.length){notif('Aucun jour à copier');return}
+  document.getElementById('modal-content').innerHTML='<h2>📋 Copier un jour</h2><div class="text-muted text-sm mb-12">Choisissez un jour à copier dans le journal d\'aujourd\'hui</div>'
+    +days.map(d=>{let foods=DB.journal[d],cal=foods.reduce((s,f)=>s+f.cal,0);return '<div class="food-item" onclick="copyDayJournal(\''+d+'\')"><span class="food-emoji">📅</span><div><div class="text-sm">'+d+'</div><div class="text-muted text-xs">'+foods.length+' aliments · '+Math.round(cal)+' kcal</div></div></div>';}).join('')
+    +'<button class="btn btn-secondary mt-12" onclick="closeModal()">Annuler</button>';
+  showModal();
+}
+async function copyDayJournal(fromDate){
+  let today=todayStr();if(!DB.journal[today])DB.journal[today]=[];
+  let copied=(DB.journal[fromDate]||[]).map(f=>({...f,id:Date.now()+Math.random()+''}));
+  DB.journal[today]=[...DB.journal[today],...copied];
+  await save();closeModal();renderJournal();renderDashboard();notif('Journal copié ✓');
+}
 function renderJournal(){
   let today=todayStr(),foods=DB.journal[today]||[];
   let meals=['petit-déjeuner','déjeuner','dîner','collation'];
@@ -959,30 +881,30 @@ function renderJournal(){
   meals.forEach(m=>{
     let items=foods.filter(f=>f.meal===m);if(!items.length)return;
     let mCal=items.reduce((s,f)=>s+f.cal,0);tCal+=mCal;tProt+=items.reduce((s,f)=>s+f.prot,0);tGluc+=items.reduce((s,f)=>s+f.gluc,0);tLip+=items.reduce((s,f)=>s+f.lip,0);
-    h+=`<div class="card"><div class="flex justify-between items-center mb-8"><span style="font-weight:700">${mealEmojis[m]} ${m}</span><span class="text-xs text-muted">${Math.round(mCal)} kcal</span></div>`;
-    items.forEach(f=>{h+=`<div class="list-item"><div class="flex items-center gap-8"><span>${f.emoji}</span><div><div class="text-sm">${f.name}</div><div class="text-xs text-muted">${f.qty}${f.unit} · ${Math.round(f.cal)}kcal</div></div></div><button class="btn-icon" onclick="removeFoodEntry('${f.id}')">✕</button></div>`});
-    h+=`</div>`;
+    h+='<div class="card"><div class="flex justify-between items-center mb-8"><span style="font-weight:700">'+mealEmojis[m]+' '+m+'</span><span class="text-xs text-muted">'+Math.round(mCal)+' kcal</span></div>';
+    items.forEach(f=>{h+='<div class="list-item"><div class="flex items-center gap-8"><span>'+f.emoji+'</span><div><div class="text-sm">'+f.name+'</div><div class="text-xs text-muted">'+f.qty+f.unit+' · '+Math.round(f.cal)+'kcal</div></div></div><button class="btn-icon" onclick="removeFoodEntry(\''+f.id+'\')">✕</button></div>'});
+    h+='</div>';
   });
-  if(tCal>0)h+=`<div class="card"><div class="flex justify-between items-center"><div><div class="text-xs text-muted">Total</div><div style="font-weight:800;font-size:1.1rem;color:var(--orange)">${Math.round(tCal)} kcal</div></div><div class="text-xs text-muted">P:${Math.round(tProt)}g G:${Math.round(tGluc)}g L:${Math.round(tLip)}g</div></div></div>`;
+  if(tCal>0)h+='<div class="card"><div class="flex justify-between items-center"><div><div class="text-xs text-muted">Total</div><div style="font-weight:800;font-size:1.1rem;color:var(--orange)">'+Math.round(tCal)+' kcal</div></div><div class="text-xs text-muted">P:'+Math.round(tProt)+'g G:'+Math.round(tGluc)+'g L:'+Math.round(tLip)+'g</div></div></div>';
   document.getElementById('journal-daily').innerHTML=h||'<div class="text-muted text-sm">Aucun aliment enregistré</div>';
 }
 async function removeFoodEntry(id){let today=todayStr();DB.journal[today]=(DB.journal[today]||[]).filter(f=>f.id!==id);await save();renderJournal();renderDashboard();}
 function renderAliments(){
   let search=(document.getElementById('aliments-search')||{}).value||'';
   let list=DB.foods.filter(f=>(foodFilter==='all'||f.cat===foodFilter)&&(!search||f.name.toLowerCase().includes(search.toLowerCase())));
-  document.getElementById('aliments-count').textContent=`${list.length} aliment(s)`;
-  document.getElementById('aliments-list').innerHTML=list.map(f=>`<div class="food-item" style="cursor:default"><span class="food-emoji">${f.emoji}</span><div style="flex:1"><div class="text-sm">${f.name}</div><div class="text-xs text-muted">${f.cal}kcal P:${f.prot}g G:${f.gluc}g L:${f.lip}g</div></div><button class="btn-icon" onclick="editFood('${f.id}')">✏️</button><button class="btn-icon" onclick="deleteFood('${f.id}')">🗑</button></div>`).join('');
+  document.getElementById('aliments-count').textContent=list.length+' aliment(s)';
+  document.getElementById('aliments-list').innerHTML=list.map(f=>'<div class="food-item" style="cursor:default"><span class="food-emoji">'+f.emoji+'</span><div style="flex:1"><div class="text-sm">'+f.name+'</div><div class="text-xs text-muted">'+f.cal+'kcal P:'+f.prot+'g G:'+f.gluc+'g L:'+f.lip+'g</div></div><button class="btn-icon" onclick="editFood(\''+f.id+'\')">✏️</button><button class="btn-icon" onclick="deleteFood(\''+f.id+'\')">🗑</button></div>').join('');
 }
 function filterFoods(cat,el){foodFilter=cat;document.querySelectorAll('#nutri-tab-aliments .tag').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderAliments();}
 function openFoodModal(editId){
   let f=editId?DB.foods.find(x=>x.id===editId):{id:null,name:'',emoji:'🍽',cat:'autre',cal:0,prot:0,gluc:0,lip:0,unit:'g'};
-  document.getElementById('modal-content').innerHTML=`<h2>${editId?'Modifier':'Ajouter'} un aliment</h2>
-    <input type="hidden" id="ef-id" value="${f.id||''}">
-    <div class="form-row"><div class="form-group"><label>Emoji</label><input type="text" id="ef-emoji" value="${f.emoji}" style="width:70px"></div><div class="form-group"><label>Nom</label><input type="text" id="ef-name" value="${f.name}"></div></div>
-    <div class="form-row"><div class="form-group"><label>Catégorie</label><select id="ef-cat"><option value="viande" ${f.cat==='viande'?'selected':''}>Viande</option><option value="feculents" ${f.cat==='feculents'?'selected':''}>Féculents</option><option value="produits-laitiers" ${f.cat==='produits-laitiers'?'selected':''}>Laitiers</option><option value="legumes" ${f.cat==='legumes'?'selected':''}>Légumes</option><option value="fruits" ${f.cat==='fruits'?'selected':''}>Fruits</option><option value="autre" ${f.cat==='autre'?'selected':''}>Autre</option></select></div><div class="form-group"><label>Unité</label><select id="ef-unit"><option value="g" ${f.unit==='g'?'selected':''}>g</option><option value="ml" ${f.unit==='ml'?'selected':''}>ml</option></select></div></div>
-    <div class="form-row"><div class="form-group"><label>Calories</label><input type="number" id="ef-cal" value="${f.cal}" inputmode="decimal"></div><div class="form-group"><label>Protéines</label><input type="number" id="ef-prot" value="${f.prot}" inputmode="decimal"></div></div>
-    <div class="form-row"><div class="form-group"><label>Glucides</label><input type="number" id="ef-gluc" value="${f.gluc}" inputmode="decimal"></div><div class="form-group"><label>Lipides</label><input type="number" id="ef-lip" value="${f.lip}" inputmode="decimal"></div></div>
-    <div class="flex gap-8 mt-12"><button class="btn btn-secondary" style="flex:.4" onclick="closeModal()">Annuler</button><button class="btn btn-primary" style="flex:1" onclick="saveFood()">Sauvegarder</button></div>`;
+  document.getElementById('modal-content').innerHTML='<h2>'+(editId?'Modifier':'Ajouter')+' un aliment</h2>'
+    +'<input type="hidden" id="ef-id" value="'+(f.id||'')+'">'
+    +'<div class="form-row"><div class="form-group"><label>Emoji</label><input type="text" id="ef-emoji" value="'+f.emoji+'" style="width:70px"></div><div class="form-group"><label>Nom</label><input type="text" id="ef-name" value="'+f.name+'"></div></div>'
+    +'<div class="form-row"><div class="form-group"><label>Catégorie</label><select id="ef-cat"><option value="viande"'+(f.cat==='viande'?' selected':'')+'>Viande</option><option value="feculents"'+(f.cat==='feculents'?' selected':'')+'>Féculents</option><option value="produits-laitiers"'+(f.cat==='produits-laitiers'?' selected':'')+'>Laitiers</option><option value="legumes"'+(f.cat==='legumes'?' selected':'')+'>Légumes</option><option value="fruits"'+(f.cat==='fruits'?' selected':'')+'>Fruits</option><option value="autre"'+(f.cat==='autre'?' selected':'')+'>Autre</option></select></div><div class="form-group"><label>Unité</label><select id="ef-unit"><option value="g"'+(f.unit==='g'?' selected':'')+'>g</option><option value="ml"'+(f.unit==='ml'?' selected':'')+'>ml</option></select></div></div>'
+    +'<div class="form-row"><div class="form-group"><label>Calories</label><input type="number" id="ef-cal" value="'+f.cal+'" inputmode="decimal"></div><div class="form-group"><label>Protéines</label><input type="number" id="ef-prot" value="'+f.prot+'" inputmode="decimal"></div></div>'
+    +'<div class="form-row"><div class="form-group"><label>Glucides</label><input type="number" id="ef-gluc" value="'+f.gluc+'" inputmode="decimal"></div><div class="form-group"><label>Lipides</label><input type="number" id="ef-lip" value="'+f.lip+'" inputmode="decimal"></div></div>'
+    +'<div class="flex gap-8 mt-12"><button class="btn btn-secondary" style="flex:.4" onclick="closeModal()">Annuler</button><button class="btn btn-primary" style="flex:1" onclick="saveFood()">Sauvegarder</button></div>';
   showModal();
 }
 async function saveFood(){
@@ -994,22 +916,22 @@ async function saveFood(){
 function editFood(id){openFoodModal(id)}
 async function deleteFood(id){if(confirm('Supprimer ?')){DB.foods=DB.foods.filter(f=>f.id!==id);await save();renderAliments();}}
 function renderRecettes(){
-  document.getElementById('recettes-count').textContent=`${DB.recipes.length} recette(s)`;
-  document.getElementById('recettes-list').innerHTML=DB.recipes.map(r=>`<div class="card"><div class="flex justify-between items-center mb-8"><div><span style="font-size:1.3rem">${r.emoji}</span> <strong>${r.name}</strong></div><div class="flex gap-8"><button class="btn btn-primary btn-sm" onclick="addRecipeToJournal('${r.id}')">+</button><button class="btn-icon" onclick="deleteRecipe('${r.id}')">🗑</button></div></div><div class="text-xs text-muted">${Math.round(r.totalCal||0)} kcal · P:${Math.round(r.totalProt||0)}g · ⏱${r.prepTime}min</div></div>`).join('')||'<div class="text-muted text-sm">Aucune recette</div>';
+  document.getElementById('recettes-count').textContent=DB.recipes.length+' recette(s)';
+  document.getElementById('recettes-list').innerHTML=DB.recipes.map(r=>'<div class="card"><div class="flex justify-between items-center mb-8"><div><span style="font-size:1.3rem">'+r.emoji+'</span> <strong>'+r.name+'</strong></div><div class="flex gap-8"><button class="btn btn-primary btn-sm" onclick="addRecipeToJournal(\''+r.id+'\')">+</button><button class="btn-icon" onclick="deleteRecipe(\''+r.id+'\')">🗑</button></div></div><div class="text-xs text-muted">'+Math.round(r.totalCal||0)+' kcal · P:'+Math.round(r.totalProt||0)+'g · ⏱'+r.prepTime+'min</div></div>').join('')||'<div class="text-muted text-sm">Aucune recette</div>';
 }
 function openRecetteModal(){
-  let foodOptions=DB.foods.map(f=>`<option value="${f.id}">${f.emoji} ${f.name}</option>`).join('');
-  document.getElementById('modal-content').innerHTML=`<h2>Nouvelle recette</h2>
-    <div class="form-row"><div class="form-group"><label>Emoji</label><input type="text" id="er-emoji" value="🍽" style="width:70px"></div><div class="form-group"><label>Nom</label><input type="text" id="er-name"></div></div>
-    <div class="form-row"><div class="form-group"><label>Catégorie</label><select id="er-cat"><option value="petit-dejeuner">Petit-déj</option><option value="plat">Plat</option><option value="snack">Snack</option><option value="dessert">Dessert</option></select></div><div class="form-group"><label>Temps (min)</label><input type="number" id="er-time" value="30" inputmode="numeric"></div></div>
-    <div class="form-group"><label>Ingrédients</label><div id="er-ingr-list"></div><button class="btn btn-secondary btn-sm mt-8" onclick="addIngredientRow()">+ Ingrédient</button></div>
-    <div class="flex gap-8 mt-12"><button class="btn btn-secondary" style="flex:.4" onclick="closeModal()">Annuler</button><button class="btn btn-primary" style="flex:1" onclick="saveRecette()">Créer</button></div>`;
+  let fo=DB.foods.map(f=>'<option value="'+f.id+'">'+f.emoji+' '+f.name+'</option>').join('');
+  document.getElementById('modal-content').innerHTML='<h2>Nouvelle recette</h2>'
+    +'<div class="form-row"><div class="form-group"><label>Emoji</label><input type="text" id="er-emoji" value="🍽" style="width:70px"></div><div class="form-group"><label>Nom</label><input type="text" id="er-name"></div></div>'
+    +'<div class="form-row"><div class="form-group"><label>Catégorie</label><select id="er-cat"><option value="petit-dejeuner">Petit-déj</option><option value="plat">Plat</option><option value="snack">Snack</option><option value="dessert">Dessert</option></select></div><div class="form-group"><label>Temps (min)</label><input type="number" id="er-time" value="30" inputmode="numeric"></div></div>'
+    +'<div class="form-group"><label>Ingrédients</label><div id="er-ingr-list"></div><button class="btn btn-secondary btn-sm mt-8" onclick="addIngredientRow()">+ Ingrédient</button></div>'
+    +'<div class="flex gap-8 mt-12"><button class="btn btn-secondary" style="flex:.4" onclick="closeModal()">Annuler</button><button class="btn btn-primary" style="flex:1" onclick="saveRecette()">Créer</button></div>';
   showModal();
 }
 function addIngredientRow(){
-  let fo=DB.foods.map(f=>`<option value="${f.id}">${f.emoji} ${f.name}</option>`).join('');
+  let fo=DB.foods.map(f=>'<option value="'+f.id+'">'+f.emoji+' '+f.name+'</option>').join('');
   let div=document.createElement('div');div.className='flex gap-8 mb-8 items-center';
-  div.innerHTML=`<select class="er-ing-food" style="flex:1;background:var(--el);border:1.5px solid var(--border);color:var(--text);padding:10px;border-radius:10px;font-size:.9rem">${fo}</select><input type="number" class="er-ing-qty" placeholder="100" value="100" inputmode="numeric" style="width:70px;background:var(--el);border:1.5px solid var(--border);color:var(--text);padding:10px;border-radius:10px;text-align:center"><button class="btn-icon" onclick="this.parentNode.remove()">✕</button>`;
+  div.innerHTML='<select class="er-ing-food" style="flex:1;background:var(--el);border:1.5px solid var(--border);color:var(--text);padding:10px;border-radius:10px;font-size:.9rem">'+fo+'</select><input type="number" class="er-ing-qty" placeholder="100" value="100" inputmode="numeric" style="width:70px;background:var(--el);border:1.5px solid var(--border);color:var(--text);padding:10px;border-radius:10px;text-align:center"><button class="btn-icon" onclick="this.parentNode.remove()">✕</button>';
   document.getElementById('er-ingr-list').appendChild(div);
 }
 async function saveRecette(){
@@ -1024,7 +946,7 @@ async function addRecipeToJournal(id){
   let r=DB.recipes.find(x=>x.id===id);if(!r)return;
   let today=todayStr();if(!DB.journal[today])DB.journal[today]=[];
   DB.journal[today].push({id:Date.now()+'',name:r.name,emoji:r.emoji,meal:currentMeal,qty:1,unit:'portion',cal:r.totalCal||0,prot:r.totalProt||0,gluc:r.totalGluc||0,lip:r.totalLip||0});
-  await save();notif(`${r.name} ajouté ✓`);
+  await save();notif(r.name+' ajouté ✓');
 }
 
 // ── PROGRAMME ──
@@ -1039,7 +961,7 @@ let exerciseLibrary=[
   {id:'e15',name:'Mollets debout',muscle:'Mollets',emoji:'🦵'},
 ];
 function renderProgSeances(){
-  document.getElementById('prog-seances-list').innerHTML=DB.sessions.map(s=>`<div class="card"><div class="flex justify-between items-center"><div><div style="font-weight:700">${s.name}</div><div class="text-xs text-muted">${s.type==='musculation'?'💪':'🏃'} ${s.cat||''} · ${s.type==='musculation'?(s.exercises||[]).length+' ex.':''}</div></div><div class="flex gap-8"><button class="btn btn-primary btn-sm" onclick="launchSession('${s.id}')">▶</button><button class="btn-icon" onclick="deleteSession('${s.id}')">🗑</button></div></div></div>`).join('')||'<div class="text-muted text-sm">Aucune séance. Créez-en une dans "Créer".</div>';
+  document.getElementById('prog-seances-list').innerHTML=DB.sessions.map(s=>'<div class="card"><div class="flex justify-between items-center"><div><div style="font-weight:700">'+s.name+'</div><div class="text-xs text-muted">'+(s.type==='musculation'?'💪':'🏃')+' '+s.cat+' · '+(s.type==='musculation'?(s.exercises||[]).length+' ex.':''+(s.restTime||60)+'s repos')+'</div></div><div class="flex gap-8"><button class="btn btn-primary btn-sm" onclick="launchSession(\''+s.id+'\')">▶</button><button class="btn-icon" onclick="deleteSession(\''+s.id+'\')">🗑</button></div></div></div>').join('')||'<div class="text-muted text-sm">Créez votre première séance dans "Créer".</div>';
 }
 function onSessionTypeChange(){
   let t=document.getElementById('new-session-type').value;
@@ -1047,7 +969,7 @@ function onSessionTypeChange(){
   document.getElementById('new-session-course').classList.toggle('hidden',t!=='course');
 }
 function openExerciseLibrary(){
-  document.getElementById('modal-content').innerHTML=`<h2>Exercices</h2><input class="search-bar" placeholder="🔍 Rechercher..." oninput="filterExLib(this.value)">${exerciseLibrary.map(e=>`<div class="food-item" onclick="addExerciseToSession('${e.id}')"><span class="food-emoji">${e.emoji}</span><div><div class="text-sm">${e.name}</div><div class="text-xs text-muted">${e.muscle}</div></div></div>`).join('')}`;
+  document.getElementById('modal-content').innerHTML='<h2>Exercices</h2><input class="search-bar" placeholder="🔍 Rechercher..." oninput="filterExLib(this.value)">'+exerciseLibrary.map(e=>'<div class="food-item" onclick="addExerciseToSession(\''+e.id+'\')"><span class="food-emoji">'+e.emoji+'</span><div><div class="text-sm">'+e.name+'</div><div class="text-xs text-muted">'+e.muscle+'</div></div></div>').join('');
   showModal();
 }
 function filterExLib(q){document.querySelectorAll('#modal-content .food-item').forEach(item=>{item.style.display=item.querySelector('.text-sm').textContent.toLowerCase().includes(q.toLowerCase())?'':'none'})}
@@ -1056,12 +978,12 @@ function addExerciseToSession(id){
   newExercises.push({...ex,series:[{reps:10,weight:0}]});closeModal();renderNewExercisesList();
 }
 function renderNewExercisesList(){
-  document.getElementById('new-exercises-list').innerHTML=newExercises.map((ex,i)=>`<div class="exercise-card"><div class="flex justify-between items-center mb-8"><span style="font-weight:700">${ex.emoji} ${ex.name}</span><button class="btn-icon" onclick="removeNewEx(${i})">✕</button></div>${ex.series.map((s,si)=>`<div class="series-row"><span class="text-muted text-xs" style="width:24px">S${si+1}</span><input type="number" class="series-input" placeholder="kg" value="${s.weight}" inputmode="decimal" onchange="newExercises[${i}].series[${si}].weight=parseFloat(this.value)||0"><span class="text-xs text-muted">kg ×</span><input type="number" class="series-input" placeholder="reps" value="${s.reps}" inputmode="numeric" onchange="newExercises[${i}].series[${si}].reps=parseInt(this.value)||0"></div>`).join('')}<button class="btn btn-secondary btn-sm mt-8" onclick="addSerie(${i})">+ Série</button></div>`).join('');
+  document.getElementById('new-exercises-list').innerHTML=newExercises.map((ex,i)=>'<div class="exercise-card"><div class="flex justify-between items-center mb-8"><span style="font-weight:700">'+ex.emoji+' '+ex.name+'</span><button class="btn-icon" onclick="removeNewEx('+i+')">✕</button></div>'+ex.series.map((s,si)=>'<div class="series-row"><span class="text-muted text-xs" style="width:24px">S'+(si+1)+'</span><input type="number" class="series-input" placeholder="kg" value="'+s.weight+'" inputmode="decimal" onchange="newExercises['+i+'].series['+si+'].weight=parseFloat(this.value)||0"><span class="text-xs text-muted">kg ×</span><input type="number" class="series-input" placeholder="reps" value="'+s.reps+'" inputmode="numeric" onchange="newExercises['+i+'].series['+si+'].reps=parseInt(this.value)||0"></div>').join('')+'<button class="btn btn-secondary btn-sm mt-8" onclick="addSerie('+i+')">+ Série</button></div>').join('');
 }
 function addSerie(i){newExercises[i].series.push({reps:10,weight:0});renderNewExercisesList()}
 function removeNewEx(i){newExercises.splice(i,1);renderNewExercisesList()}
 async function saveNewSession(){
-  let name=document.getElementById('new-session-name').value;if(!name){notif('Donnez un nom à la séance');return}
+  let name=document.getElementById('new-session-name').value;if(!name){notif('Donnez un nom');return}
   let type=document.getElementById('new-session-type').value,cat=document.getElementById('new-session-cat').value;
   let restTime=parseInt(document.getElementById('new-rest-time').value)||60;
   let session={id:'s'+Date.now(),name,type,cat,restTime,exercises:type==='musculation'?newExercises.map(e=>({...e,series:[...e.series]})):[]};
@@ -1081,30 +1003,30 @@ function launchSession(id){
   if(s.type==='musculation'){
     (s.exercises||[]).forEach((ex,i)=>{
       let lp=findLastPerf(ex.id);
-      h+=`<div class="exercise-card"><div style="font-weight:700;margin-bottom:.5rem">${ex.emoji} ${ex.name}</div>${lp?`<div class="text-xs text-muted mb-8">Dernière : ${lp}</div>`:''}`
-      ex.series.forEach((s2,si)=>{h+=`<div class="series-row"><span class="text-muted text-xs" style="width:24px">S${si+1}</span><input type="number" id="wm-w-${i}-${si}" class="series-input" placeholder="kg" value="${s2.weight}" inputmode="decimal"><span class="text-xs text-muted">×</span><input type="number" id="wm-r-${i}-${si}" class="series-input" placeholder="reps" value="${s2.reps}" inputmode="numeric"><button class="btn btn-secondary btn-sm" onclick="startRestTimer(${s.restTime||60})">⏱</button></div>`});
-      h+=`</div>`;
+      h+='<div class="exercise-card"><div style="font-weight:700;margin-bottom:.5rem">'+ex.emoji+' '+ex.name+'</div>'+(lp?'<div class="text-xs text-muted mb-8">Dernière : '+lp+'</div>':'');
+      ex.series.forEach((s2,si)=>{h+='<div class="series-row"><span class="text-muted text-xs" style="width:24px">S'+(si+1)+'</span><input type="number" id="wm-w-'+i+'-'+si+'" class="series-input" placeholder="kg" value="'+s2.weight+'" inputmode="decimal"><span class="text-xs text-muted">×</span><input type="number" id="wm-r-'+i+'-'+si+'" class="series-input" placeholder="reps" value="'+s2.reps+'" inputmode="numeric"><button class="btn btn-secondary btn-sm" onclick="startRestTimer('+(s.restTime||60)+')">⏱</button></div>'});
+      h+='</div>';
     });
   }else{
-    h=`<div class="card"><div class="form-row"><div class="form-group"><label>Durée (min)</label><input type="number" id="wm-dur" inputmode="numeric" placeholder="30" style="background:var(--el);border:1.5px solid var(--border);color:var(--text);padding:10px;border-radius:10px;width:100%"></div><div class="form-group"><label>Distance (km)</label><input type="number" id="wm-dist" step=".1" inputmode="decimal" placeholder="5" style="background:var(--el);border:1.5px solid var(--border);color:var(--text);padding:10px;border-radius:10px;width:100%"></div></div><div class="form-row"><div class="form-group"><label>Allure (min/km)</label><input type="number" id="wm-allure" step=".1" inputmode="decimal" style="background:var(--el);border:1.5px solid var(--border);color:var(--text);padding:10px;border-radius:10px;width:100%"></div><div class="form-group"><label>FC moy</label><input type="number" id="wm-fc" inputmode="numeric" style="background:var(--el);border:1.5px solid var(--border);color:var(--text);padding:10px;border-radius:10px;width:100%"></div></div></div>`;
+    h='<div class="card"><div class="form-row"><div class="form-group"><label>Durée (min)</label><input type="number" id="wm-dur" inputmode="numeric" placeholder="30" style="background:var(--el);border:1.5px solid var(--border);color:var(--text);padding:10px;border-radius:10px;width:100%"></div><div class="form-group"><label>Distance (km)</label><input type="number" id="wm-dist" step=".1" inputmode="decimal" placeholder="5" style="background:var(--el);border:1.5px solid var(--border);color:var(--text);padding:10px;border-radius:10px;width:100%"></div></div><div class="form-row"><div class="form-group"><label>Allure (min/km)</label><input type="number" id="wm-allure" step=".1" inputmode="decimal" style="background:var(--el);border:1.5px solid var(--border);color:var(--text);padding:10px;border-radius:10px;width:100%"></div><div class="form-group"><label>FC moy</label><input type="number" id="wm-fc" inputmode="numeric" style="background:var(--el);border:1.5px solid var(--border);color:var(--text);padding:10px;border-radius:10px;width:100%"></div></div></div>';
   }
   document.getElementById('wm-exercises').innerHTML=h;
   document.getElementById('workout-mode').classList.remove('hidden');
   workoutSeconds=0;
-  workoutTimer=setInterval(()=>{workoutSeconds++;let m=String(Math.floor(workoutSeconds/60)).padStart(2,'0'),s2=String(workoutSeconds%60).padStart(2,'0');document.getElementById('wm-chrono').textContent=`${m}:${s2}`},1000);
+  workoutTimer=setInterval(()=>{workoutSeconds++;let m=String(Math.floor(workoutSeconds/60)).padStart(2,'0'),s2=String(workoutSeconds%60).padStart(2,'0');document.getElementById('wm-chrono').textContent=m+':'+s2},1000);
 }
 function findLastPerf(exId){
   let perfs=DB.workoutHistory.filter(w=>w.exercises&&w.exercises.find(e=>e.id===exId));
   if(!perfs.length)return null;
   let ex=perfs[perfs.length-1].exercises.find(e=>e.id===exId);
-  return ex&&ex.series?ex.series.map(s=>`${s.weight}kg×${s.reps}`).join(' / '):null;
+  return ex&&ex.series?ex.series.map(s=>s.weight+'kg×'+s.reps).join(' / '):null;
 }
 async function endWorkout(){
   if(workoutTimer)clearInterval(workoutTimer);
   let s=currentWorkout.session;
   let record={id:'w'+Date.now(),sessionId:s.id,sessionName:s.name,type:s.type,date:todayStr(),duration:workoutSeconds,exercises:[]};
   if(s.type==='musculation'){
-    (s.exercises||[]).forEach((ex,i)=>{record.exercises.push({id:ex.id,name:ex.name,series:ex.series.map((s2,si)=>({weight:parseFloat(document.getElementById(`wm-w-${i}-${si}`)?.value)||s2.weight,reps:parseInt(document.getElementById(`wm-r-${i}-${si}`)?.value)||s2.reps}))})});
+    (s.exercises||[]).forEach((ex,i)=>{record.exercises.push({id:ex.id,name:ex.name,series:ex.series.map((s2,si)=>({weight:parseFloat(document.getElementById('wm-w-'+i+'-'+si)?.value)||s2.weight,reps:parseInt(document.getElementById('wm-r-'+i+'-'+si)?.value)||s2.reps}))})});
   }else{record.dist=parseFloat(document.getElementById('wm-dist')?.value)||0;record.dur=parseInt(document.getElementById('wm-dur')?.value)||0;record.allure=parseFloat(document.getElementById('wm-allure')?.value)||0;record.fc=parseInt(document.getElementById('wm-fc')?.value)||0;}
   DB.workoutHistory.push(record);await save();
   document.getElementById('workout-mode').classList.add('hidden');notif('Séance terminée ✓');currentWorkout=null;
@@ -1124,13 +1046,13 @@ function renderCalWeek(){
   let monday=new Date(now);let day=monday.getDay();monday.setDate(monday.getDate()-(day===0?6:day-1));
   let days=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
   let end=new Date(monday.getTime()+6*86400000);
-  document.getElementById('cal-week-label').textContent=`${monday.getDate()}/${monday.getMonth()+1} – ${end.getDate()}/${end.getMonth()+1}`;
+  document.getElementById('cal-week-label').textContent=monday.getDate()+'/'+(monday.getMonth()+1)+' – '+end.getDate()+'/'+(end.getMonth()+1);
   let h='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">';
   for(let i=0;i<7;i++){
     let d=new Date(monday);d.setDate(d.getDate()+i);
     let ds=d.toISOString().split('T')[0],isToday=ds===todayStr();
     let events=DB.planning.filter(e=>e.date===ds);
-    h+=`<div class="cal-day${isToday?' today':''}"><div class="cal-day-num">${days[i]}<br>${d.getDate()}</div>${events.map(e=>`<div class="cal-event${e.type==='event'?' green':''}" style="display:flex;align-items:center;justify-content:space-between;gap:2px;cursor:pointer" onclick="confirmDeletePlanItem('${e.id}','${e.name.replace(/'/g,'')}')">${e.name.slice(0,6)} <span style="font-size:.65rem;opacity:.8">✕</span></div>`).join('')}</div>`;
+    h+='<div class="cal-day'+(isToday?' today':'')+'"><div class="cal-day-num">'+days[i]+'<br>'+d.getDate()+'</div>'+events.map(e=>'<div class="cal-event'+(e.type==='event'?' green':'')+'" onclick="confirmDeletePlanItem(\''+e.id+'\',\''+e.name.replace(/'/g,'').slice(0,20)+'\')">'+e.name.slice(0,6)+' ✕</div>').join('')+'</div>';
   }
   document.getElementById('cal-week-view').innerHTML=h+'</div>';
 }
@@ -1138,42 +1060,33 @@ function renderCalMonth(){
   let now=new Date();now.setMonth(now.getMonth()+calMonthOffset);now.setDate(1);
   let month=now.getMonth(),year=now.getFullYear();
   let months=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
-  document.getElementById('cal-month-label').textContent=`${months[month]} ${year}`;
+  document.getElementById('cal-month-label').textContent=months[month]+' '+year;
   let first=new Date(year,month,1),startDay=first.getDay();startDay=startDay===0?6:startDay-1;
-  let h=`<div class="cal-header-row"><div>L</div><div>M</div><div>M</div><div>J</div><div>V</div><div>S</div><div>D</div></div><div class="cal-grid">`;
-  for(let i=0;i<startDay;i++)h+=`<div class="cal-day other-month"></div>`;
+  let h='<div class="cal-header-row"><div>L</div><div>M</div><div>M</div><div>J</div><div>V</div><div>S</div><div>D</div></div><div class="cal-grid">';
+  for(let i=0;i<startDay;i++)h+='<div class="cal-day other-month"></div>';
   let daysInMonth=new Date(year,month+1,0).getDate();
   for(let d=1;d<=daysInMonth;d++){
-    let ds=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`,isToday=ds===todayStr();
+    let ds=year+'-'+String(month+1).padStart(2,'0')+'-'+String(d).padStart(2,'0'),isToday=ds===todayStr();
     let events=DB.planning.filter(e=>e.date===ds);
-    h+=`<div class="cal-day${isToday?' today':''}"><div class="cal-day-num">${d}</div>${events.map(e=>`<div class="cal-event${e.type==='event'?' green':''}" style="display:flex;justify-content:space-between;cursor:pointer" onclick="confirmDeletePlanItem('${e.id}','${e.name.replace(/'/g,'')}')">${e.name.slice(0,4)} <span>✕</span></div>`).join('')}</div>`;
+    h+='<div class="cal-day'+(isToday?' today':'')+'"><div class="cal-day-num">'+d+'</div>'+events.map(e=>'<div class="cal-event'+(e.type==='event'?' green':'')+'" onclick="confirmDeletePlanItem(\''+e.id+'\',\''+e.name.replace(/'/g,'').slice(0,20)+'\')">'+e.name.slice(0,4)+'✕</div>').join('')+'</div>';
   }
   document.getElementById('cal-month-view').innerHTML=h+'</div>';
-}
-function confirmDeletePlanItem(id, name){
-  document.getElementById('modal-content').innerHTML=`
-    <h2>Supprimer cet élément ?</h2>
-    <div class="text-muted text-sm mb-16">"${name}"</div>
-    <div class="flex gap-8">
-      <button class="btn btn-secondary" style="flex:.4" onclick="closeModal()">Annuler</button>
-      <button class="btn btn-danger" style="flex:1" onclick="deletePlanItem('${id}')">Supprimer</button>
-    </div>`;
-  showModal();
-}
-async function deletePlanItem(id){
-  DB.planning=DB.planning.filter(e=>e.id!==id);
-  await save();closeModal();renderCalWeek();renderCalMonth();notif('Supprimé ✓');
 }
 function calNav(dir){calWeekOffset+=dir;renderCalWeek()}
 function calNavMonth(dir){calMonthOffset+=dir;renderCalMonth()}
 function openPlanModal(type){
-  let sessionOptions=DB.sessions.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
-  document.getElementById('modal-content').innerHTML=`<h2>${type==='seance'?'Ajouter une séance':'Ajouter un événement'}</h2>
-    ${type==='seance'?`<div class="form-group"><label>Séance</label><select id="plan-session">${sessionOptions}</select></div>`:`<div class="form-group"><label>Titre</label><input type="text" id="plan-event-name" placeholder="Ex: Médecin"></div>`}
-    <div class="form-group"><label>Date</label><input type="date" id="plan-date" value="${todayStr()}"></div>
-    <div class="flex gap-8 mt-12"><button class="btn btn-secondary" style="flex:.4" onclick="closeModal()">Annuler</button><button class="btn btn-primary" style="flex:1" onclick="savePlanItem('${type}')">Ajouter</button></div>`;
+  let sessionOptions=DB.sessions.map(s=>'<option value="'+s.id+'">'+s.name+'</option>').join('');
+  document.getElementById('modal-content').innerHTML='<h2>'+(type==='seance'?'Ajouter une séance':'Ajouter un événement')+'</h2>'
+    +(type==='seance'?'<div class="form-group"><label>Séance</label><select id="plan-session">'+sessionOptions+'</select></div>':'<div class="form-group"><label>Titre</label><input type="text" id="plan-event-name" placeholder="Ex: Médecin"></div>')
+    +'<div class="form-group"><label>Date</label><input type="date" id="plan-date" value="'+todayStr()+'"></div>'
+    +'<div class="flex gap-8 mt-12"><button class="btn btn-secondary" style="flex:.4" onclick="closeModal()">Annuler</button><button class="btn btn-primary" style="flex:1" onclick="savePlanItem(\''+type+'\')">Ajouter</button></div>';
   showModal();
 }
+function confirmDeletePlanItem(id,name){
+  document.getElementById('modal-content').innerHTML='<h2>Supprimer ?</h2><div class="text-muted text-sm mb-16">"'+name+'"</div><div class="flex gap-8"><button class="btn btn-secondary" style="flex:.4" onclick="closeModal()">Annuler</button><button class="btn btn-danger" style="flex:1" onclick="deletePlanItem(\''+id+'\')">Supprimer</button></div>';
+  showModal();
+}
+async function deletePlanItem(id){DB.planning=DB.planning.filter(e=>e.id!==id);await save();closeModal();renderCalWeek();renderCalMonth();notif('Supprimé ✓')}
 async function savePlanItem(type){
   let date=document.getElementById('plan-date').value,item={id:'p'+Date.now(),type,date};
   if(type==='seance'){let sid=document.getElementById('plan-session').value,s=DB.sessions.find(x=>x.id===sid);item.sessionId=sid;item.name=s?s.name:'Séance';}
@@ -1182,28 +1095,23 @@ async function savePlanItem(type){
 }
 
 // ── PLUS ──
-function renderPlus(){renderHydra();renderSommeil();renderProfil();}
 function renderHydra(){
   let today=todayStr(),w=DB.water[today]||0,g=DB.goals.eau,pct=Math.min(1,w/g);
   let bv=document.getElementById('hydro-big-val'),bg=document.getElementById('hydro-big-goal'),bc=document.getElementById('hydro-big-circle');
   if(bv)bv.textContent=w;if(bg)bg.textContent=g;if(bc)bc.style.strokeDashoffset=339-(339*pct);
   let gl=document.getElementById('water-glasses');
-  if(gl){let glasses=Math.floor(w/250);gl.innerHTML=Array.from({length:16},(_,i)=>`<div style="opacity:${i<glasses?1:.15}">💧</div>`).join('');}
+  if(gl){let glasses=Math.floor(w/250);gl.innerHTML=Array.from({length:16},(_,i)=>'<div style="opacity:'+(i<glasses?1:.15)+'">💧</div>').join('');}
   drawBarChart('hydro-chart',last7Days().map(d=>({label:d.slice(5),val:DB.water[d]||0})),DB.goals.eau,'ml','#378add');
 }
 function renderSommeil(){
   let sd=document.getElementById('sleep-date');if(sd&&!sd.value)sd.value=todayStr();
-  let jh=DB.sleep.slice().reverse().slice(0,7).map(n=>`<div class="list-item"><div><div class="text-sm">${n.date} · <span style="color:var(--purple);font-weight:700">${calcSleepDur(n.bed,n.wake)}</span></div><div class="text-xs text-muted">${'★'.repeat(n.quality)} ${n.notes||''}</div></div><button class="btn-icon" onclick="deleteSleep('${n.id}')">🗑</button></div>`).join('');
+  let jh=DB.sleep.slice().reverse().slice(0,7).map(n=>'<div class="list-item"><div><div class="text-sm">'+n.date+' · <span style="color:var(--purple);font-weight:700">'+calcSleepDur(n.bed,n.wake)+'</span></div><div class="text-xs text-muted">'+'★'.repeat(n.quality)+' '+(n.notes||'')+'</div></div><button class="btn-icon" onclick="deleteSleep(\''+n.id+'\')">🗑</button></div>').join('');
   let sj=document.getElementById('sleep-journal');if(sj)sj.innerHTML=jh||'<div class="text-muted text-sm">Aucune entrée</div>';
   drawBarChart('sleep-chart',last7Days().map(d=>{let n=DB.sleep.find(s=>s.date===d);return{label:d.slice(5),val:n?calcSleepDurNum(n.bed,n.wake):0}}),9,'h','#7c6cf7');
 }
 function setSleepQuality(q){sleepQuality=q;document.querySelectorAll('.star').forEach((s,i)=>s.classList.toggle('active',i<q))}
-function calcSleepDurNum(bed,wake){
-  if(!bed||!wake)return 0;
-  let bh=parseInt(bed.split(':')[0]),bm=parseInt(bed.split(':')[1]||0),wh=parseInt(wake.split(':')[0]),wm=parseInt(wake.split(':')[1]||0),total=(wh*60+wm)-(bh*60+bm);
-  if(total<0)total+=1440;return total/60;
-}
-function calcSleepDur(bed,wake){let h=calcSleepDurNum(bed,wake);return`${Math.floor(h)}h${Math.round((h%1)*60).toString().padStart(2,'0')}`}
+function calcSleepDurNum(bed,wake){if(!bed||!wake)return 0;let bh=parseInt(bed.split(':')[0]),bm=parseInt(bed.split(':')[1]||0),wh=parseInt(wake.split(':')[0]),wm=parseInt(wake.split(':')[1]||0),total=(wh*60+wm)-(bh*60+bm);if(total<0)total+=1440;return total/60}
+function calcSleepDur(bed,wake){let h=calcSleepDurNum(bed,wake);return Math.floor(h)+'h'+Math.round((h%1)*60).toString().padStart(2,'0')}
 async function saveSleep(){
   DB.sleep.push({id:'sl'+Date.now(),bed:document.getElementById('sleep-bed').value,wake:document.getElementById('sleep-wake').value,date:document.getElementById('sleep-date').value,quality:sleepQuality,notes:document.getElementById('sleep-notes').value});
   await save();renderSommeil();renderDashboard();notif('Nuit enregistrée ✓');
@@ -1215,48 +1123,44 @@ function renderWeightChart(){
   let data=DB.weight.slice(-20).map(w=>({label:w.date.slice(5),val:w.val}));
   if(data.length)drawLineChart('weight-chart',data,'kg','#7c6cf7');
   let wh=document.getElementById('weight-history');
-  if(wh)wh.innerHTML=DB.weight.slice().reverse().slice(0,8).map(w=>`<div class="list-item"><span class="text-sm">${w.date}</span><div class="flex items-center gap-8"><span style="font-weight:700;color:var(--purple)">${w.val}kg</span><button class="btn-icon" onclick="deleteWeight('${w.id}')">🗑</button></div></div>`).join('')||'<div class="text-muted text-sm">Aucune donnée</div>';
+  if(wh)wh.innerHTML=DB.weight.slice().reverse().slice(0,8).map(w=>'<div class="list-item"><span class="text-sm">'+w.date+'</span><div class="flex items-center gap-8"><span style="font-weight:700;color:var(--purple)">'+w.val+'kg</span><button class="btn-icon" onclick="deleteWeight(\''+w.id+'\')">🗑</button></div></div>').join('')||'<div class="text-muted text-sm">Aucune donnée</div>';
 }
 function openWeightModal(){
-  document.getElementById('modal-content').innerHTML=`<h2>Ajouter un poids</h2>
-    <div class="form-row"><div class="form-group"><label>Poids (kg)</label><input type="number" id="new-weight" step=".1" inputmode="decimal" placeholder="70.5"></div><div class="form-group"><label>Date</label><input type="date" id="new-weight-date" value="${todayStr()}"></div></div>
-    <div class="flex gap-8 mt-12"><button class="btn btn-secondary" style="flex:.4" onclick="closeModal()">Annuler</button><button class="btn btn-primary" style="flex:1" onclick="saveWeight()">Ajouter</button></div>`;
+  document.getElementById('modal-content').innerHTML='<h2>Ajouter un poids</h2><div class="form-row"><div class="form-group"><label>Poids (kg)</label><input type="number" id="new-weight" step=".1" inputmode="decimal" placeholder="70.5"></div><div class="form-group"><label>Date</label><input type="date" id="new-weight-date" value="'+todayStr()+'"></div></div><div class="flex gap-8 mt-12"><button class="btn btn-secondary" style="flex:.4" onclick="closeModal()">Annuler</button><button class="btn btn-primary" style="flex:1" onclick="saveWeight()">Ajouter</button></div>';
   showModal();
 }
 async function saveWeight(){
   let v=parseFloat(document.getElementById('new-weight').value);if(!v)return;
-  DB.weight.push({id:'wt'+Date.now(),val:v,date:document.getElementById('new-weight-date').value});
-  await save();closeModal();renderWeightChart();notif('Poids enregistré ✓');
+  let date=document.getElementById('new-weight-date').value;
+  DB.weight.push({id:'wt'+Date.now(),val:v,date});
+  if(date===todayStr()&&DB.profile){
+    let p=DB.profile;p.poids=v;
+    let bmr=p.sexe==='h'?88.36+(13.4*v)+(4.8*p.taille)-(5.7*p.age):447.6+(9.2*v)+(3.1*p.taille)-(4.3*p.age);
+    let tdee=Math.round(bmr*p.activite),obj=p.objectif||'maintien';
+    let cal=obj==='masse'?tdee+300:obj==='perte'?tdee-400:tdee;
+    let prot=Math.round(v*2),lip=Math.round(cal*0.25/9),gluc=Math.round((cal-prot*4-lip*9)/4),eau=calcWaterNeeds(p);
+    DB.goals={...DB.goals,cal,prot,gluc,lip,eau};
+    notif('Poids & objectifs mis à jour ✓');
+  }else{notif('Poids enregistré ✓');}
+  await save();closeModal();renderWeightChart();renderDashboard();
 }
-async function deleteWeight(id){DB.weight=DB.weight.filter(w=>w.id!==id);await save();renderWeightChart()}
+async function deleteWeight(id){DB.weight=DB.weight.filter(w=>w.id!==id);await save();renderWeightChart();notif('Supprimé ✓')}
+
 function renderMuscu(){
   let records={};
   DB.workoutHistory.forEach(w=>{
     (w.exercises||[]).forEach(ex=>{
       if(!records[ex.name])records[ex.name]={name:ex.name,id:ex.id,best:0,last:null,history:[]};
-      let maxW=Math.max(...ex.series.map(s=>s.weight||0));
+      let maxW=Math.max(0,...ex.series.map(s=>s.weight||0));
       if(maxW>records[ex.name].best)records[ex.name].best=maxW;
       records[ex.name].last=w.date;
-      records[ex.name].history.push({date:w.date,weight:maxW,reps:ex.series[0]?.reps||0});
+      records[ex.name].history.push({date:w.date,weight:maxW});
     });
   });
-  let mr=document.getElementById('muscu-records');
-  if(!mr)return;
+  let mr=document.getElementById('muscu-records');if(!mr)return;
   let list=Object.values(records);
   if(!list.length){mr.innerHTML='<div class="text-muted text-sm">Aucun entraînement enregistré</div>';return;}
-  mr.innerHTML=list.map(r=>`
-    <div class="card" style="cursor:pointer" onclick="showMuscuChart('${r.name}')">
-      <div class="flex justify-between items-center">
-        <div>
-          <div style="font-weight:700">${r.name}</div>
-          <div class="text-xs text-muted">${r.last} · ${r.history.length} séance${r.history.length>1?'s':''}</div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-size:1.4rem;font-weight:800;color:var(--purple)">${r.best}kg</div>
-          <div class="text-xs text-muted">📈 voir progression</div>
-        </div>
-      </div>
-    </div>`).join('');
+  mr.innerHTML=list.map(r=>'<div class="card" style="cursor:pointer" onclick="showMuscuChart(\''+r.name+'\')"><div class="flex justify-between items-center"><div><div style="font-weight:700">'+r.name+'</div><div class="text-xs text-muted">'+r.last+' · '+r.history.length+' séance'+(r.history.length>1?'s':'')+'</div></div><div style="text-align:right"><div style="font-size:1.4rem;font-weight:800;color:var(--purple)">'+r.best+'kg</div><div class="text-xs text-muted">📈 progression</div></div></div></div>').join('');
 }
 function showMuscuChart(name){
   let section=document.getElementById('muscu-chart-section');
@@ -1265,151 +1169,103 @@ function showMuscuChart(name){
   let data=[];
   DB.workoutHistory.forEach(w=>{
     let ex=(w.exercises||[]).find(e=>e.name===name);
-    if(ex){let maxW=Math.max(...ex.series.map(s=>s.weight||0));data.push({label:w.date.slice(5),val:maxW});}
+    if(ex){let maxW=Math.max(0,...ex.series.map(s=>s.weight||0));data.push({label:w.date.slice(5),val:maxW});}
   });
-  data.sort((a,b)=>a.label.localeCompare(b.label));
   setTimeout(()=>drawLineChart('muscu-chart',data,'kg','#7c6cf7'),50);
   section.scrollIntoView({behavior:'smooth'});
 }
+
+function renderCourseHistory(){
+  let courses=DB.workoutHistory.filter(w=>w.type==='course');
+  let statsEl=document.getElementById('course-stats-card');
+  if(statsEl&&courses.length){
+    let totalDist=courses.reduce((s,c)=>s+(c.dist||0),0);
+    let totalTime=courses.reduce((s,c)=>s+(c.dur||0),0);
+    let bestDist=Math.max(...courses.map(c=>c.dist||0));
+    let alluRes=courses.filter(c=>c.allure>0);
+    let avgAllure=alluRes.length?alluRes.reduce((s,c)=>s+c.allure,0)/alluRes.length:0;
+    statsEl.innerHTML='<div style="font-weight:600;margin-bottom:10px">🏃 Stats course</div><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">'
+      +'<div style="background:var(--el);border-radius:10px;padding:10px;text-align:center"><div style="font-size:1.3rem;font-weight:800;color:var(--green)">'+totalDist.toFixed(1)+'km</div><div class="text-xs text-muted">distance totale</div></div>'
+      +'<div style="background:var(--el);border-radius:10px;padding:10px;text-align:center"><div style="font-size:1.3rem;font-weight:800;color:var(--blue)">'+Math.floor(totalTime/60)+'h'+(totalTime%60)+'min</div><div class="text-xs text-muted">temps total</div></div>'
+      +'<div style="background:var(--el);border-radius:10px;padding:10px;text-align:center"><div style="font-size:1.3rem;font-weight:800;color:var(--orange)">'+bestDist+'km</div><div class="text-xs text-muted">meilleure dist.</div></div>'
+      +'<div style="background:var(--el);border-radius:10px;padding:10px;text-align:center"><div style="font-size:1.3rem;font-weight:800;color:var(--purple)">'+(avgAllure?avgAllure.toFixed(1)+'min/km':'—')+'</div><div class="text-xs text-muted">allure moy.</div></div>'
+      +'</div>';
+  }else if(statsEl)statsEl.innerHTML='';
+  let ch=document.getElementById('course-history');
+  if(ch)ch.innerHTML=courses.slice().reverse().map(c=>'<div class="card"><div class="flex justify-between items-center"><div><div style="font-weight:700">'+c.sessionName+'</div><div class="text-xs text-muted">'+c.date+'</div></div><div style="text-align:right"><div style="font-weight:800;color:var(--green)">'+(c.dist||0)+'km</div><div class="text-xs text-muted">'+(c.dur||0)+'min'+(c.allure?' · '+c.allure+'min/km':'')+'</div></div></div></div>').join('')||'<div class="text-muted text-sm">Aucune course</div>';
+}
+
 function renderFormeScore(){
-  let days=last7Days();
-  // Score sur 100 basé sur 5 critères
-  let seances=Math.min(DB.workoutHistory.filter(w=>days.includes(w.date)).length,5);
+  let days7=last7Days();
+  let seances=Math.min(DB.workoutHistory.filter(w=>days7.includes(w.date)).length,5);
   let scoreSeances=Math.round(seances/5*20);
-  let calDays=days.filter(d=>(DB.journal[d]||[]).length>0).length;
+  let calDays=days7.filter(d=>(DB.journal[d]||[]).length>0).length;
   let scoreNutri=Math.round(calDays/7*20);
-  let waterDays=days.filter(d=>(DB.water[d]||0)>=DB.goals.eau).length;
+  let waterDays=days7.filter(d=>(DB.water[d]||0)>=DB.goals.eau).length;
   let scoreEau=Math.round(waterDays/7*20);
-  let sleepDays=DB.sleep.filter(s=>days.includes(s.date));
-  let avgSleep=sleepDays.length?sleepDays.reduce((a,s)=>a+calcSleepDurNum(s.bed,s.wake),0)/sleepDays.length:0;
+  let sleepArr=DB.sleep.filter(s=>days7.includes(s.date));
+  let avgSleep=sleepArr.length?sleepArr.reduce((a,s)=>a+calcSleepDurNum(s.bed,s.wake),0)/sleepArr.length:0;
   let scoreSommeil=Math.round(Math.min(avgSleep/8,1)*20);
-  let lastWeight=DB.weight.slice(-2);
   let scorePoids=20;
-  if(lastWeight.length===2){
-    let obj=DB.profile?.objectif;
-    let diff=lastWeight[1].val-lastWeight[0].val;
-    if(obj==='perte'&&diff<=0)scorePoids=20;
-    else if(obj==='masse'&&diff>=0)scorePoids=20;
-    else if(obj==='maintien'&&Math.abs(diff)<0.5)scorePoids=20;
+  let lastW=DB.weight.slice(-2);
+  if(lastW.length===2){
+    let obj=DB.profile?.objectif,diff=lastW[1].val-lastW[0].val;
+    if((obj==='perte'&&diff<=0)||(obj==='masse'&&diff>=0)||(obj==='maintien'&&Math.abs(diff)<0.5))scorePoids=20;
     else scorePoids=10;
   }
   let total=scoreSeances+scoreNutri+scoreEau+scoreSommeil+scorePoids;
   let color=total>=80?'var(--green)':total>=60?'var(--orange)':'var(--red)';
   let emoji=total>=80?'🏆':total>=60?'💪':'📈';
-  let fc=document.getElementById('forme-content');
-  if(!fc)return;
-  fc.innerHTML=`
-    <div class="card" style="text-align:center;margin-bottom:12px">
-      <div style="font-size:3rem;margin-bottom:8px">${emoji}</div>
-      <div style="font-size:3rem;font-weight:800;color:${color}">${total}</div>
-      <div class="text-muted text-sm">Score de forme / 100</div>
-      <div style="margin-top:12px;height:10px;background:var(--el);border-radius:5px;overflow:hidden">
-        <div style="height:100%;width:${total}%;background:${color};border-radius:5px;transition:.5s"></div>
-      </div>
-    </div>
-    <div class="card">
-      <div style="font-weight:600;margin-bottom:12px">Détail des 7 derniers jours</div>
-      ${[
-        {label:'🏋️ Entraînements',score:scoreSeances,max:20,detail:`${seances}/5 séances`},
-        {label:'🍽️ Nutrition',score:scoreNutri,max:20,detail:`${calDays}/7 jours journalisés`},
-        {label:'💧 Hydratation',score:scoreEau,max:20,detail:`${waterDays}/7 jours objectif atteint`},
-        {label:'😴 Sommeil',score:scoreSommeil,max:20,detail:`${avgSleep?avgSleep.toFixed(1)+'h moy.':'aucune donnée'}`},
-        {label:'⚖️ Poids',score:scorePoids,max:20,detail:`cohérence avec l'objectif`},
-      ].map(c=>`
-        <div style="margin-bottom:12px">
-          <div class="flex justify-between text-sm mb-4">
-            <span>${c.label}</span>
-            <span style="font-weight:700;color:${c.score>=16?'var(--green)':c.score>=10?'var(--orange)':'var(--red)'}">${c.score}/${c.max}</span>
-          </div>
-          <div class="prog-bar"><div class="prog-fill" style="width:${c.score/c.max*100}%;background:${c.score>=16?'var(--green)':c.score>=10?'var(--orange)':'var(--red)'}"></div></div>
-          <div class="text-xs text-muted mt-4">${c.detail}</div>
-        </div>`).join('')}
-    </div>
-    <div class="card">
-      <div style="font-weight:600;margin-bottom:8px">📊 Corrélation poids / calories</div>
-      ${renderCorrelChart()}
-    </div>`;
+  let fc=document.getElementById('forme-content');if(!fc)return;
+  let criterias=[
+    {label:'🏋️ Entraînements',score:scoreSeances,max:20,detail:seances+'/5 séances cette semaine'},
+    {label:'🍽️ Nutrition',score:scoreNutri,max:20,detail:calDays+'/7 jours journalisés'},
+    {label:'💧 Hydratation',score:scoreEau,max:20,detail:waterDays+'/7 jours objectif atteint'},
+    {label:'😴 Sommeil',score:scoreSommeil,max:20,detail:avgSleep?avgSleep.toFixed(1)+'h de moyenne':'aucune donnée'},
+    {label:'⚖️ Poids',score:scorePoids,max:20,detail:'cohérence avec l\'objectif'},
+  ];
+  fc.innerHTML='<div class="card" style="text-align:center;margin-bottom:12px">'
+    +'<div style="font-size:3rem;margin-bottom:8px">'+emoji+'</div>'
+    +'<div style="font-size:3rem;font-weight:800;color:'+color+'">'+total+'</div>'
+    +'<div class="text-muted text-sm mb-12">Score de forme / 100</div>'
+    +'<div class="score-bar"><div class="score-fill" style="width:'+total+'%;background:'+color+'"></div></div>'
+    +'</div>'
+    +'<div class="card">'+criterias.map(c=>{
+      let cc=c.score>=16?'var(--green)':c.score>=10?'var(--orange)':'var(--red)';
+      return '<div style="margin-bottom:12px"><div class="flex justify-between text-sm mb-4"><span>'+c.label+'</span><span style="font-weight:700;color:'+cc+'">'+c.score+'/'+c.max+'</span></div><div class="score-bar"><div class="score-fill" style="width:'+(c.score/c.max*100)+'%;background:'+cc+'"></div></div><div class="text-xs text-muted mt-4">'+c.detail+'</div></div>';
+    }).join('')+'</div>'
+    +'<div class="card"><div style="font-weight:600;margin-bottom:8px">📊 Poids vs Calories (14 derniers jours)</div>'+renderCorrelChart()+'</div>';
   setTimeout(()=>drawCorrelChart(),100);
 }
+
 function renderCorrelChart(){
-  if(DB.weight.length<3)return '<div class="text-muted text-sm">Pas assez de données (besoin de 3+ pesées)</div>';
-  let points=DB.weight.slice(-14).map(w=>{
-    let foods=DB.journal[w.date]||[];
-    let cal=foods.reduce((s,f)=>s+f.cal,0);
-    return{date:w.date.slice(5),weight:w.val,cal};
-  }).filter(p=>p.cal>0);
+  if(DB.weight.length<2)return '<div class="text-muted text-sm">Pas assez de données de poids</div>';
+  let points=DB.weight.slice(-14).map(w=>{let foods=DB.journal[w.date]||[];let cal=foods.reduce((s,f)=>s+f.cal,0);return{date:w.date.slice(5),weight:w.val,cal}}).filter(p=>p.cal>0);
   if(points.length<2)return '<div class="text-muted text-sm">Journalisez vos repas pour voir la corrélation</div>';
-  // Stocker les points pour le canvas
-  window._correlPoints=points;
-  return `<canvas id="correl-chart" height="120"></canvas><div class="flex gap-12 mt-8 text-xs text-muted"><span>🟧 Calories</span><span style="color:var(--purple)">— Poids</span></div>`;
+  window._correlPts=points;
+  return '<canvas id="correl-chart" height="120"></canvas><div class="flex gap-12 mt-8 text-xs text-muted"><span>🟧 Calories</span><span style="color:var(--purple)">— Poids</span></div>';
 }
 function drawCorrelChart(){
-  let c=document.getElementById('correl-chart');if(!c||!window._correlPoints)return;
-  let pts=window._correlPoints;
-  let ctx=c.getContext('2d'),W=c.offsetWidth||300,H=120;
+  let c=document.getElementById('correl-chart');if(!c||!window._correlPts)return;
+  let pts=window._correlPts,ctx=c.getContext('2d'),W=c.offsetWidth||300,H=120;
   c.width=W;ctx.clearRect(0,0,W,H);
   let maxCal=Math.max(...pts.map(p=>p.cal)),minW=Math.min(...pts.map(p=>p.weight)),maxW=Math.max(...pts.map(p=>p.weight));
   let bw=(W-40)/pts.length-2;
-  pts.forEach((p,i)=>{
-    let x=40+i*((W-40)/pts.length);
-    let h=p.cal/maxCal*(H-30);
-    ctx.fillStyle='#f59e4233';ctx.fillRect(x,H-20-h,bw,h);
-  });
+  pts.forEach((p,i)=>{let x=40+i*((W-40)/pts.length),h2=p.cal/maxCal*(H-30);ctx.fillStyle='#f59e4233';ctx.fillRect(x,H-20-h2,bw,h2);});
   let wPts=pts.map((p,i)=>({x:40+i*((W-40)/pts.length)+bw/2,y:H-20-(p.weight-minW)/(maxW-minW||1)*(H-30)}));
   ctx.beginPath();ctx.strokeStyle='#7c6cf7';ctx.lineWidth=2;ctx.lineJoin='round';
   wPts.forEach((p,i)=>i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));ctx.stroke();
   wPts.forEach(p=>{ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fillStyle='#7c6cf7';ctx.fill();});
   pts.forEach((p,i)=>{if(i%2===0){ctx.fillStyle='#666';ctx.font='9px system-ui';ctx.fillText(p.date,40+i*((W-40)/pts.length),H-4);}});
 }
-  let courses=DB.workoutHistory.filter(w=>w.type==='course');
-  let ch=document.getElementById('course-history');
-  // Stats globales
-  let statsEl=document.getElementById('course-stats-card');
-  if(statsEl&&courses.length){
-    let totalDist=courses.reduce((s,c)=>s+(c.dist||0),0);
-    let totalTime=courses.reduce((s,c)=>s+(c.dur||0),0);
-    let bestDist=Math.max(...courses.map(c=>c.dist||0));
-    let avgAllure=courses.filter(c=>c.allure>0).reduce((s,c,_,a)=>s+c.allure/a.length,0);
-    statsEl.innerHTML=`
-      <div style="font-weight:600;margin-bottom:10px">🏃 Stats course</div>
-      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
-        <div style="background:var(--el);border-radius:10px;padding:10px;text-align:center">
-          <div style="font-size:1.3rem;font-weight:800;color:var(--green)">${totalDist.toFixed(1)}km</div>
-          <div class="text-xs text-muted">distance totale</div>
-        </div>
-        <div style="background:var(--el);border-radius:10px;padding:10px;text-align:center">
-          <div style="font-size:1.3rem;font-weight:800;color:var(--blue)">${Math.floor(totalTime/60)}h${totalTime%60}min</div>
-          <div class="text-xs text-muted">temps total</div>
-        </div>
-        <div style="background:var(--el);border-radius:10px;padding:10px;text-align:center">
-          <div style="font-size:1.3rem;font-weight:800;color:var(--orange)">${bestDist}km</div>
-          <div class="text-xs text-muted">meilleure distance</div>
-        </div>
-        <div style="background:var(--el);border-radius:10px;padding:10px;text-align:center">
-          <div style="font-size:1.3rem;font-weight:800;color:var(--purple)">${avgAllure?avgAllure.toFixed(1)+'min/km':'—'}</div>
-          <div class="text-xs text-muted">allure moyenne</div>
-        </div>
-      </div>`;
-  }else if(statsEl){statsEl.innerHTML=''}
-  if(ch)ch.innerHTML=courses.slice().reverse().map(c=>`
-    <div class="card">
-      <div class="flex justify-between items-center">
-        <div><div style="font-weight:700">${c.sessionName}</div><div class="text-xs text-muted">${c.date}</div></div>
-        <div style="text-align:right">
-          <div style="font-weight:800;color:var(--green)">${c.dist||0}km</div>
-          <div class="text-xs text-muted">${c.dur||0}min${c.allure?' · '+c.allure+'min/km':''}</div>
-        </div>
-      </div>
-    </div>`).join('')||'<div class="text-muted text-sm">Aucune course</div>';
-}
 
 // ── PROFIL ──
 function renderProfil(){
   let p=DB.profile||{},g=DB.goals||{};
-  let fields={prenom:'p-prenom',age:'p-age',sexe:'p-sexe',taille:'p-taille',poids:'p-poids',activite:'p-activite',objectif:'p-objectif'};
-  Object.entries(fields).forEach(([k,id])=>{let el=document.getElementById(id);if(el&&p[k]!==undefined)el.value=p[k];});
-  let gFields={cal:'p-cal',eau:'p-eau',prot:'p-prot',gluc:'p-gluc',lip:'p-lip'};
-  Object.entries(gFields).forEach(([k,id])=>{let el=document.getElementById(id);if(el&&g[k]!==undefined)el.value=g[k];});
+  let pf={prenom:'p-prenom',age:'p-age',sexe:'p-sexe',taille:'p-taille',poids:'p-poids',activite:'p-activite',objectif:'p-objectif'};
+  Object.entries(pf).forEach(([k,id])=>{let el=document.getElementById(id);if(el&&p[k]!==undefined&&p[k]!==null)el.value=p[k];});
+  let gf={cal:'p-cal',eau:'p-eau',prot:'p-prot',gluc:'p-gluc',lip:'p-lip'};
+  Object.entries(gf).forEach(([k,id])=>{let el=document.getElementById(id);if(el&&g[k]!==undefined)el.value=g[k];});
   let pe=document.getElementById('profile-email');if(pe&&currentUser)pe.textContent=currentUser.user?.email||'';
 }
 async function saveProfile(){
@@ -1418,35 +1274,21 @@ async function saveProfile(){
   let newAge=parseInt(document.getElementById('p-age').value)||25;
   let newSexe=document.getElementById('p-sexe').value;
   let newTaille=parseInt(document.getElementById('p-taille').value)||170;
-  DB.profile={...DB.profile,
-    prenom:document.getElementById('p-prenom').value,
-    age:newAge,sexe:newSexe,taille:newTaille,
-    poids:newPoids,activite:newActivite
-  };
-  // Recalcul automatique calories, eau, macros selon nouveau poids
+  DB.profile={...DB.profile,prenom:document.getElementById('p-prenom').value,age:newAge,sexe:newSexe,taille:newTaille,poids:newPoids,activite:newActivite};
   let bmr=newSexe==='h'?88.36+(13.4*newPoids)+(4.8*newTaille)-(5.7*newAge):447.6+(9.2*newPoids)+(3.1*newTaille)-(4.3*newAge);
-  let tdee=Math.round(bmr*newActivite);
-  let obj=DB.profile.objectif||'maintien';
+  let tdee=Math.round(bmr*newActivite),obj=DB.profile.objectif||'maintien';
   let cal=obj==='masse'?tdee+300:obj==='perte'?tdee-400:tdee;
-  let prot=Math.round(newPoids*2);
-  let lip=Math.round(cal*0.25/9);
-  let gluc=Math.round((cal-prot*4-lip*9)/4);
-  let eau=calcWaterNeeds(DB.profile);
+  let prot=Math.round(newPoids*2),lip=Math.round(cal*0.25/9),gluc=Math.round((cal-prot*4-lip*9)/4),eau=calcWaterNeeds(DB.profile);
   DB.goals={...DB.goals,cal,prot,gluc,lip,eau};
-  // Mettre à jour les champs objectifs affichés
-  let gFields={cal:'p-cal',eau:'p-eau',prot:'p-prot',gluc:'p-gluc',lip:'p-lip'};
-  Object.entries(gFields).forEach(([k,id])=>{let el=document.getElementById(id);if(el)el.value=DB.goals[k];});
+  let gf={cal:'p-cal',eau:'p-eau',prot:'p-prot',gluc:'p-gluc',lip:'p-lip'};
+  Object.entries(gf).forEach(([k,id])=>{let el=document.getElementById(id);if(el)el.value=DB.goals[k];});
   await save();renderDashboard();notif('Profil & objectifs mis à jour ✓');
 }
 async function saveGoals(){
   DB.goals={cal:parseInt(document.getElementById('p-cal').value)||2000,eau:parseInt(document.getElementById('p-eau').value)||2000,prot:parseInt(document.getElementById('p-prot').value)||150,gluc:parseInt(document.getElementById('p-gluc').value)||250,lip:parseInt(document.getElementById('p-lip').value)||70};
   await save();renderDashboard();notif('Objectifs sauvegardés ✓');
 }
-async function resetAllData(){
-  if(confirm('Réinitialiser toutes les données ?')){
-    DB={};initDefaults();await save();location.reload();
-  }
-}
+async function resetAllData(){if(confirm('Réinitialiser toutes les données ?')){DB={};initDefaults();await save();location.reload();}}
 
 // ── CHARTS ──
 function drawBarChart(id,data,maxVal,unit,color){
@@ -1471,7 +1313,7 @@ function drawLineChart(id,data,unit,color){
   let n=data.length;if(n<2)return;
   let maxV=Math.max(...data.map(d=>d.val),1),minV=Math.min(...data.map(d=>d.val));
   let pts=data.map((d,i)=>({x:30+i*(W-40)/(n-1),y:(H-20)-(d.val-minV)/(maxV-minV||1)*(H-30)}));
-  ctx.beginPath();ctx.moveTo(pts[0].x,H-18);pts.forEach(p=>ctx.lineTo(p.x,p.y));ctx.lineTo(pts[pts.length-1].x,H-18);ctx.closePath();ctx.fillStyle=color+'22';ctx.fill();
+  ctx.beginPath();ctx.moveTo(pts[0].x,H-18);pts.forEach(p=>ctx.lineTo(p.x,p.y));ctx.lineTo(pts[n-1].x,H-18);ctx.closePath();ctx.fillStyle=color+'22';ctx.fill();
   ctx.beginPath();ctx.strokeStyle=color;ctx.lineWidth=2;ctx.lineJoin='round';pts.forEach((p,i)=>i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));ctx.stroke();
   pts.forEach(p=>{ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();});
   data.forEach((d,i)=>{if(i%Math.ceil(n/5)===0){ctx.fillStyle='#666';ctx.font='9px system-ui';ctx.fillText(d.label,pts[i].x-8,H-4);}});
@@ -1482,7 +1324,7 @@ function last7Days(){let r=[];for(let i=6;i>=0;i--){let d=new Date();d.setDate(d
 function showModal(){document.getElementById('modal-overlay').classList.remove('hidden')}
 function closeModal(){document.getElementById('modal-overlay').classList.add('hidden')}
 function closeModalOutside(e){if(e.target.id==='modal-overlay')closeModal()}
-function notif(msg){let el=document.getElementById('notif');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2000)}
+function notif(msg){let el=document.getElementById('notif');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2500)}
 </script>
 </body>
 </html>
