@@ -223,6 +223,18 @@ hr{border:none;border-top:1px solid var(--border);margin:.75rem 0}
   </div>
   <div id="content">
 
+    <!-- AI PANEL -->
+    <div id="ai-panel" class="hidden" style="position:fixed;inset:0;background:var(--bg);z-index:350;overflow-y:auto;padding:calc(var(--safe-top) + 1rem) 1rem calc(var(--safe-bot) + 1rem)">
+      <div class="flex items-center justify-between mb-16">
+        <div>
+          <div style="font-size:1.1rem;font-weight:700" id="ai-panel-title">🤖 Coach IA</div>
+          <div class="text-muted text-xs" id="ai-panel-sub"></div>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="closeAI()">✕ Fermer</button>
+      </div>
+      <div id="ai-content"></div>
+    </div>
+
     <!-- DASHBOARD -->
     <div id="page-dashboard" class="page active">
       <div class="flex items-center justify-between mb-12">
@@ -271,6 +283,11 @@ hr{border:none;border-top:1px solid var(--border);margin:.75rem 0}
         <div class="card"><h3>Aujourd'hui</h3><div id="dash-sessions"></div></div>
       </div>
       <div class="tip-box mb-12" id="dash-tip"></div>
+      <!-- IA BOUTONS -->
+      <div class="grid-2 mb-12">
+        <button class="btn btn-primary" onclick="openAI('suggestions')" style="background:linear-gradient(135deg,#7c6cf7,#378add)">🍽️ Suggestions repas IA</button>
+        <button class="btn btn-primary" onclick="openAI('analyse')" style="background:linear-gradient(135deg,#3dba7a,#378add)">📊 Analyse semaine IA</button>
+      </div>
       <div class="card" id="dash-week-summary"></div>
     </div>
 
@@ -478,7 +495,13 @@ hr{border:none;border-top:1px solid var(--border);margin:.75rem 0}
           <div class="card mb-12" id="course-stats-card"></div>
           <div id="course-history"></div>
         </div>
-        <div id="prog2-tab-forme" class="tab-content"><div id="forme-content"></div></div>
+        <div id="prog2-tab-forme" class="tab-content">
+          <div class="flex gap-8 mb-12">
+            <button class="btn btn-primary btn-sm" onclick="openAI('analyse')" style="background:linear-gradient(135deg,#3dba7a,#378add)">📊 Analyse IA</button>
+            <button class="btn btn-secondary btn-sm" onclick="openAI('conseils')">💡 Conseils perso</button>
+          </div>
+          <div id="forme-content"></div>
+        </div>
       </div>
       <div id="plus-tab-profil" class="tab-content">
         <div class="card">
@@ -628,7 +651,146 @@ function showSetup(){document.getElementById('setup').classList.remove('hidden')
 function hideSetup(){document.getElementById('setup').classList.add('hidden')}
 function initApp(){document.getElementById('app').classList.remove('hidden');renderDashboard();}
 
-// ── THEME ──
+// ── IA COACH ──
+function closeAI(){document.getElementById('ai-panel').classList.add('hidden')}
+
+async function openAI(mode){
+  let panel=document.getElementById('ai-panel');
+  panel.classList.remove('hidden');
+  let content=document.getElementById('ai-content');
+  let titleEl=document.getElementById('ai-panel-title');
+  let subEl=document.getElementById('ai-panel-sub');
+
+  if(mode==='suggestions'){
+    titleEl.textContent='🍽️ Suggestions repas IA';
+    subEl.textContent='Basé sur vos macros restantes aujourd\'hui';
+    content.innerHTML='<div style="text-align:center;padding:2rem;color:var(--muted)">⏳ Génération en cours...</div>';
+    let today=todayStr();
+    let foods=DB.journal[today]||[];
+    let tCal=foods.reduce((s,f)=>s+f.cal,0);
+    let tProt=foods.reduce((s,f)=>s+f.prot,0);
+    let tGluc=foods.reduce((s,f)=>s+f.gluc,0);
+    let tLip=foods.reduce((s,f)=>s+f.lip,0);
+    let remCal=Math.max(0,DB.goals.cal-tCal);
+    let remProt=Math.max(0,DB.goals.prot-tProt);
+    let remGluc=Math.max(0,DB.goals.gluc-tGluc);
+    let remLip=Math.max(0,DB.goals.lip-tLip);
+    let myFoods=DB.foods.map(f=>f.name).join(', ');
+    let prompt=`Tu es un coach nutrition. L'utilisateur s'appelle ${DB.profile?.prenom||'l\'utilisateur'}, objectif: ${DB.profile?.objectif||'maintien'}.
+
+Macros restantes aujourd'hui:
+- Calories: ${Math.round(remCal)} kcal
+- Protéines: ${Math.round(remProt)}g
+- Glucides: ${Math.round(remGluc)}g
+- Lipides: ${Math.round(remLip)}g
+
+Aliments disponibles dans sa base: ${myFoods||'non renseignés'}
+
+Propose 3 suggestions de repas ou collations adaptées aux macros restantes. Pour chaque suggestion, donne:
+1. Un nom accrocheur avec emoji
+2. Les ingrédients principaux avec quantités approximatives
+3. Les macros estimées (cal, P, G, L)
+4. Un conseil rapide
+
+Réponds en français, de façon concise et motivante. Format: suggestion avec titre en gras, liste ingrédients, puis macros.`;
+
+    try{
+      let r=await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          model:'claude-sonnet-4-20250514',
+          max_tokens:1000,
+          messages:[{role:'user',content:prompt}]
+        })
+      });
+      let d=await r.json();
+      let text=d.content?.[0]?.text||'Erreur de réponse';
+      content.innerHTML=renderAIText(text)
+        +'<div class="mt-16 tip-box">💡 Ces suggestions sont basées sur vos macros restantes. Ajustez les quantités selon vos besoins.</div>';
+    }catch(e){
+      content.innerHTML='<div class="card"><div class="text-red">Erreur de connexion à l\'IA. Vérifiez votre connexion.</div></div>';
+    }
+
+  }else if(mode==='analyse'){
+    titleEl.textContent='📊 Analyse de semaine IA';
+    subEl.textContent='Bilan intelligent des 7 derniers jours';
+    content.innerHTML='<div style="text-align:center;padding:2rem;color:var(--muted)">⏳ Analyse en cours...</div>';
+
+    let days7=last7Days();
+    let seances=DB.workoutHistory.filter(w=>days7.includes(w.date));
+    let avgCal=Math.round(days7.reduce((s,d)=>{let f=DB.journal[d]||[];return s+f.reduce((a,x)=>a+x.cal,0)},0)/7);
+    let avgWater=Math.round(days7.reduce((s,d)=>s+(DB.water[d]||0),0)/7);
+    let sleepArr=DB.sleep.filter(s=>days7.includes(s.date));
+    let avgSleep=sleepArr.length?Math.round(sleepArr.reduce((s,n)=>s+calcSleepDurNum(n.bed,n.wake),0)/sleepArr.length*10)/10:0;
+    let avgSleepQ=sleepArr.length?Math.round(sleepArr.reduce((s,n)=>s+n.quality,0)/sleepArr.length*10)/10:0;
+    let poids=DB.weight.slice(-2);
+    let weightTrend=poids.length===2?poids[1].val-poids[0].val:null;
+
+    let prompt=`Tu es un coach fitness bienveillant et expert. Analyse la semaine de ${DB.profile?.prenom||'l\'utilisateur'}.
+
+Profil: ${DB.profile?.objectif||'maintien'}, ${DB.profile?.poids||'?'}kg, ${DB.profile?.age||'?'} ans
+
+Données de la semaine:
+- Séances d'entraînement: ${seances.length} (types: ${seances.map(s=>s.sessionName).join(', ')||'aucune'})
+- Calories moyennes/jour: ${avgCal} kcal (objectif: ${DB.goals.cal} kcal)
+- Eau moyenne/jour: ${avgWater} ml (objectif: ${DB.goals.eau} ml)
+- Sommeil moyen: ${avgSleep}h (qualité: ${avgSleepQ}/5)
+- Évolution du poids: ${weightTrend!==null?(weightTrend>0?'+':'')+weightTrend.toFixed(1)+'kg':'non mesuré'}
+
+Fais une analyse complète en 4 parties:
+1. 🏆 Points forts de la semaine
+2. ⚠️ Points à améliorer
+3. 💡 3 conseils personnalisés et actionnables pour la semaine prochaine
+4. 🎯 Objectif prioritaire pour les 7 prochains jours
+
+Sois précis, motivant et personnalisé. Réponds en français.`;
+
+    try{
+      let r=await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          model:'claude-sonnet-4-20250514',
+          max_tokens:1000,
+          messages:[{role:'user',content:prompt}]
+        })
+      });
+      let d=await r.json();
+      let text=d.content?.[0]?.text||'Erreur de réponse';
+      content.innerHTML=renderAIText(text);
+    }catch(e){
+      content.innerHTML='<div class="card"><div class="text-red">Erreur de connexion à l\'IA.</div></div>';
+    }
+  }
+  }else if(mode==='conseils'){
+    titleEl.textContent='💡 Conseils personnalisés IA';
+    subEl.textContent='Basé sur vos données et tendances';
+    content.innerHTML='<div style="text-align:center;padding:2rem;color:var(--muted)">⏳ Analyse de vos tendances...</div>';
+    let lastWeights=DB.weight.slice(-5).map(w=>w.val+'kg le '+w.date).join(', ');
+    let lastSleeps=DB.sleep.slice(-5).map(s=>calcSleepDur(s.bed,s.wake)+' (qualité '+s.quality+'/5) le '+s.date).join(', ');
+    let sessionTypes=[...new Set(DB.workoutHistory.slice(-10).map(w=>w.sessionName))].join(', ');
+    let avgCal7=Math.round(last7Days().reduce((s,d)=>{let f=DB.journal[d]||[];return s+f.reduce((a,x)=>a+x.cal,0)},0)/7);
+    let prompt='Tu es un coach fitness expert et bienveillant. Donne des conseils ultra-personnalisés à '+(DB.profile?.prenom||'cet utilisateur')+'.\n\nProfil:\n- Âge: '+(DB.profile?.age||'?')+' ans, Sexe: '+(DB.profile?.sexe==='h'?'Homme':'Femme')+'\n- Taille: '+(DB.profile?.taille||'?')+'cm, Poids: '+(DB.profile?.poids||'?')+'kg\n- Objectif: '+(DB.profile?.objectif||'maintien')+'\n\nTendances:\n- Poids récent: '+(lastWeights||'non mesuré')+'\n- Sommeil: '+(lastSleeps||'non renseigné')+'\n- Séances: '+(sessionTypes||'aucune')+'\n- Calories moy. 7j: '+avgCal7+' kcal (objectif: '+DB.goals.cal+')\n\nDonne 5 conseils très personnalisés et actionnables. Réponds en français avec des emojis.';
+    try{
+      let r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
+      let d=await r.json();
+      content.innerHTML=renderAIText(d.content?.[0]?.text||'Erreur');
+    }catch(e){content.innerHTML='<div class="card"><div style="color:var(--red)">Erreur de connexion.</div></div>';}
+  }
+}
+  // Convertir markdown basique en HTML
+  let html=text
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/^### (.+)$/gm,'<div style="font-size:1rem;font-weight:700;color:var(--purple);margin:16px 0 8px">$1</div>')
+    .replace(/^## (.+)$/gm,'<div style="font-size:1.1rem;font-weight:700;margin:16px 0 8px">$1</div>')
+    .replace(/^# (.+)$/gm,'<div style="font-size:1.2rem;font-weight:800;margin:16px 0 8px">$1</div>')
+    .replace(/^- (.+)$/gm,'<div style="padding:4px 0 4px 12px;border-left:2px solid var(--purple);margin:4px 0;font-size:.9rem">$1</div>')
+    .replace(/^\d+\. (.+)$/gm,'<div style="padding:4px 0 4px 12px;margin:4px 0;font-size:.9rem">$1</div>')
+    .replace(/\n\n/g,'</p><p style="margin:8px 0">')
+    .replace(/\n/g,'<br>');
+  return '<div class="card" style="line-height:1.6;font-size:.95rem"><p style="margin:8px 0">'+html+'</p></div>';
+}
 function toggleTheme(){
   document.body.classList.toggle('light');
   let light=document.body.classList.contains('light');
