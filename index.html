@@ -185,6 +185,24 @@ hr{border:none;border-top:1px solid var(--border);margin:.75rem 0}
   <div id="wm-exercises"></div>
 </div>
 
+<!-- AUTH -->
+<div id="auth-screen" style="position:fixed;inset:0;background:var(--bg);z-index:2000;display:flex;align-items:center;justify-content:center;padding:1.5rem">
+  <div style="width:100%;max-width:380px">
+    <div style="font-size:2.5rem;font-weight:800;background:linear-gradient(135deg,var(--purple),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.25rem">⚡ FitTrack</div>
+    <div style="color:var(--muted);margin-bottom:2rem;font-size:.95rem">Votre coach fitness personnel</div>
+    <div class="tabs" style="margin-bottom:1.5rem">
+      <button class="tab active" onclick="authTab('login')">Connexion</button>
+      <button class="tab" onclick="authTab('signup')">Inscription</button>
+    </div>
+    <div id="auth-error" class="hidden" style="background:var(--red)22;border:1px solid var(--red)44;color:var(--red);padding:10px 14px;border-radius:10px;font-size:.9rem;margin-bottom:12px"></div>
+    <div class="form-group"><label>Email</label><input type="email" id="auth-email" placeholder="vous@email.com" autocomplete="email" inputmode="email"></div>
+    <div class="form-group"><label>Mot de passe</label><input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password"></div>
+    <div id="auth-confirm-wrap" class="form-group hidden"><label>Confirmer le mot de passe</label><input type="password" id="auth-confirm" placeholder="••••••••"></div>
+    <button class="btn btn-primary mt-8" id="auth-submit" onclick="authSubmit()">Se connecter</button>
+    <div id="auth-success" class="hidden mt-12" style="background:var(--green)22;border:1px solid var(--green)44;color:var(--green);padding:10px 14px;border-radius:10px;font-size:.9rem;text-align:center"></div>
+  </div>
+</div>
+
 <!-- SETUP -->
 <div id="setup">
   <div class="setup-box">
@@ -547,8 +565,12 @@ hr{border:none;border-top:1px solid var(--border);margin:.75rem 0}
           <button class="btn btn-primary mt-8" onclick="saveGoals()">Sauvegarder objectifs</button>
         </div>
         <div class="card">
-          <h3>Données</h3>
-          <div class="text-muted text-sm mb-12">Données sauvegardées localement sur cet appareil.</div>
+          <h3>Compte</h3>
+          <div class="text-sm text-muted mb-12" id="profile-email"></div>
+          <button class="btn btn-secondary mb-12" onclick="signOut()">🚪 Se déconnecter</button>
+          <hr>
+          <h3 style="margin-top:12px">Données</h3>
+          <div class="text-muted text-sm mb-12">Données sauvegardées sur le serveur.</div>
           <button class="btn btn-danger btn-sm" onclick="resetAllData()">⚠ Réinitialiser toutes les données</button>
         </div>
       </div>
@@ -596,48 +618,69 @@ let calWeekOffset=0;
 let calMonthOffset=0;
 let sleepQuality=3;
 
-// ── STORAGE (IndexedDB + localStorage fallback) ──
-const DB_NAME='fittrack_db', STORE='data', KEY='main';
-let idb=null;
+// ── SUPABASE CONFIG ──
+const SUPA_URL='https://yvkcoyofnllawjfvlthz.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2a2NveW9mbmxsYXdqZnZsdGh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxMjQ2MzksImV4cCI6MjA5MzcwMDYzOX0.TmqANNlMVWO25zf658gjpRLmvfGucURtCec7oK7MzdA';
+let currentUser=null;
 
-function openIDB(){
-  return new Promise((res,rej)=>{
-    let req=indexedDB.open(DB_NAME,1);
-    req.onupgradeneeded=e=>{e.target.result.createObjectStore(STORE)};
-    req.onsuccess=e=>{idb=e.target.result;res(idb)};
-    req.onerror=()=>rej();
-  });
+async function supaFetch(path,opts={}){
+  let headers={'apikey':SUPA_KEY,'Content-Type':'application/json',...(opts.headers||{})};
+  if(currentUser?.access_token)headers['Authorization']='Bearer '+currentUser.access_token;
+  let r=await fetch(SUPA_URL+path,{...opts,headers});
+  return r;
 }
-function idbSet(val){
-  return new Promise((res,rej)=>{
-    if(!idb){res();return;}
-    let tx=idb.transaction(STORE,'readwrite');
-    tx.objectStore(STORE).put(val,KEY);
-    tx.oncomplete=()=>res();
-    tx.onerror=()=>rej();
-  });
+
+// ── AUTH ──
+async function signUp(email,password){
+  let r=await supaFetch('/auth/v1/signup',{method:'POST',body:JSON.stringify({email,password})});
+  let d=await r.json();
+  if(d.error)throw new Error(d.error.message||d.msg||'Erreur inscription');
+  return d;
 }
-function idbGet(){
-  return new Promise((res,rej)=>{
-    if(!idb){res(null);return;}
-    let tx=idb.transaction(STORE,'readonly');
-    let req=tx.objectStore(STORE).get(KEY);
-    req.onsuccess=()=>res(req.result||null);
-    req.onerror=()=>rej();
-  });
+async function signIn(email,password){
+  let r=await supaFetch('/auth/v1/token?grant_type=password',{method:'POST',body:JSON.stringify({email,password})});
+  let d=await r.json();
+  if(d.error_description||d.error)throw new Error(d.error_description||d.error);
+  currentUser=d;
+  localStorage.setItem('fittrack_session',JSON.stringify(d));
+  return d;
 }
+async function signOut(){
+  await supaFetch('/auth/v1/logout',{method:'POST'});
+  currentUser=null;localStorage.removeItem('fittrack_session');
+  location.reload();
+}
+async function restoreSession(){
+  try{
+    let s=localStorage.getItem('fittrack_session');
+    if(!s)return false;
+    let session=JSON.parse(s);
+    // Refresh token
+    let r=await supaFetch('/auth/v1/token?grant_type=refresh_token',{method:'POST',body:JSON.stringify({refresh_token:session.refresh_token})});
+    let d=await r.json();
+    if(d.access_token){currentUser=d;localStorage.setItem('fittrack_session',JSON.stringify(d));return true;}
+    return false;
+  }catch(e){return false;}
+}
+
+// ── STORAGE ──
 async function save(){
-  try{await idbSet(DB)}catch(e){}
-  try{localStorage.setItem('fittrack_pwa',JSON.stringify(DB))}catch(e){}
+  if(!currentUser)return;
+  try{
+    await supaFetch('/rest/v1/fittrack_data',{
+      method:'POST',
+      headers:{'Prefer':'resolution=merge-duplicates'},
+      body:JSON.stringify({user_id:currentUser.user.id,data:DB,updated_at:new Date().toISOString()})
+    });
+  }catch(e){console.error('Save error',e)}
 }
 async function load(){
-  try{await openIDB()}catch(e){}
-  let data=null;
-  try{data=await idbGet()}catch(e){}
-  if(!data){
-    try{let raw=localStorage.getItem('fittrack_pwa');if(raw)data=JSON.parse(raw)}catch(e){}
-  }
-  DB=data||{};
+  if(!currentUser)return;
+  try{
+    let r=await supaFetch(`/rest/v1/fittrack_data?user_id=eq.${currentUser.user.id}&select=data`);
+    let rows=await r.json();
+    if(rows&&rows.length&&rows[0].data)DB=rows[0].data;else DB={};
+  }catch(e){DB={}}
   initDefaults();
 }
 function initDefaults(){
@@ -666,11 +709,55 @@ function defaultFoods(){return[
 ]}
 
 // ── INIT ──
+// ── AUTH UI ──
+let authMode='login';
+function authTab(mode){
+  authMode=mode;
+  document.querySelectorAll('#auth-screen .tab').forEach(t=>t.classList.toggle('active',t.textContent===(mode==='login'?'Connexion':'Inscription')));
+  document.getElementById('auth-confirm-wrap').classList.toggle('hidden',mode!=='signup');
+  document.getElementById('auth-submit').textContent=mode==='login'?'Se connecter':'Créer mon compte';
+  document.getElementById('auth-error').classList.add('hidden');
+  document.getElementById('auth-success').classList.add('hidden');
+}
+async function authSubmit(){
+  let email=document.getElementById('auth-email').value.trim();
+  let password=document.getElementById('auth-password').value;
+  let errEl=document.getElementById('auth-error');
+  let successEl=document.getElementById('auth-success');
+  errEl.classList.add('hidden');successEl.classList.add('hidden');
+  if(!email||!password){errEl.textContent='Remplissez tous les champs';errEl.classList.remove('hidden');return}
+  let btn=document.getElementById('auth-submit');btn.textContent='...';btn.disabled=true;
+  try{
+    if(authMode==='signup'){
+      let confirm=document.getElementById('auth-confirm').value;
+      if(password!==confirm){throw new Error('Les mots de passe ne correspondent pas')}
+      await signUp(email,password);
+      successEl.textContent='Compte créé ! Vérifiez vos emails pour confirmer votre compte, puis connectez-vous.';
+      successEl.classList.remove('hidden');
+      authTab('login');
+    }else{
+      await signIn(email,password);
+      document.getElementById('auth-screen').classList.add('hidden');
+      await load();
+      if(!DB.profile){showSetup()}else{initApp()}
+    }
+  }catch(e){
+    errEl.textContent=e.message||'Erreur de connexion';
+    errEl.classList.remove('hidden');
+  }
+  btn.textContent=authMode==='login'?'Se connecter':'Créer mon compte';btn.disabled=false;
+}
+
 window.onload=async function(){
-  await load();
-  let sd=document.getElementById('sleep-date');
-  if(sd)sd.value=todayStr();
-  if(!DB.profile){showSetup()}else{initApp()}
+  let ok=await restoreSession();
+  if(ok){
+    document.getElementById('auth-screen').classList.add('hidden');
+    await load();
+    let sd=document.getElementById('sleep-date');if(sd)sd.value=todayStr();
+    if(!DB.profile){showSetup()}else{initApp()}
+  }else{
+    let sd=document.getElementById('sleep-date');if(sd)sd.value=todayStr();
+  }
   setInterval(()=>save(),30000);
 }
 function todayStr(){return new Date().toISOString().split('T')[0]}
@@ -1102,6 +1189,8 @@ function renderProfil(){
   let p=DB.profile||{},g=DB.goals||{};
   ['prenom','age','sexe','taille','poids','activite','objectif'].forEach(k=>{let el=document.getElementById('p-'+k);if(el)el.value=p[k]||''});
   ['cal','eau','prot','gluc','lip'].forEach(k=>{let el=document.getElementById('p-'+k);if(el)el.value=g[k]||0});
+  let emailEl=document.getElementById('profile-email');
+  if(emailEl&&currentUser)emailEl.textContent=currentUser.user?.email||'';
 }
 function saveProfile(){
   DB.profile={...DB.profile,prenom:document.getElementById('p-prenom').value,age:parseInt(document.getElementById('p-age').value)||25,sexe:document.getElementById('p-sexe').value,taille:parseInt(document.getElementById('p-taille').value)||170,poids:parseFloat(document.getElementById('p-poids').value)||70,activite:parseFloat(document.getElementById('p-activite').value)||1.55};
