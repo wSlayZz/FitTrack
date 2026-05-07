@@ -251,6 +251,8 @@ hr{border:none;border-top:1px solid var(--border);margin:.75rem 0}
               <button class="btn btn-secondary btn-sm" onclick="addWater(250)">+250</button>
               <button class="btn btn-secondary btn-sm" onclick="addWater(500)">+500</button>
               <button class="btn btn-secondary btn-sm" onclick="addWater(750)">+750</button>
+              <button class="btn btn-secondary btn-sm" onclick="removeWater(150)" style="color:var(--red)">-150</button>
+              <button class="btn btn-secondary btn-sm" onclick="removeWater(250)" style="color:var(--red)">-250</button>
             </div>
           </div>
         </div>
@@ -1013,7 +1015,7 @@ function renderCalWeek(){
     let d=new Date(monday);d.setDate(d.getDate()+i);
     let ds=d.toISOString().split('T')[0],isToday=ds===todayStr();
     let events=DB.planning.filter(e=>e.date===ds);
-    h+=`<div class="cal-day${isToday?' today':''}"><div class="cal-day-num">${days[i]}<br>${d.getDate()}</div>${events.map(e=>`<div class="cal-event${e.type==='event'?' green':''}" style="display:flex;align-items:center;justify-content:space-between;gap:2px">${e.name.slice(0,6)}<span onclick="deletePlanItem('${e.id}')" style="cursor:pointer;font-size:.65rem;opacity:.7">✕</span></div>`).join('')}</div>`;
+    h+=`<div class="cal-day${isToday?' today':''}"><div class="cal-day-num">${days[i]}<br>${d.getDate()}</div>${events.map(e=>`<div class="cal-event${e.type==='event'?' green':''}" style="display:flex;align-items:center;justify-content:space-between;gap:2px;cursor:pointer" onclick="confirmDeletePlanItem('${e.id}','${e.name.replace(/'/g,'')}')">${e.name.slice(0,6)} <span style="font-size:.65rem;opacity:.8">✕</span></div>`).join('')}</div>`;
   }
   document.getElementById('cal-week-view').innerHTML=h+'</div>';
 }
@@ -1029,13 +1031,23 @@ function renderCalMonth(){
   for(let d=1;d<=daysInMonth;d++){
     let ds=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`,isToday=ds===todayStr();
     let events=DB.planning.filter(e=>e.date===ds);
-    h+=`<div class="cal-day${isToday?' today':''}"><div class="cal-day-num">${d}</div>${events.map(e=>`<div class="cal-event${e.type==='event'?' green':''}" style="display:flex;justify-content:space-between">${e.name.slice(0,4)}<span onclick="deletePlanItem('${e.id}')" style="cursor:pointer">✕</span></div>`).join('')}</div>`;
+    h+=`<div class="cal-day${isToday?' today':''}"><div class="cal-day-num">${d}</div>${events.map(e=>`<div class="cal-event${e.type==='event'?' green':''}" style="display:flex;justify-content:space-between;cursor:pointer" onclick="confirmDeletePlanItem('${e.id}','${e.name.replace(/'/g,'')}')">${e.name.slice(0,4)} <span>✕</span></div>`).join('')}</div>`;
   }
   document.getElementById('cal-month-view').innerHTML=h+'</div>';
 }
+function confirmDeletePlanItem(id, name){
+  document.getElementById('modal-content').innerHTML=`
+    <h2>Supprimer cet élément ?</h2>
+    <div class="text-muted text-sm mb-16">"${name}"</div>
+    <div class="flex gap-8">
+      <button class="btn btn-secondary" style="flex:.4" onclick="closeModal()">Annuler</button>
+      <button class="btn btn-danger" style="flex:1" onclick="deletePlanItem('${id}')">Supprimer</button>
+    </div>`;
+  showModal();
+}
 async function deletePlanItem(id){
   DB.planning=DB.planning.filter(e=>e.id!==id);
-  await save();renderCalWeek();renderCalMonth();notif('Supprimé ✓');
+  await save();closeModal();renderCalWeek();renderCalMonth();notif('Supprimé ✓');
 }
 function calNav(dir){calWeekOffset+=dir;renderCalWeek()}
 function calNavMonth(dir){calMonthOffset+=dir;renderCalMonth()}
