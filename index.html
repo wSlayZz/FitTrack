@@ -665,21 +665,23 @@ async function restoreSession(){
 
 // ── STORAGE ──
 async function save(){
-  if(!currentUser)return;
+  if(!currentUser?.user?.id)return;
   try{
-    await supaFetch('/rest/v1/fittrack_data',{
+    let r=await supaFetch('/rest/v1/fittrack_data',{
       method:'POST',
-      headers:{'Prefer':'resolution=merge-duplicates'},
+      headers:{'Prefer':'return=minimal,resolution=merge-duplicates'},
       body:JSON.stringify({user_id:currentUser.user.id,data:DB,updated_at:new Date().toISOString()})
     });
+    if(!r.ok){let t=await r.text();console.error('Save failed',r.status,t);}
   }catch(e){console.error('Save error',e)}
 }
 async function load(){
-  if(!currentUser)return;
+  if(!currentUser?.user?.id)return;
   try{
-    let r=await supaFetch(`/rest/v1/fittrack_data?user_id=eq.${currentUser.user.id}&select=data`);
+    let r=await supaFetch(`/rest/v1/fittrack_data?user_id=eq.${currentUser.user.id}&select=data&limit=1`);
+    if(!r.ok)throw new Error('load failed');
     let rows=await r.json();
-    if(rows&&rows.length&&rows[0].data)DB=rows[0].data;else DB={};
+    DB=(rows&&rows.length&&rows[0].data)?rows[0].data:{};
   }catch(e){DB={}}
   initDefaults();
 }
@@ -726,26 +728,40 @@ async function authSubmit(){
   let successEl=document.getElementById('auth-success');
   errEl.classList.add('hidden');successEl.classList.add('hidden');
   if(!email||!password){errEl.textContent='Remplissez tous les champs';errEl.classList.remove('hidden');return}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){errEl.textContent='Email invalide';errEl.classList.remove('hidden');return}
+  if(password.length<6){errEl.textContent='Mot de passe : 6 caractères minimum';errEl.classList.remove('hidden');return}
   let btn=document.getElementById('auth-submit');btn.textContent='...';btn.disabled=true;
   try{
     if(authMode==='signup'){
       let confirm=document.getElementById('auth-confirm').value;
-      if(password!==confirm){throw new Error('Les mots de passe ne correspondent pas')}
-      await signUp(email,password);
-      successEl.textContent='Compte créé ! Vérifiez vos emails pour confirmer votre compte, puis connectez-vous.';
-      successEl.classList.remove('hidden');
-      authTab('login');
+      if(password!==confirm)throw new Error('Les mots de passe ne correspondent pas');
+      let d=await signUp(email,password);
+      if(d.user&&!d.user.confirmed_at){
+        successEl.textContent='Compte créé ! Vérifiez vos emails pour confirmer votre compte, puis connectez-vous.';
+        successEl.classList.remove('hidden');
+        authTab('login');
+      }else if(d.user){
+        // email confirmation désactivée, on connecte directement
+        await signIn(email,password);
+        await afterLogin();
+      }
     }else{
       await signIn(email,password);
-      document.getElementById('auth-screen').classList.add('hidden');
-      await load();
-      if(!DB.profile){showSetup()}else{initApp()}
+      await afterLogin();
     }
   }catch(e){
-    errEl.textContent=e.message||'Erreur de connexion';
+    errEl.textContent=e.message||'Email ou mot de passe incorrect';
     errEl.classList.remove('hidden');
   }
   btn.textContent=authMode==='login'?'Se connecter':'Créer mon compte';btn.disabled=false;
+}
+
+async function afterLogin(){
+  document.getElementById('auth-screen').classList.add('hidden');
+  notif('Chargement...');
+  await load();
+  let sd=document.getElementById('sleep-date');if(sd)sd.value=todayStr();
+  if(!DB.profile){showSetup()}else{initApp()}
 }
 
 window.onload=async function(){
