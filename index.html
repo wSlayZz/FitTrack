@@ -596,15 +596,48 @@ let calWeekOffset=0;
 let calMonthOffset=0;
 let sleepQuality=3;
 
-// ── STORAGE ──
-function save(){
-  try{localStorage.setItem('fittrack_pwa',JSON.stringify(DB))}catch(e){notif('Erreur sauvegarde')}
+// ── STORAGE (IndexedDB + localStorage fallback) ──
+const DB_NAME='fittrack_db', STORE='data', KEY='main';
+let idb=null;
+
+function openIDB(){
+  return new Promise((res,rej)=>{
+    let req=indexedDB.open(DB_NAME,1);
+    req.onupgradeneeded=e=>{e.target.result.createObjectStore(STORE)};
+    req.onsuccess=e=>{idb=e.target.result;res(idb)};
+    req.onerror=()=>rej();
+  });
 }
-function load(){
-  try{
-    let raw=localStorage.getItem('fittrack_pwa');
-    if(raw){DB=JSON.parse(raw)}else{DB={}}
-  }catch(e){DB={}}
+function idbSet(val){
+  return new Promise((res,rej)=>{
+    if(!idb){res();return;}
+    let tx=idb.transaction(STORE,'readwrite');
+    tx.objectStore(STORE).put(val,KEY);
+    tx.oncomplete=()=>res();
+    tx.onerror=()=>rej();
+  });
+}
+function idbGet(){
+  return new Promise((res,rej)=>{
+    if(!idb){res(null);return;}
+    let tx=idb.transaction(STORE,'readonly');
+    let req=tx.objectStore(STORE).get(KEY);
+    req.onsuccess=()=>res(req.result||null);
+    req.onerror=()=>rej();
+  });
+}
+async function save(){
+  try{await idbSet(DB)}catch(e){}
+  try{localStorage.setItem('fittrack_pwa',JSON.stringify(DB))}catch(e){}
+}
+async function load(){
+  try{await openIDB()}catch(e){}
+  let data=null;
+  try{data=await idbGet()}catch(e){}
+  if(!data){
+    try{let raw=localStorage.getItem('fittrack_pwa');if(raw)data=JSON.parse(raw)}catch(e){}
+  }
+  DB=data||{};
   initDefaults();
 }
 function initDefaults(){
@@ -633,8 +666,8 @@ function defaultFoods(){return[
 ]}
 
 // ── INIT ──
-window.onload=function(){
-  load();
+window.onload=async function(){
+  await load();
   let sd=document.getElementById('sleep-date');
   if(sd)sd.value=todayStr();
   if(!DB.profile){showSetup()}else{initApp()}
