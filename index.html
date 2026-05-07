@@ -753,15 +753,59 @@ function renderDashboard(){
 }
 function drawMacroPie(prot,gluc,lip){
   let c=document.getElementById('macro-pie');if(!c)return;
-  let ctx=c.getContext('2d');ctx.clearRect(0,0,80,80);
+  let dpr=window.devicePixelRatio||1;
+  let size=80;
+  c.width=size*dpr;c.height=size*dpr;
+  c.style.width=size+'px';c.style.height=size+'px';
+  let ctx=c.getContext('2d');ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,size,size);
+  let cx=size/2,cy=size/2,r=34,ri=20;
   let total=prot*4+gluc*4+lip*9;
-  if(total<1){ctx.beginPath();ctx.arc(40,40,36,0,Math.PI*2);ctx.fillStyle='#22222f';ctx.fill();return}
-  let slices=[{v:prot*4,c:'#378add'},{v:gluc*4,c:'#f59e42'},{v:lip*9,c:'#3dba7a'}],start=-Math.PI/2;
-  slices.forEach(s=>{if(s.v<=0)return;let a=s.v/total*Math.PI*2;ctx.beginPath();ctx.moveTo(40,40);ctx.arc(40,40,36,start,start+a);ctx.closePath();ctx.fillStyle=s.c;ctx.fill();start+=a;});
-  ctx.beginPath();ctx.arc(40,40,22,0,Math.PI*2);ctx.fillStyle='#1a1a24';ctx.fill();
+  if(total<1){
+    ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);
+    let g=ctx.createRadialGradient(cx,cy,ri,cx,cy,r);
+    g.addColorStop(0,'#2a2a3a');g.addColorStop(1,'#1a1a28');
+    ctx.fillStyle=g;ctx.fill();
+    ctx.beginPath();ctx.arc(cx,cy,ri,0,Math.PI*2);ctx.fillStyle='#1a1a24';ctx.fill();
+    return;
+  }
+  let slices=[
+    {v:prot*4,c:'#378add',label:'P'},
+    {v:gluc*4,c:'#f59e42',label:'G'},
+    {v:lip*9,c:'#3dba7a',label:'L'}
+  ];
+  let start=-Math.PI/2;
+  // Ombre douce
+  ctx.save();ctx.shadowColor='rgba(0,0,0,.4)';ctx.shadowBlur=8;
+  slices.forEach(s=>{
+    if(s.v<=0)return;
+    let a=s.v/total*Math.PI*2;
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,start,start+a);ctx.closePath();
+    let g=ctx.createRadialGradient(cx,cy,0,cx,cy,r);
+    g.addColorStop(0,s.c+'cc');g.addColorStop(1,s.c);
+    ctx.fillStyle=g;ctx.fill();
+    start+=a;
+  });
+  ctx.restore();
+  // Trou central avec dégradé
+  ctx.beginPath();ctx.arc(cx,cy,ri,0,Math.PI*2);
+  let gCenter=ctx.createRadialGradient(cx-4,cy-4,2,cx,cy,ri);
+  gCenter.addColorStop(0,'#252535');gCenter.addColorStop(1,'#1a1a24');
+  ctx.fillStyle=gCenter;ctx.fill();
 }
 
-// ── WATER ──
+// ── EAU ──
+function calcWaterNeeds(p){
+  if(!p)return 2000;
+  let base=p.poids*35;
+  // Bonus activité
+  let bonus={1.2:0,1.375:200,1.55:400,1.725:600,1.9:800};
+  base+=bonus[p.activite]||0;
+  // Bonus taille (personnes plus grandes = plus de besoin)
+  if(p.taille>180)base+=200;
+  else if(p.taille<160)base-=100;
+  return Math.round(base/50)*50; // arrondi à 50ml
+}
 function addWater(ml){
   let today=todayStr();if(!DB.water[today])DB.water[today]=0;DB.water[today]+=ml;save();notif(`+${ml}ml 💧`);
   renderDashboard();if(document.getElementById('page-plus').classList.contains('active'))renderHydra();
@@ -969,7 +1013,7 @@ function renderCalWeek(){
     let d=new Date(monday);d.setDate(d.getDate()+i);
     let ds=d.toISOString().split('T')[0],isToday=ds===todayStr();
     let events=DB.planning.filter(e=>e.date===ds);
-    h+=`<div class="cal-day${isToday?' today':''}"><div class="cal-day-num">${days[i]}<br>${d.getDate()}</div>${events.map(e=>`<div class="cal-event${e.type==='event'?' green':''}">${e.name.slice(0,6)}</div>`).join('')}</div>`;
+    h+=`<div class="cal-day${isToday?' today':''}"><div class="cal-day-num">${days[i]}<br>${d.getDate()}</div>${events.map(e=>`<div class="cal-event${e.type==='event'?' green':''}" style="display:flex;align-items:center;justify-content:space-between;gap:2px">${e.name.slice(0,6)}<span onclick="deletePlanItem('${e.id}')" style="cursor:pointer;font-size:.65rem;opacity:.7">✕</span></div>`).join('')}</div>`;
   }
   document.getElementById('cal-week-view').innerHTML=h+'</div>';
 }
@@ -985,9 +1029,13 @@ function renderCalMonth(){
   for(let d=1;d<=daysInMonth;d++){
     let ds=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`,isToday=ds===todayStr();
     let events=DB.planning.filter(e=>e.date===ds);
-    h+=`<div class="cal-day${isToday?' today':''}"><div class="cal-day-num">${d}</div>${events.map(e=>`<div class="cal-event${e.type==='event'?' green':''}">${e.name.slice(0,4)}</div>`).join('')}</div>`;
+    h+=`<div class="cal-day${isToday?' today':''}"><div class="cal-day-num">${d}</div>${events.map(e=>`<div class="cal-event${e.type==='event'?' green':''}" style="display:flex;justify-content:space-between">${e.name.slice(0,4)}<span onclick="deletePlanItem('${e.id}')" style="cursor:pointer">✕</span></div>`).join('')}</div>`;
   }
   document.getElementById('cal-month-view').innerHTML=h+'</div>';
+}
+async function deletePlanItem(id){
+  DB.planning=DB.planning.filter(e=>e.id!==id);
+  await save();renderCalWeek();renderCalMonth();notif('Supprimé ✓');
 }
 function calNav(dir){calWeekOffset+=dir;renderCalWeek()}
 function calNavMonth(dir){calMonthOffset+=dir;renderCalMonth()}
@@ -1068,13 +1116,37 @@ function renderCourseHistory(){
 // ── PROFIL ──
 function renderProfil(){
   let p=DB.profile||{},g=DB.goals||{};
-  ['prenom','age','sexe','taille','poids','activite','objectif'].forEach(k=>{let el=document.getElementById('p-'+k);if(el)el.value=p[k]||''});
-  ['cal','eau','prot','gluc','lip'].forEach(k=>{let el=document.getElementById('p-'+k);if(el)el.value=g[k]||0});
+  let fields={prenom:'p-prenom',age:'p-age',sexe:'p-sexe',taille:'p-taille',poids:'p-poids',activite:'p-activite',objectif:'p-objectif'};
+  Object.entries(fields).forEach(([k,id])=>{let el=document.getElementById(id);if(el&&p[k]!==undefined)el.value=p[k];});
+  let gFields={cal:'p-cal',eau:'p-eau',prot:'p-prot',gluc:'p-gluc',lip:'p-lip'};
+  Object.entries(gFields).forEach(([k,id])=>{let el=document.getElementById(id);if(el&&g[k]!==undefined)el.value=g[k];});
   let pe=document.getElementById('profile-email');if(pe&&currentUser)pe.textContent=currentUser.user?.email||'';
 }
 async function saveProfile(){
-  DB.profile={...DB.profile,prenom:document.getElementById('p-prenom').value,age:parseInt(document.getElementById('p-age').value)||25,sexe:document.getElementById('p-sexe').value,taille:parseInt(document.getElementById('p-taille').value)||170,poids:parseFloat(document.getElementById('p-poids').value)||70,activite:parseFloat(document.getElementById('p-activite').value)||1.55};
-  await save();renderDashboard();notif('Profil sauvegardé ✓');
+  let newPoids=parseFloat(document.getElementById('p-poids').value)||DB.profile?.poids||70;
+  let newActivite=parseFloat(document.getElementById('p-activite').value)||1.55;
+  let newAge=parseInt(document.getElementById('p-age').value)||25;
+  let newSexe=document.getElementById('p-sexe').value;
+  let newTaille=parseInt(document.getElementById('p-taille').value)||170;
+  DB.profile={...DB.profile,
+    prenom:document.getElementById('p-prenom').value,
+    age:newAge,sexe:newSexe,taille:newTaille,
+    poids:newPoids,activite:newActivite
+  };
+  // Recalcul automatique calories, eau, macros selon nouveau poids
+  let bmr=newSexe==='h'?88.36+(13.4*newPoids)+(4.8*newTaille)-(5.7*newAge):447.6+(9.2*newPoids)+(3.1*newTaille)-(4.3*newAge);
+  let tdee=Math.round(bmr*newActivite);
+  let obj=DB.profile.objectif||'maintien';
+  let cal=obj==='masse'?tdee+300:obj==='perte'?tdee-400:tdee;
+  let prot=Math.round(newPoids*2);
+  let lip=Math.round(cal*0.25/9);
+  let gluc=Math.round((cal-prot*4-lip*9)/4);
+  let eau=calcWaterNeeds(DB.profile);
+  DB.goals={...DB.goals,cal,prot,gluc,lip,eau};
+  // Mettre à jour les champs objectifs affichés
+  let gFields={cal:'p-cal',eau:'p-eau',prot:'p-prot',gluc:'p-gluc',lip:'p-lip'};
+  Object.entries(gFields).forEach(([k,id])=>{let el=document.getElementById(id);if(el)el.value=DB.goals[k];});
+  await save();renderDashboard();notif('Profil & objectifs mis à jour ✓');
 }
 async function saveGoals(){
   DB.goals={cal:parseInt(document.getElementById('p-cal').value)||2000,eau:parseInt(document.getElementById('p-eau').value)||2000,prot:parseInt(document.getElementById('p-prot').value)||150,gluc:parseInt(document.getElementById('p-gluc').value)||250,lip:parseInt(document.getElementById('p-lip').value)||70};
