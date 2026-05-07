@@ -765,16 +765,14 @@ async function afterLogin(){
 }
 
 window.onload=async function(){
+  let sd=document.getElementById('sleep-date');if(sd)sd.value=todayStr();
+  setInterval(()=>save(),30000);
   let ok=await restoreSession();
   if(ok){
     document.getElementById('auth-screen').classList.add('hidden');
     await load();
-    let sd=document.getElementById('sleep-date');if(sd)sd.value=todayStr();
     if(!DB.profile){showSetup()}else{initApp()}
-  }else{
-    let sd=document.getElementById('sleep-date');if(sd)sd.value=todayStr();
   }
-  setInterval(()=>save(),30000);
 }
 function todayStr(){return new Date().toISOString().split('T')[0]}
 function showSetup(){document.getElementById('setup').classList.remove('hidden')}
