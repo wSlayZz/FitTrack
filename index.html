@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="FitTrack">
@@ -15,14 +16,12 @@
 body.light{--bg:#f4f4f8;--card:#fff;--el:#eaeaf0;--border:#d0d0e0;--text:#1a1a2e;--muted:#7070a0}
 html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:-apple-system,system-ui,sans-serif}
 .hidden{display:none!important}
-/* FORMS */
 .form-group{margin-bottom:1rem}
 .form-group label{display:block;font-size:.75rem;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em;font-weight:600}
 .form-group input,.form-group select,.form-group textarea{width:100%;background:var(--el);border:1.5px solid var(--border);color:var(--text);padding:12px 14px;border-radius:12px;font-size:1rem;outline:none;-webkit-appearance:none}
 .form-group input:focus,.form-group select:focus{border-color:var(--purple)}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 select option{background:var(--card)}
-/* BUTTONS */
 .btn{padding:14px 20px;border-radius:14px;border:none;cursor:pointer;font-size:1rem;font-weight:600;width:100%;display:block;text-align:center;transition:.15s}
 .btn-primary{background:var(--purple);color:#fff}
 .btn-secondary{background:var(--el);color:var(--text);border:1.5px solid var(--border)}
@@ -30,7 +29,6 @@ select option{background:var(--card)}
 .btn-icon{background:none;border:none;cursor:pointer;color:var(--muted);padding:6px;font-size:1.1rem}
 .btn-danger{background:var(--red)22;color:var(--red);border:1.5px solid var(--red)44}
 .btn:active{transform:scale(.97)}
-/* LAYOUT */
 #app{position:fixed;inset:0;display:flex;flex-direction:column}
 #content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-top:calc(var(--safe-top) + 56px);padding-bottom:calc(var(--safe-bot) + 80px)}
 #topbar{position:fixed;top:0;left:0;right:0;height:calc(var(--safe-top)+56px);padding-top:var(--safe-top);background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;padding-left:1rem;padding-right:1rem;z-index:100;gap:10px}
@@ -40,18 +38,15 @@ select option{background:var(--card)}
 .nav-btn.active{color:var(--purple)}
 .page{display:none;padding:1rem}
 .page.active{display:block}
-/* CARDS */
 .card{background:var(--card);border-radius:16px;padding:1.1rem;border:1px solid var(--border);margin-bottom:12px}
 .card h3{font-size:.9rem;font-weight:600;margin-bottom:.85rem;color:var(--muted)}
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-/* TABS */
 .tabs{display:flex;gap:6px;margin-bottom:1rem;overflow-x:auto;padding-bottom:2px}
 .tabs::-webkit-scrollbar{display:none}
 .tab{padding:8px 16px;border-radius:20px;cursor:pointer;font-size:.85rem;color:var(--muted);border:1.5px solid var(--border);background:none;white-space:nowrap;font-weight:500}
 .tab.active{background:var(--purple);color:#fff;border-color:var(--purple)}
 .tab-content{display:none}
 .tab-content.active{display:block}
-/* MISC */
 .badge-pill{display:inline-block;padding:4px 10px;border-radius:20px;font-size:.75rem;font-weight:600}
 .badge-green{background:var(--green)22;color:var(--green)}
 .badge-purple{background:var(--purple)22;color:var(--purple)}
@@ -73,27 +68,21 @@ select option{background:var(--card)}
 .stars{display:flex;gap:6px}
 .star{font-size:1.6rem;cursor:pointer;opacity:.25}
 .star.active{opacity:1}
-/* MODAL */
 #modal-overlay{position:fixed;inset:0;background:#000b;z-index:500;display:flex;align-items:flex-end;padding-bottom:var(--safe-bot)}
 .modal{background:var(--card);border-radius:24px 24px 0 0;padding:1.5rem;width:100%;max-height:90vh;overflow-y:auto}
 .modal-handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 1.25rem}
 .modal h2{font-size:1.1rem;font-weight:700;margin-bottom:1rem}
-/* TIMER */
 #timer-overlay{position:fixed;inset:0;background:#000c;z-index:600;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1rem}
 .timer-num{font-size:5rem;font-weight:800;color:var(--purple);font-variant-numeric:tabular-nums;line-height:1}
-/* WORKOUT */
 #workout-mode{position:fixed;inset:0;background:var(--bg);z-index:400;overflow-y:auto;padding:calc(var(--safe-top)+1rem) 1rem calc(var(--safe-bot)+1rem)}
 .wm-chrono{font-size:2rem;font-weight:800;color:var(--purple);font-variant-numeric:tabular-nums}
 .exercise-card{background:var(--el);border-radius:14px;padding:1rem;margin-bottom:10px}
 .series-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
 .series-input{background:var(--card);border:1.5px solid var(--border);color:var(--text);padding:8px;border-radius:10px;text-align:center;font-size:1rem;width:70px;-webkit-appearance:none}
-/* NOTIF */
 #notif{position:fixed;top:calc(var(--safe-top)+64px);left:50%;transform:translateX(-50%);background:var(--green);color:#fff;padding:10px 20px;border-radius:20px;font-size:.9rem;z-index:9999;opacity:0;transition:.3s;pointer-events:none;white-space:nowrap}
 #notif.show{opacity:1}
-/* CIRCLES */
 .circle-wrap{display:flex;align-items:center;justify-content:center;position:relative}
 .circle-wrap .val{position:absolute;text-align:center}
-/* CALENDAR */
 .cal-header-row{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:3px;text-align:center;font-size:.7rem;color:var(--muted);font-weight:600}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
 .cal-day{background:var(--el);border-radius:8px;padding:5px 3px;min-height:52px}
@@ -102,47 +91,37 @@ select option{background:var(--card)}
 .cal-day-num{font-size:.7rem;color:var(--muted);margin-bottom:3px;text-align:center}
 .cal-event{background:var(--purple)33;border-radius:4px;padding:2px 3px;font-size:.6rem;color:var(--purple);margin-bottom:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer}
 .cal-event.green{background:var(--green)33;color:var(--green)}
-/* AUTH */
 #auth-screen{position:fixed;inset:0;background:var(--bg);z-index:2000;display:flex;align-items:center;justify-content:center;padding:1.5rem;overflow-y:auto}
 .auth-box{width:100%;max-width:380px}
 .auth-err{background:var(--red)22;border:1px solid var(--red)44;color:var(--red);padding:10px 14px;border-radius:10px;font-size:.9rem;margin-bottom:12px}
 .auth-ok{background:var(--green)22;border:1px solid var(--green)44;color:var(--green);padding:10px 14px;border-radius:10px;font-size:.9rem;margin-bottom:12px;text-align:center}
-/* SETUP */
 #setup{position:fixed;inset:0;background:var(--bg);z-index:1000;overflow-y:auto;padding:calc(var(--safe-top)+2rem) 1.5rem calc(var(--safe-bot)+2rem)}
 .setup-box{max-width:400px;margin:0 auto}
 .setup-logo{font-size:2.5rem;font-weight:800;background:linear-gradient(135deg,var(--purple),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.25rem}
 .step-dot{width:8px;height:8px;border-radius:50%;background:var(--border);transition:.3s;display:inline-block;margin-right:4px}
 .step-dot.active{background:var(--purple);width:24px;border-radius:4px}
-/* SCANNER */
 #scanner-overlay{position:fixed;inset:0;background:#000;z-index:800;display:flex;flex-direction:column}
 #reader{flex:1;width:100%}
 #reader video{width:100%!important;height:100%!important;object-fit:cover}
-/* AI PANEL */
 #ai-panel{position:fixed;inset:0;background:var(--bg);z-index:350;overflow-y:auto;padding:calc(var(--safe-top)+1rem) 1rem calc(var(--safe-bot)+1rem)}
-/* XP */
 .xp-bar-wrap{background:var(--el);border-radius:20px;height:14px;overflow:hidden;position:relative}
 .xp-bar-fill{height:100%;border-radius:20px;transition:width .5s;background:linear-gradient(90deg,var(--purple),var(--blue))}
 .xp-bar-text{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:#fff}
 .avatar-ring{width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.8rem;position:relative;flex-shrink:0;background:var(--el)}
 .avatar-level{position:absolute;bottom:-4px;right:-4px;background:var(--purple);color:#fff;border-radius:20px;font-size:.6rem;font-weight:800;padding:2px 5px;border:2px solid var(--bg)}
-/* BADGES */
 .badge-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .badge-item{background:var(--el);border-radius:12px;padding:8px;text-align:center;border:1.5px solid var(--border)}
 .badge-item.earned{border-color:var(--purple);background:var(--purple)15}
 .badge-icon{font-size:1.6rem;opacity:.3}
 .badge-item.earned .badge-icon{opacity:1}
-/* SQUAD */
 .squad-member{background:var(--el);border-radius:14px;padding:1rem;margin-bottom:10px}
 .ring-wrap{position:relative;width:56px;height:56px}
 .ring-emoji{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.3rem}
-/* COURSES */
 .courses-item{display:flex;align-items:center;gap:10px;padding:10px;background:var(--el);border-radius:12px;margin-bottom:8px}
 .courses-check{width:22px;height:22px;border-radius:50%;border:2px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .courses-check.done{background:var(--green);border-color:var(--green);color:#fff}
-/* SCORE */
 .score-bar{height:10px;background:var(--el);border-radius:5px;overflow:hidden;margin-top:6px}
 .score-fill{height:100%;border-radius:5px;transition:width .5s}
-/* CHECKIN */
 #checkin-banner{background:linear-gradient(135deg,var(--purple),var(--blue));border-radius:14px;padding:1rem;margin-bottom:12px;color:#fff}
 </style>
 </head>
@@ -239,7 +218,6 @@ select option{background:var(--card)}
         <div><div id="dash-greeting" style="font-size:1.2rem;font-weight:700"></div><div id="dash-date" class="text-muted text-sm"></div></div>
         <div id="dash-badge"></div>
       </div>
-      <!-- Avatar XP -->
       <div class="card mb-12">
         <div class="flex items-center gap-12">
           <div class="avatar-ring"><span id="avatar-emoji">🏋️</span><div class="avatar-level" id="avatar-level">1</div></div>
@@ -250,7 +228,6 @@ select option{background:var(--card)}
           </div>
         </div>
       </div>
-      <!-- Calories -->
       <div class="card">
         <div class="flex items-center gap-12">
           <canvas id="macro-pie" width="80" height="80" style="flex-shrink:0"></canvas>
@@ -266,7 +243,6 @@ select option{background:var(--card)}
           </div>
         </div>
       </div>
-      <!-- Eau -->
       <div class="card">
         <div class="flex items-center gap-12">
           <div class="circle-wrap" style="flex-shrink:0">
@@ -575,17 +551,16 @@ function refreshSession() {
 }
 
 // ══════════════════════════════════════════
-// DATABASE — SAVE & LOAD ROBUSTES
+// DATABASE — SAVE & LOAD
 // ══════════════════════════════════════════
 function save() {
   if (!currentUser || !currentUser.user || !currentUser.user.id) return Promise.resolve();
   if (isSaving) return Promise.resolve();
   isSaving = true;
-  // Backup local immédiat
   try { localStorage.setItem('ft_backup_' + currentUser.user.id, JSON.stringify(DB)); } catch(e) {}
   return supaFetch('/rest/v1/fittrack_data', {
     method: 'POST',
-    headers: { 'Prefer': 'return=minimal,resolution=merge-duplicates' },
+    headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
     body: JSON.stringify({ user_id: currentUser.user.id, data: DB, updated_at: new Date().toISOString() })
   }).then(function(r) {
     isSaving = false;
@@ -601,19 +576,26 @@ function load() {
   if (!currentUser || !currentUser.user || !currentUser.user.id) return Promise.resolve();
   var uid = currentUser.user.id;
   return supaFetch('/rest/v1/fittrack_data?user_id=eq.' + uid + '&select=data&limit=1')
-    .then(function(r) { return r.json(); })
+    .then(function(r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
     .then(function(rows) {
-      if (Array.isArray(rows) && rows.length > 0 && rows[0] && rows[0].data && Object.keys(rows[0].data).length > 0) {
-        DB = rows[0].data;
-        // Mettre à jour le backup local
-        try { localStorage.setItem('ft_backup_' + uid, JSON.stringify(DB)); } catch(e) {}
-      } else {
-        // Essayer le backup local
-        loadFromBackup(uid);
+      console.log('Supabase load result:', rows);
+      if (Array.isArray(rows) && rows.length > 0 && rows[0] && rows[0].data) {
+        var d = rows[0].data;
+        if (Object.keys(d).length > 0) {
+          DB = d;
+          try { localStorage.setItem('ft_backup_' + uid, JSON.stringify(DB)); } catch(e) {}
+          console.log('Loaded from Supabase OK');
+          return;
+        }
       }
+      console.log('Supabase empty, trying backup...');
+      loadFromBackup(uid);
     })
     .catch(function(e) {
-      console.error('Load error', e);
+      console.error('Load error:', e);
       loadFromBackup(uid);
     });
 }
@@ -625,7 +607,8 @@ function loadFromBackup(uid) {
       var parsed = JSON.parse(backup);
       if (parsed && Object.keys(parsed).length > 0) {
         DB = parsed;
-        save(); // Resync vers Supabase
+        console.log('Loaded from localStorage backup');
+        save();
         return;
       }
     }
@@ -633,19 +616,20 @@ function loadFromBackup(uid) {
   DB = {};
 }
 
+// initDefaults ne touche QUE les clés absentes — ne jamais écraser les données existantes
 function initDefaults() {
-  if (!DB.goals) DB.goals = { cal: 2000, eau: 2000, prot: 150, gluc: 250, lip: 70 };
-  if (!DB.foods) DB.foods = defaultFoods();
-  if (!DB.recipes) DB.recipes = [];
-  if (!DB.sessions) DB.sessions = [];
-  if (!DB.journal) DB.journal = {};
-  if (!DB.water) DB.water = {};
-  if (!DB.sleep) DB.sleep = [];
-  if (!DB.weight) DB.weight = [];
-  if (!DB.planning) DB.planning = [];
+  if (!DB.goals)          DB.goals = { cal: 2000, eau: 2000, prot: 150, gluc: 250, lip: 70 };
+  if (!DB.foods)          DB.foods = defaultFoods();
+  if (!DB.recipes)        DB.recipes = [];
+  if (!DB.sessions)       DB.sessions = [];
+  if (!DB.journal)        DB.journal = {};
+  if (!DB.water)          DB.water = {};
+  if (!DB.sleep)          DB.sleep = [];
+  if (!DB.weight)         DB.weight = [];
+  if (!DB.planning)       DB.planning = [];
   if (!DB.workoutHistory) DB.workoutHistory = [];
-  if (!DB.courses) DB.courses = [];
-  if (!DB.gamification) DB.gamification = { xp: 0, badges: [], streak: 0, lastJournalDate: '', lastCheckin: '' };
+  if (!DB.courses)        DB.courses = [];
+  if (!DB.gamification)   DB.gamification = { xp: 0, badges: [], streak: 0, lastJournalDate: '', lastCheckin: '' };
 }
 
 function defaultFoods() {
@@ -676,7 +660,7 @@ function calcBMR(p) { return p.sexe==='h' ? 88.36+(13.4*p.poids)+(4.8*p.taille)-
 function calcWater(p) { var b=p.poids*35,bn={'1.2':0,'1.375':200,'1.55':400,'1.725':600,'1.9':800};b+=bn[String(p.activite)]||0;if(p.taille>180)b+=200;else if(p.taille<160)b-=100;return Math.round(b/50)*50; }
 
 // ══════════════════════════════════════════
-// INIT
+// INIT — load() AVANT initDefaults()
 // ══════════════════════════════════════════
 window.onload = function() {
   var sleepDateEl = document.getElementById('sleep-date');
@@ -685,12 +669,12 @@ window.onload = function() {
   setInterval(function() { save(); }, 30000);
 
   refreshSession().then(function(ok) {
-    if (!ok) return; // Rester sur écran auth
+    if (!ok) return Promise.resolve(null); // rester sur écran auth
     document.getElementById('auth-screen').classList.add('hidden');
-    return load();
+    return load(); // ← attendre load() avant tout
   }).then(function() {
     if (!currentUser) return;
-    initDefaults();
+    initDefaults(); // ← appelé APRÈS load(), ne touche que les clés manquantes
     if (!DB.profile) {
       document.getElementById('setup').classList.remove('hidden');
     } else {
@@ -734,6 +718,7 @@ function authTab(mode) {
   document.getElementById('auth-error').classList.add('hidden');
   document.getElementById('auth-success').classList.add('hidden');
 }
+
 function authSubmit() {
   var email = document.getElementById('auth-email').value.trim();
   var pass = document.getElementById('auth-password').value;
@@ -753,9 +738,9 @@ function authSubmit() {
   } else {
     authSignIn(email, pass).then(function() {
       document.getElementById('auth-screen').classList.add('hidden');
-      return load();
+      return load(); // ← load() d'abord
     }).then(function() {
-      initDefaults();
+      initDefaults(); // ← ensuite initDefaults()
       if (!DB.profile) {
         document.getElementById('setup').classList.remove('hidden');
       } else {
@@ -896,10 +881,7 @@ function renderAvatarXP() {
   var g=DB.gamification||{xp:0,badges:[],streak:0};
   var lvl=getLvl(g.xp||0);
   var p=DB.profile||{};
-  var els={
-    'avatar-emoji':lvl.emoji,'avatar-level':lvl.level,'avatar-name':p.prenom||'',
-    'avatar-title':lvl.title,'b-emoji':lvl.emoji,'b-level':lvl.level,'b-name':p.prenom||'','b-title':lvl.title
-  };
+  var els={'avatar-emoji':lvl.emoji,'avatar-level':lvl.level,'avatar-name':p.prenom||'','avatar-title':lvl.title,'b-emoji':lvl.emoji,'b-level':lvl.level,'b-name':p.prenom||'','b-title':lvl.title};
   Object.keys(els).forEach(function(id){var el=document.getElementById(id);if(el)el.textContent=els[id];});
   var xpBar=document.getElementById('xp-bar');if(xpBar)xpBar.style.width=lvl.pct+'%';
   var xpText=document.getElementById('xp-text');if(xpText)xpText.textContent=(g.xp||0)+' XP';
@@ -922,7 +904,7 @@ function renderBadges() {
 function runCheckin() {
   if(!DB.profile||!DB.gamification) return;
   var today=todayStr(), now=new Date();
-  if(now.getDay()!==1) return; // Lundi seulement
+  if(now.getDay()!==1) return;
   if(DB.gamification.lastCheckin===today) return;
   DB.gamification.lastCheckin=today;
   var last7=last7Days();
@@ -1082,7 +1064,7 @@ function openCopyDayModal() {
 
 function copyDay(fromDate) {
   var today=todayStr();if(!DB.journal[today])DB.journal[today]=[];
-  DB.journal[today]=DB.journal[today].concat((DB.journal[fromDate]||[]).map(function(f){return Object.assign({},f,{id:Date.now()+Math.random()+''}); }));
+  DB.journal[today]=DB.journal[today].concat((DB.journal[fromDate]||[]).map(function(f){return Object.assign({},f,{id:Date.now()+Math.random()+''});}));
   save();closeModal();renderJournal();renderDashboard();notif('Journal copié ✓');
 }
 
@@ -1184,7 +1166,6 @@ function addRecipeToCourses(id) {
   save();notif('Ingrédients ajoutés aux courses');
 }
 
-// Import recette IA
 function openImportModal() {
   document.getElementById('modal-content').innerHTML='<h2>🔗 Importer une recette</h2><div class="text-muted text-sm mb-12">URL d\'une page de recette</div><div class="form-group"><label>URL</label><input type="url" id="import-url" placeholder="https://www.marmiton.org/..." style="background:var(--el);border:1.5px solid var(--border);color:var(--text);padding:12px;border-radius:12px;width:100%;font-size:1rem"></div><div id="import-status" class="hidden text-muted text-sm" style="text-align:center;padding:.5rem">🤖 Analyse...</div><div class="flex gap-8 mt-12"><button class="btn btn-secondary" style="flex:.4" onclick="closeModal()">Annuler</button><button class="btn btn-primary" style="flex:1" onclick="importRecette()">Importer</button></div>';
   showModal();
@@ -1503,7 +1484,7 @@ function updateSquadStats(){
   var waterPct=Math.min(100,Math.round((DB.water[today]||0)/DB.goals.eau*100));
   var sportToday=DB.workoutHistory.some(function(w){return w.date===today;});
   var lvl=getLvl((DB.gamification&&DB.gamification.xp)||0);
-  supaFetch('/rest/v1/squad_stats',{method:'POST',headers:{'Prefer':'return=minimal,resolution=merge-duplicates'},body:JSON.stringify({user_id:currentUser.user.id,display_name:DB.profile.prenom||'?',cal_pct:calPct,water_pct:waterPct,sport_today:sportToday,streak:(DB.gamification&&DB.gamification.streak)||0,level:lvl.level,xp:(DB.gamification&&DB.gamification.xp)||0,updated_at:new Date().toISOString()})}).catch(function(){});
+  supaFetch('/rest/v1/squad_stats',{method:'POST',headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({user_id:currentUser.user.id,display_name:DB.profile.prenom||'?',cal_pct:calPct,water_pct:waterPct,sport_today:sportToday,streak:(DB.gamification&&DB.gamification.streak)||0,level:lvl.level,xp:(DB.gamification&&DB.gamification.xp)||0,updated_at:new Date().toISOString()})}).catch(function(){});
 }
 function renderEscouade(){
   var el=document.getElementById('squad-content');if(!el)return;
