@@ -940,7 +940,29 @@ window.onload=function(){
   applyTheme();
   setInterval(function(){dbSave();},30000);
   restoreSession().then(function(ok){
-    if(ok){document.getElementById('auth-screen').classList.add('hidden');dbLoad().then(function(){initDefaults();if(!DB.profile)showSetup();else initApp();});}
+    if(ok){
+      document.getElementById('auth-screen').classList.add('hidden');
+      return dbLoad();
+    }
+    return Promise.resolve();
+  }).then(function(){
+    if(currentUser){
+      initDefaults();
+      if(!DB.profile)showSetup();
+      else initApp();
+    }
+  }).catch(function(e){
+    console.error('Init error:',e);
+    // Fallback localStorage
+    try{
+      var backup=localStorage.getItem('fittrack_backup');
+      if(backup)DB=JSON.parse(backup)||{};
+    }catch(e2){}
+    initDefaults();
+    if(currentUser){
+      if(!DB.profile)showSetup();
+      else initApp();
+    }
   });
 };
 
@@ -972,7 +994,15 @@ function authSubmit(){
     if(pass!==conf){errEl.textContent='Mots de passe différents';errEl.classList.remove('hidden');done();return;}
     signUp(email,pass).then(function(){okEl.textContent='Compte créé ! Connectez-vous.';okEl.classList.remove('hidden');authTab('login');done();}).catch(function(e){errEl.textContent=e.message;errEl.classList.remove('hidden');done();});
   }else{
-    signIn(email,pass).then(function(){document.getElementById('auth-screen').classList.add('hidden');dbLoad().then(function(){initDefaults();if(!DB.profile)showSetup();else initApp();});done();}).catch(function(e){errEl.textContent=e.message;errEl.classList.remove('hidden');done();});
+    signIn(email,pass).then(function(){
+      document.getElementById('auth-screen').classList.add('hidden');
+      return dbLoad();
+    }).then(function(){
+      initDefaults();
+      if(!DB.profile)showSetup();
+      else initApp();
+      done();
+    }).catch(function(e){errEl.textContent=e.message;errEl.classList.remove('hidden');done();});
   }
 }
 
