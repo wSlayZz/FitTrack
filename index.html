@@ -590,11 +590,6 @@ select option{background:var(--card)}
       <!-- PROFIL -->
       <div id="plus-tab-profil" class="tab-content">
         <div class="card">
-          <h3>Diagnostic</h3>
-          <button class="btn btn-secondary mb-8" onclick="testLoad()">🔍 Tester le chargement</button>
-          <div id="diag-result" class="text-xs text-muted" style="word-break:break-all"></div>
-        </div>
-        <div class="card">
           <h3>Compte</h3>
           <div class="text-sm text-muted mb-12" id="profile-email"></div>
           <button class="btn btn-secondary mb-8" onclick="signOut()">Se déconnecter</button>
@@ -853,59 +848,56 @@ function signIn(e,p){return supaFetch('/auth/v1/token?grant_type=password',{meth
 function signOut(){supaFetch('/auth/v1/logout',{method:'POST'}).catch(function(){});currentUser=null;localStorage.removeItem('fittrack_session');location.reload();}
 function restoreSession(){
   try{
-    var s=localStorage.getItem('fittrack_session');if(!s)return Promise.resolve(false);
-    var session=JSON.parse(s);if(!session.refresh_token)return Promise.resolve(false);
-    return supaFetch('/auth/v1/token?grant_type=refresh_token',{method:'POST',body:JSON.stringify({refresh_token:session.refresh_token})}).then(function(r){return r.json();}).then(function(d){if(!d.access_token)return false;currentUser=d;localStorage.setItem('fittrack_session',JSON.stringify(d));return true;}).catch(function(){return false;});
+    var s=localStorage.getItem('fittrack_session');
+    if(!s)return Promise.resolve(false);
+    var session=JSON.parse(s);
+    if(!session.refresh_token)return Promise.resolve(false);
+    return supaFetch('/auth/v1/token?grant_type=refresh_token',{
+      method:'POST',
+      body:JSON.stringify({refresh_token:session.refresh_token})
+    }).then(function(r){return r.json();}).then(function(d){
+      if(!d.access_token)return false;
+      currentUser=d;
+      localStorage.setItem('fittrack_session',JSON.stringify(d));
+      return true;
+    }).catch(function(e){
+      console.error('restoreSession error:',e);
+      return false;
+    });
   }catch(e){return Promise.resolve(false);}
-}
-function dbSave(){
-  if(!currentUser||!currentUser.user||!currentUser.user.id)return Promise.resolve();
-  updateSquadStats();
-  // Sauvegarde aussi en localStorage comme backup
-  try{localStorage.setItem('fittrack_backup',JSON.stringify(DB));}catch(e){}
-  var payload={user_id:currentUser.user.id,data:DB,updated_at:new Date().toISOString()};
-  return supaFetch('/rest/v1/fittrack_data',{
-    method:'POST',
-    headers:{'Prefer':'return=minimal,resolution=merge-duplicates'},
-    body:JSON.stringify(payload)
-  }).then(function(r){
-    if(!r.ok){r.text().then(function(t){console.error('Save failed:',r.status,t);});}
-    return r;
-  }).catch(function(e){console.error('Save exception:',e);});
 }
 function dbLoad(){
   if(!currentUser||!currentUser.user||!currentUser.user.id)return Promise.resolve();
-  return supaFetch('/rest/v1/fittrack_data?user_id=eq.'+currentUser.user.id+'&select=data&limit=1')
+  var uid=currentUser.user.id;
+  return supaFetch('/rest/v1/fittrack_data?user_id=eq.'+uid+'&select=data&limit=1')
     .then(function(r){
+      if(r.status===401){
+        // Token expiré — essayer de rafraîchir
+        return restoreSession().then(function(ok){
+          if(!ok)return;
+          return supaFetch('/rest/v1/fittrack_data?user_id=eq.'+uid+'&select=data&limit=1')
+            .then(function(r2){return r2.json();});
+        });
+      }
       if(!r.ok)throw new Error('HTTP '+r.status);
       return r.json();
     })
     .then(function(rows){
-      if(Array.isArray(rows)&&rows.length>0&&rows[0]&&rows[0].data&&Object.keys(rows[0].data).length>0){
+      if(rows&&Array.isArray(rows)&&rows.length>0&&rows[0]&&rows[0].data&&Object.keys(rows[0].data).length>0){
         DB=rows[0].data;
+        try{localStorage.setItem('fittrack_backup',JSON.stringify(DB));}catch(e){}
       }else{
         // Fallback localStorage
         try{
           var backup=localStorage.getItem('fittrack_backup');
-          if(backup){
-            var parsed=JSON.parse(backup);
-            if(parsed&&Object.keys(parsed).length>0){
-              DB=parsed;
-              // Resauvegarder dans Supabase
-              dbSave();
-            }else DB={};
-          }else DB={};
-        }catch(e){DB={};}
+          if(backup){var parsed=JSON.parse(backup);if(parsed&&Object.keys(parsed).length>0){DB=parsed;dbSave();return;}}
+        }catch(e){}
+        DB={};
       }
     })
     .catch(function(e){
       console.error('Load error:',e);
-      // Fallback localStorage
-      try{
-        var backup=localStorage.getItem('fittrack_backup');
-        if(backup)DB=JSON.parse(backup)||{};
-        else DB={};
-      }catch(e2){DB={};}
+      try{var b=localStorage.getItem('fittrack_backup');if(b)DB=JSON.parse(b)||{};}catch(e2){}
     });
 }
 function initDefaults(){
