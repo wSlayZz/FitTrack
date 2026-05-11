@@ -590,6 +590,11 @@ select option{background:var(--card)}
       <!-- PROFIL -->
       <div id="plus-tab-profil" class="tab-content">
         <div class="card">
+          <h3>Diagnostic</h3>
+          <button class="btn btn-secondary mb-8" onclick="testLoad()">🔍 Tester le chargement</button>
+          <div id="diag-result" class="text-xs text-muted" style="word-break:break-all"></div>
+        </div>
+        <div class="card">
           <h3>Compte</h3>
           <div class="text-sm text-muted mb-12" id="profile-email"></div>
           <button class="btn btn-secondary mb-8" onclick="signOut()">Se déconnecter</button>
