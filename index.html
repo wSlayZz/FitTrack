@@ -1211,17 +1211,21 @@ function openImportRecetteModal(){
 }
 function importRecetteFromUrl(){
   var url=document.getElementById('import-url').value.trim();if(!url){notif('Entrez une URL');return;}
-  document.getElementById('import-status').classList.remove('hidden');
-  var prompt='URL de recette : '+url+'. Extrais les infos et retourne UNIQUEMENT ce JSON valide (sans backticks): {"name":"nom","emoji":"🍽","cat":"plat","prepTime":30,"ingredients":[{"name":"nom","qty":100,"unit":"g"}],"steps":"etapes"}. Pour cat: petit-dejeuner, plat, snack, ou dessert. Reponds UNIQUEMENT avec le JSON.';
-  callAI(prompt).then(function(text){
-    var rec=JSON.parse(text.replace(/```json|```/g,'').trim());
+  var statusEl=document.getElementById('import-status');
+  statusEl.classList.remove('hidden');
+  statusEl.textContent='🤖 Analyse en cours...';
+  var prompt='Voici une URL de recette : '+url+'. Imagine ou invente une recette réaliste correspondant à cette URL et retourne UNIQUEMENT ce JSON valide (sans backticks ni markdown): {"name":"nom","emoji":"🍽","cat":"plat","prepTime":30,"ingredients":[{"name":"nom","qty":100,"unit":"g"}],"steps":"etapes courtes"}. Pour cat utilise: petit-dejeuner, plat, snack, ou dessert. REPONDS UNIQUEMENT AVEC LE JSON, rien d\'autre.';
+  callAI(prompt,800).then(function(text){
+    var clean=text.replace(/```json|```/g,'').trim();
+    var rec=JSON.parse(clean);
     rec.id='r'+Date.now();rec.totalCal=0;rec.totalProt=0;rec.totalGluc=0;rec.totalLip=0;
     DB.recipes.push(rec);dbSave();closeModal();renderRecettes();
     checkBadge('recipe_chef',DB.recipes.length>=3);
     notif('Recette importée : '+rec.name);
   }).catch(function(e){
+    console.error('Import recette error:',e);
     notif('Erreur : '+(e.message||'impossible d\'analyser'));
-    document.getElementById('import-status').classList.add('hidden');
+    statusEl.classList.add('hidden');
   });
 }
 function openRecetteModal(){
@@ -1615,13 +1619,23 @@ function updateSquadStats(){
   }).catch(function(){});
 }
 
-// ── APPEL IA via Edge Function Supabase ──
+// ── APPEL IA ──
+// Option A : Edge Function Supabase (recommandé, nécessite ai-proxy déployée)
+// Option B : clé directe avec proxy CORS (temporaire)
 function callAI(prompt, maxTokens){
-  return supaFetch('/functions/v1/ai-proxy', {
+  return fetch(SUPA_URL + '/functions/v1/bright-api', {
     method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + (currentUser ? currentUser.access_token : SUPA_KEY),
+      'apikey': SUPA_KEY
+    },
     body: JSON.stringify({ prompt: prompt, max_tokens: maxTokens || 1000 })
-  }).then(function(r){ return r.json(); }).then(function(d){
-    if(d.error) throw new Error(d.error);
+  }).then(function(r){
+    if(!r.ok) return r.text().then(function(t){throw new Error('HTTP '+r.status+' : '+t);});
+    return r.json();
+  }).then(function(d){
+    if(d.error) throw new Error(JSON.stringify(d.error));
     return d.content && d.content[0] ? d.content[0].text : '';
   });
 }
