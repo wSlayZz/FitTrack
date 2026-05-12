@@ -670,10 +670,20 @@ function dbSave(){
   if(!currentUser||!currentUser.user||!currentUser.user.id)return Promise.resolve();
   var uid=currentUser.user.id;
   try{localStorage.setItem('fittrack_backup',JSON.stringify(DB));}catch(e){}
-  return supaFetch('/rest/v1/fittrack_data',{
-    method:'POST',
-    headers:{'Prefer':'return=minimal,resolution=merge-duplicates'},
-    body:JSON.stringify({user_id:uid,data:DB,updated_at:new Date().toISOString()})
+  return supaFetch('/rest/v1/fittrack_data?user_id=eq.'+uid,{
+    method:'PATCH',
+    headers:{'Prefer':'return=minimal'},
+    body:JSON.stringify({data:DB,updated_at:new Date().toISOString()})
+  }).then(function(r){
+    if(r.status===404||r.status===0){
+      // Ligne inexistante : on insère
+      return supaFetch('/rest/v1/fittrack_data',{
+        method:'POST',
+        headers:{'Prefer':'return=minimal'},
+        body:JSON.stringify({user_id:uid,data:DB,updated_at:new Date().toISOString()})
+      });
+    }
+    return r;
   }).catch(function(e){console.error('Save error:',e);});
 }
 
