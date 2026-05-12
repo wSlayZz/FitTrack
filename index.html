@@ -1645,8 +1645,16 @@ function callAI(prompt, maxTokens){
     if(!r.ok) return r.text().then(function(t){throw new Error('HTTP '+r.status+' : '+t);});
     return r.json();
   }).then(function(d){
+    console.log('Réponse IA brute:', JSON.stringify(d));
     if(d.error) throw new Error(JSON.stringify(d.error));
-    return d.content && d.content[0] ? d.content[0].text : '';
+    // Chercher le texte dans tous les formats possibles
+    var text = '';
+    if(d.content && d.content[0] && d.content[0].text) text = d.content[0].text;
+    else if(d.candidates && d.candidates[0]) text = d.candidates[0]?.content?.parts?.[0]?.text || '';
+    else if(typeof d.text === 'string') text = d.text;
+    console.log('Texte extrait:', text);
+    if(!text) throw new Error('Réponse vide du modèle');
+    return text;
   });
 }
 function closeAI(){document.getElementById('ai-panel').classList.add('hidden');}
