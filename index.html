@@ -24,7 +24,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .step-dot.active{background:var(--purple);width:24px;border-radius:4px}
 .form-group{margin-bottom:1rem}
 .form-group label{display:block;font-size:.75rem;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;font-weight:600}
-.form-group input,.form-group select,.form-group textarea{width:100%;background:var(--el);border:1.5px solid var(--border);color:var(--text);padding:12px 14px;border-radius:12px;font-size:1rem;outline:none;-webkit-appearance:none;transition:.2s}
+.form-group input,.form-group select{width:100%;background:var(--el);border:1.5px solid var(--border);color:var(--text);padding:12px 14px;border-radius:12px;font-size:1rem;outline:none;-webkit-appearance:none;transition:.2s}
 .form-group input:focus,.form-group select:focus{border-color:var(--purple)}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 select option{background:var(--card)}
@@ -38,7 +38,6 @@ select option{background:var(--card)}
 #app{position:fixed;inset:0;display:flex;flex-direction:column}
 #content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-top:calc(var(--safe-top) + 56px);padding-bottom:calc(var(--safe-bot) + 80px)}
 #topbar{position:fixed;top:0;left:0;right:0;height:calc(var(--safe-top)+56px);padding-top:var(--safe-top);background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;padding-left:1rem;padding-right:1rem;z-index:100;gap:10px}
-#topbar-title{font-size:1.1rem;font-weight:700;flex:1}
 #bottomnav{position:fixed;bottom:0;left:0;right:0;height:calc(var(--safe-bot)+60px);padding-bottom:var(--safe-bot);background:var(--card);border-top:1px solid var(--border);display:grid;grid-template-columns:repeat(5,1fr);z-index:100}
 .nav-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;background:none;border:none;color:var(--muted);font-size:.6rem;padding:4px 2px;transition:.15s}
 .nav-btn svg{width:20px;height:20px;stroke-width:1.8}
@@ -105,8 +104,6 @@ select option{background:var(--card)}
 .score-bar{height:10px;background:var(--el);border-radius:5px;overflow:hidden;margin-top:6px}
 .score-fill{height:100%;border-radius:5px;transition:width .5s}
 #ai-panel{position:fixed;inset:0;background:var(--bg);z-index:350;overflow-y:auto;padding:calc(var(--safe-top)+1rem) 1rem calc(var(--safe-bot)+1rem)}
-.ai-loading{text-align:center;padding:3rem 1rem;color:var(--muted)}
-.ai-loading div{font-size:2rem;margin-bottom:1rem}
 #scanner-overlay{position:fixed;inset:0;background:#000;z-index:800;display:flex;flex-direction:column}
 #scanner-header{display:flex;align-items:center;justify-content:space-between;padding:calc(var(--safe-top)+1rem) 1rem 1rem;background:#000}
 #reader{flex:1;width:100%}
@@ -162,7 +159,7 @@ select option{background:var(--card)}
 </div>
 <div id="ai-panel" class="hidden">
   <div class="flex items-center justify-between mb-16">
-    <div><div style="font-size:1.1rem;font-weight:700" id="ai-panel-title">Coach IA</div><div class="text-muted text-xs" id="ai-panel-sub"></div></div>
+    <div><div style="font-size:1.1rem;font-weight:700" id="ai-panel-title"></div><div class="text-muted text-xs" id="ai-panel-sub"></div></div>
     <button class="btn btn-secondary btn-sm" onclick="closeAI()">✕ Fermer</button>
   </div>
   <div id="ai-content"></div>
@@ -253,11 +250,9 @@ select option{background:var(--card)}
       </div>
       <div class="card mb-12">
         <div class="flex items-center gap-12">
-          <div>
-            <div class="avatar-ring" id="avatar-ring" style="background:var(--el)">
-              <span id="avatar-emoji">🏋️</span>
-              <div class="avatar-level" id="avatar-level">1</div>
-            </div>
+          <div class="avatar-ring" id="avatar-ring" style="background:var(--el)">
+            <span id="avatar-emoji">🏋️</span>
+            <div class="avatar-level" id="avatar-level">1</div>
           </div>
           <div style="flex:1">
             <div class="flex justify-between items-center mb-4">
@@ -314,8 +309,9 @@ select option{background:var(--card)}
         <div class="card"><h3>Aujourd'hui</h3><div id="dash-sessions"></div></div>
       </div>
       <div class="tip-box mb-12" id="dash-tip"></div>
-      <div class="mb-12">
-        <button class="btn btn-primary" onclick="openAI('suggestions')" style="background:linear-gradient(135deg,#7c6cf7,#378add)">🍽️ Suggestions IA</button>
+      <div class="grid-2 mb-12">
+        <button class="btn btn-primary" onclick="openAI('suggestions')" style="background:linear-gradient(135deg,#7c6cf7,#378add)">🍽️ Suggestions repas</button>
+        <button class="btn btn-primary" onclick="openAI('analyse')" style="background:linear-gradient(135deg,#3dba7a,#378add)">📊 Analyse semaine</button>
       </div>
       <div class="card" id="dash-week-summary"></div>
     </div>
@@ -378,9 +374,7 @@ select option{background:var(--card)}
       <div id="nutri-tab-recettes" class="tab-content">
         <div class="flex justify-between items-center mb-12">
           <span class="text-muted text-sm" id="recettes-count"></span>
-          <div class="flex gap-8">
-            <button class="btn btn-primary btn-sm" onclick="openRecetteModal()">+ Recette</button>
-          </div>
+          <button class="btn btn-primary btn-sm" onclick="openRecetteModal()">+ Recette</button>
         </div>
         <div id="recettes-list"></div>
       </div>
@@ -426,7 +420,7 @@ select option{background:var(--card)}
           </div>
           <div class="form-row">
             <div class="form-group"><label>Durée (min)</label><input type="number" id="course-dur" placeholder="30" inputmode="numeric"></div>
-            <div class="form-group"><label>Zone FC</label><select id="course-fc"><option value="z1">Z1</option><option value="z2">Z2</option><option value="z3">Z3</option><option value="z4">Z4</option><option value="z5">Z5</option></select></div>
+            <div class="form-group"><label>Zone FC</label><select id="course-fc"><option>Z1</option><option>Z2</option><option>Z3</option><option>Z4</option><option>Z5</option></select></div>
           </div>
         </div>
         <button class="btn btn-primary mt-12" onclick="saveNewSession()">Sauvegarder</button>
@@ -543,16 +537,13 @@ select option{background:var(--card)}
           <div id="course-history"></div>
         </div>
         <div id="prog2-tab-forme" class="tab-content">
-          <div class="mb-12">
-            <button class="btn btn-primary btn-sm" onclick="openAI('analyse')" style="background:linear-gradient(135deg,#3dba7a,#378add)">📊 Analyse IA</button>
-          </div>
           <div id="forme-content"></div>
         </div>
       </div>
       <div id="plus-tab-badges" class="tab-content">
         <div class="card mb-12">
           <div class="flex items-center gap-12 mb-12">
-            <div class="avatar-ring" id="badges-avatar" style="background:var(--el);width:80px;height:80px;font-size:2.5rem">
+            <div class="avatar-ring" style="background:var(--el);width:80px;height:80px;font-size:2.5rem">
               <span id="badges-avatar-emoji">🏋️</span>
               <div class="avatar-level" id="badges-level" style="font-size:.75rem;padding:3px 8px">1</div>
             </div>
@@ -566,10 +557,7 @@ select option{background:var(--card)}
             </div>
           </div>
         </div>
-        <div class="card">
-          <h3>Badges obtenus</h3>
-          <div class="badge-grid" id="badges-grid"></div>
-        </div>
+        <div class="card"><h3>Badges obtenus</h3><div class="badge-grid" id="badges-grid"></div></div>
       </div>
       <div id="plus-tab-escouade" class="tab-content">
         <div id="squad-content"></div>
@@ -623,7 +611,6 @@ select option{background:var(--card)}
         <div class="card"><h3>Danger</h3><button class="btn btn-danger btn-sm" onclick="resetAllData()">Réinitialiser toutes les données</button></div>
       </div>
     </div>
-
   </div>
   <nav id="bottomnav">
     <button class="nav-btn active" onclick="nav('dashboard')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Accueil</button>
@@ -636,23 +623,14 @@ select option{background:var(--card)}
 
 <script>
 var SUPA_URL='https://yvkcoyofnllawjfvlthz.supabase.co';
-// Bloquer tout appel direct à Anthropic (debug)
-var _origFetch=window.fetch;
-window.fetch=function(url){
-  if(typeof url==='string'&&url.indexOf('anthropic.com')>=0){
-    console.error('APPEL ANTHROPIC DIRECT DETECTE - stack:',new Error().stack);
-    // Rediriger vers le proxy
-    arguments[0]=SUPA_URL+'/functions/v1/bright-api';
-  }
-  return _origFetch.apply(this,arguments);
-};
 var SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2a2NveW9mbmxsYXdqZnZsdGh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxMjQ2MzksImV4cCI6MjA5MzcwMDYzOX0.TmqANNlMVWO25zf658gjpRLmvfGucURtCec7oK7MzdA';
 var currentUser=null,DB={};
 var currentMeal='petit-dejeuner',selectedFood=null,foodFilter='all';
 var newExercises=[],timerInterval=null,timerSeconds=0;
 var workoutTimer=null,workoutSeconds=0,currentWorkout=null;
 var calWeekOffset=0,calMonthOffset=0,sleepQuality=3;
-var html5QrCode=null;
+var html5QrCode=null,_scannerActive=false;
+var _squadId=null,_chatInterval=null;
 
 var BADGES=[
   {id:'first_workout',icon:'💪',name:'Première séance',desc:'Terminer 1 séance'},
@@ -664,7 +642,6 @@ var BADGES=[
   {id:'level5',icon:'⭐',name:'Niveau 5',desc:'Atteindre le niveau 5'},
   {id:'squad_member',icon:'👥',name:'En escouade',desc:'Rejoindre une escouade'}
 ];
-
 var LEVELS=[
   {level:1,title:'Débutant',emoji:'🌱',xpNeeded:0},
   {level:2,title:'Régulier',emoji:'🏃',xpNeeded:100},
@@ -687,8 +664,6 @@ function supaFetch(path,opts){
   opts.headers=headers;
   return fetch(SUPA_URL+path,opts);
 }
-
-// ── SAVE (corrigé — était manquante) ──
 function dbSave(){
   if(!currentUser||!currentUser.user||!currentUser.user.id)return Promise.resolve();
   var uid=currentUser.user.id;
@@ -699,64 +674,33 @@ function dbSave(){
     body:JSON.stringify({data:DB,updated_at:new Date().toISOString()})
   }).then(function(r){
     if(r.status===404||r.status===0){
-      // Ligne inexistante : on insère
       return supaFetch('/rest/v1/fittrack_data',{
         method:'POST',
         headers:{'Prefer':'return=minimal'},
         body:JSON.stringify({user_id:uid,data:DB,updated_at:new Date().toISOString()})
       });
     }
-    return r;
   }).catch(function(e){console.error('Save error:',e);});
 }
-
 function signUp(e,p){return supaFetch('/auth/v1/signup',{method:'POST',body:JSON.stringify({email:e,password:p})}).then(function(r){return r.json();}).then(function(d){if(d.error)throw new Error(d.error.message||'Erreur');return d;});}
 function signIn(e,p){return supaFetch('/auth/v1/token?grant_type=password',{method:'POST',body:JSON.stringify({email:e,password:p})}).then(function(r){return r.json();}).then(function(d){if(d.error||d.error_description)throw new Error(d.error_description||'Identifiants incorrects');if(!d.access_token)throw new Error('Identifiants incorrects');currentUser=d;localStorage.setItem('fittrack_session',JSON.stringify(d));return d;});}
 function signOut(){supaFetch('/auth/v1/logout',{method:'POST'}).catch(function(){});currentUser=null;localStorage.removeItem('fittrack_session');location.reload();}
-
 function restoreSession(){
   try{
-    var s=localStorage.getItem('fittrack_session');
-    if(!s)return Promise.resolve(false);
-    var session=JSON.parse(s);
-    if(!session.refresh_token)return Promise.resolve(false);
+    var s=localStorage.getItem('fittrack_session');if(!s)return Promise.resolve(false);
+    var session=JSON.parse(s);if(!session.refresh_token)return Promise.resolve(false);
     return supaFetch('/auth/v1/token?grant_type=refresh_token',{method:'POST',body:JSON.stringify({refresh_token:session.refresh_token})})
-      .then(function(r){return r.json();}).then(function(d){
-        if(!d.access_token)return false;
-        currentUser=d;localStorage.setItem('fittrack_session',JSON.stringify(d));return true;
-      }).catch(function(){return false;});
+      .then(function(r){return r.json();}).then(function(d){if(!d.access_token)return false;currentUser=d;localStorage.setItem('fittrack_session',JSON.stringify(d));return true;}).catch(function(){return false;});
   }catch(e){return Promise.resolve(false);}
 }
-
 function dbLoad(){
   if(!currentUser||!currentUser.user||!currentUser.user.id)return Promise.resolve();
   var uid=currentUser.user.id;
   return supaFetch('/rest/v1/fittrack_data?user_id=eq.'+uid+'&select=data&limit=1')
-    .then(function(r){
-      if(r.status===401){
-        return restoreSession().then(function(ok){
-          if(!ok)return null;
-          return supaFetch('/rest/v1/fittrack_data?user_id=eq.'+uid+'&select=data&limit=1').then(function(r2){return r2.json();});
-        });
-      }
-      if(!r.ok)throw new Error('HTTP '+r.status);
-      return r.json();
-    })
-    .then(function(rows){
-      if(rows&&Array.isArray(rows)&&rows.length>0&&rows[0]&&rows[0].data&&Object.keys(rows[0].data).length>0){
-        DB=rows[0].data;
-        try{localStorage.setItem('fittrack_backup',JSON.stringify(DB));}catch(e){}
-      }else{
-        try{var b=localStorage.getItem('fittrack_backup');if(b){var p=JSON.parse(b);if(p&&Object.keys(p).length>0){DB=p;dbSave();return;}}}catch(e){}
-        DB={};
-      }
-    })
-    .catch(function(e){
-      console.error('Load error:',e);
-      try{var b=localStorage.getItem('fittrack_backup');if(b)DB=JSON.parse(b)||{};}catch(e2){}
-    });
+    .then(function(r){if(r.status===401){return restoreSession().then(function(ok){if(!ok)return null;return supaFetch('/rest/v1/fittrack_data?user_id=eq.'+uid+'&select=data&limit=1').then(function(r2){return r2.json();});});}if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+    .then(function(rows){if(rows&&Array.isArray(rows)&&rows.length>0&&rows[0]&&rows[0].data&&Object.keys(rows[0].data).length>0){DB=rows[0].data;try{localStorage.setItem('fittrack_backup',JSON.stringify(DB));}catch(e){}}else{try{var b=localStorage.getItem('fittrack_backup');if(b){var p=JSON.parse(b);if(p&&Object.keys(p).length>0){DB=p;dbSave();return;}}}catch(e){}DB={};}})
+    .catch(function(e){console.error('Load error:',e);try{var b=localStorage.getItem('fittrack_backup');if(b)DB=JSON.parse(b)||{};}catch(e2){}});
 }
-
 function initDefaults(){
   if(!DB.goals)DB.goals={cal:2000,eau:2000,prot:150,gluc:250,lip:70};
   if(!DB.foods)DB.foods=defaultFoods();
@@ -767,7 +711,6 @@ function initDefaults(){
   if(!DB.courses)DB.courses=[];
   if(!DB.gamification)DB.gamification={xp:0,badges:[],streak:0,lastJournalDate:'',lastCheckin:'',xpDone:{}};
 }
-
 function defaultFoods(){return[
   {id:'f1',name:'Blanc de poulet',emoji:'🍗',cat:'viande',cal:165,prot:31,gluc:0,lip:3.6,unit:'g'},
   {id:'f2',name:'Riz cuit',emoji:'🍚',cat:'feculents',cal:130,prot:2.7,gluc:28,lip:0.3,unit:'g'},
@@ -780,15 +723,12 @@ function defaultFoods(){return[
   {id:'f9',name:'Patate douce',emoji:'🍠',cat:'feculents',cal:86,prot:1.6,gluc:20,lip:0.1,unit:'g'},
   {id:'f10',name:'Amandes',emoji:'🥜',cat:'autre',cal:579,prot:21,gluc:22,lip:50,unit:'g'}
 ];}
-
 function todayStr(){return new Date().toISOString().split('T')[0];}
 function last7Days(){var r=[];for(var i=6;i>=0;i--){var d=new Date();d.setDate(d.getDate()-i);r.push(d.toISOString().split('T')[0]);}return r;}
 function notif(msg){var el=document.getElementById('notif');el.textContent=msg;el.classList.add('show');setTimeout(function(){el.classList.remove('show');},2500);}
 function showModal(){document.getElementById('modal-overlay').classList.remove('hidden');}
 function closeModal(){document.getElementById('modal-overlay').classList.add('hidden');}
 function closeModalOutside(e){if(e.target.id==='modal-overlay')closeModal();}
-function showSetup(){document.getElementById('setup').classList.remove('hidden');}
-function hideSetup(){document.getElementById('setup').classList.add('hidden');}
 function initApp(){document.getElementById('app').classList.remove('hidden');renderAvatarXP();runWeeklyCheckin();checkAllBadges();renderDashboard();}
 
 window.onload=function(){
@@ -796,38 +736,24 @@ window.onload=function(){
   applyTheme();
   setInterval(function(){if(currentUser)dbSave();},30000);
   restoreSession().then(function(ok){
-    if(ok){
-      document.getElementById('auth-screen').classList.add('hidden');
-      return dbLoad();
-    }
+    if(ok){document.getElementById('auth-screen').classList.add('hidden');return dbLoad();}
     return Promise.resolve();
   }).then(function(){
-    if(currentUser){initDefaults();if(!DB.profile)showSetup();else initApp();}
+    if(currentUser){initDefaults();if(!DB.profile)document.getElementById('setup').classList.remove('hidden');else initApp();}
   }).catch(function(e){
     console.error('Init error:',e);
     try{var b=localStorage.getItem('fittrack_backup');if(b)DB=JSON.parse(b)||{};}catch(e2){}
-    initDefaults();
-    if(currentUser){if(!DB.profile)showSetup();else initApp();}
+    initDefaults();if(currentUser){if(!DB.profile)document.getElementById('setup').classList.remove('hidden');else initApp();}
   });
 };
-
 function toggleTheme(){document.body.classList.toggle('light');var l=document.body.classList.contains('light');document.getElementById('theme-btn').textContent=l?'🌙':'☀️';localStorage.setItem('fittrack_theme',l?'light':'dark');}
 function applyTheme(){if(localStorage.getItem('fittrack_theme')==='light'){document.body.classList.add('light');var btn=document.getElementById('theme-btn');if(btn)btn.textContent='🌙';}}
 
 // ── AUTH ──
 var authMode='login';
-function authTab(mode){
-  authMode=mode;
-  document.getElementById('tab-login').classList.toggle('active',mode==='login');
-  document.getElementById('tab-signup').classList.toggle('active',mode==='signup');
-  document.getElementById('auth-confirm-wrap').classList.toggle('hidden',mode!=='signup');
-  document.getElementById('auth-submit').textContent=mode==='login'?'Se connecter':'Créer mon compte';
-  document.getElementById('auth-error').classList.add('hidden');
-  document.getElementById('auth-success').classList.add('hidden');
-}
+function authTab(mode){authMode=mode;document.getElementById('tab-login').classList.toggle('active',mode==='login');document.getElementById('tab-signup').classList.toggle('active',mode==='signup');document.getElementById('auth-confirm-wrap').classList.toggle('hidden',mode!=='signup');document.getElementById('auth-submit').textContent=mode==='login'?'Se connecter':'Créer mon compte';document.getElementById('auth-error').classList.add('hidden');document.getElementById('auth-success').classList.add('hidden');}
 function authSubmit(){
-  var email=document.getElementById('auth-email').value.trim();
-  var pass=document.getElementById('auth-password').value;
+  var email=document.getElementById('auth-email').value.trim(),pass=document.getElementById('auth-password').value;
   var errEl=document.getElementById('auth-error'),okEl=document.getElementById('auth-success');
   errEl.classList.add('hidden');okEl.classList.add('hidden');
   if(!email||!pass){errEl.textContent='Remplissez tous les champs';errEl.classList.remove('hidden');return;}
@@ -840,10 +766,7 @@ function authSubmit(){
     if(pass!==conf){errEl.textContent='Mots de passe différents';errEl.classList.remove('hidden');done();return;}
     signUp(email,pass).then(function(){okEl.textContent='Compte créé ! Connectez-vous.';okEl.classList.remove('hidden');authTab('login');done();}).catch(function(e){errEl.textContent=e.message;errEl.classList.remove('hidden');done();});
   }else{
-    signIn(email,pass).then(function(){
-      document.getElementById('auth-screen').classList.add('hidden');return dbLoad();
-    }).then(function(){initDefaults();if(!DB.profile)showSetup();else initApp();done();
-    }).catch(function(e){errEl.textContent=e.message;errEl.classList.remove('hidden');done();});
+    signIn(email,pass).then(function(){document.getElementById('auth-screen').classList.add('hidden');return dbLoad();}).then(function(){initDefaults();if(!DB.profile)document.getElementById('setup').classList.remove('hidden');else initApp();done();}).catch(function(e){errEl.textContent=e.message;errEl.classList.remove('hidden');done();});
   }
 }
 
@@ -862,7 +785,7 @@ function setupBack(){document.getElementById('setup-step2').classList.add('hidde
 function setupFinish(){
   DB.profile={prenom:document.getElementById('s-prenom').value,age:parseInt(document.getElementById('s-age').value)||25,sexe:document.getElementById('s-sexe').value,taille:parseInt(document.getElementById('s-taille').value)||170,poids:parseFloat(document.getElementById('s-poids').value)||70,activite:parseFloat(document.getElementById('s-activite').value)||1.55,objectif:document.getElementById('s-objectif').value};
   DB.goals={cal:parseInt(document.getElementById('g-cal').value)||2000,prot:parseInt(document.getElementById('g-prot').value)||150,gluc:parseInt(document.getElementById('g-gluc').value)||250,lip:parseInt(document.getElementById('g-lip').value)||70,eau:parseInt(document.getElementById('g-eau').value)||2000};
-  dbSave().then(function(){hideSetup();initApp();});
+  dbSave().then(function(){document.getElementById('setup').classList.add('hidden');initApp();});
 }
 
 // ── NAV ──
@@ -891,7 +814,7 @@ function switchTab(prefix,tab){
   if(prefix==='nutri'&&tab==='courses')renderCoursesList();
 }
 
-// ── XP & LEVELS ──
+// ── XP ──
 function getLevelInfo(xp){
   var lvl=LEVELS[0];
   for(var i=0;i<LEVELS.length;i++){if(xp>=LEVELS[i].xpNeeded)lvl=LEVELS[i];}
@@ -902,12 +825,10 @@ function getLevelInfo(xp){
 function addXP(amount,reason,dailyKey){
   if(!DB.gamification)DB.gamification={xp:0,badges:[],streak:0,lastJournalDate:'',lastCheckin:'',xpDone:{}};
   if(!DB.gamification.xpDone)DB.gamification.xpDone={};
-  // Si une clé journalière est fournie, on ne donne l'XP qu'une fois par jour
   if(dailyKey){
     var key=todayStr()+'_'+dailyKey;
     if(DB.gamification.xpDone[key])return;
     DB.gamification.xpDone[key]=true;
-    // Nettoyer les clés de plus de 7 jours
     var cutoff=new Date();cutoff.setDate(cutoff.getDate()-7);var cutStr=cutoff.toISOString().split('T')[0];
     Object.keys(DB.gamification.xpDone).forEach(function(k){if(k.slice(0,10)<cutStr)delete DB.gamification.xpDone[k];});
   }
@@ -916,17 +837,12 @@ function addXP(amount,reason,dailyKey){
   checkLevelUp();dbSave();renderAvatarXP();
 }
 function checkLevelUp(){
-  var g=DB.gamification;
-  var prev=getLevelInfo(Math.max(0,(g.xp||0)-10));
-  var curr=getLevelInfo(g.xp||0);
+  var g=DB.gamification,prev=getLevelInfo(Math.max(0,(g.xp||0)-10)),curr=getLevelInfo(g.xp||0);
   if(curr.level>prev.level){showLevelUpModal(curr);checkBadge('level5',curr.level>=5);}
 }
-function showLevelUpModal(lvlInfo){
-  document.getElementById('modal-content').innerHTML='<div style="text-align:center;padding:1rem"><div style="font-size:4rem;margin-bottom:1rem">'+lvlInfo.emoji+'</div><div style="font-size:1.5rem;font-weight:800;color:var(--purple)">Niveau '+lvlInfo.level+' !</div><div style="color:var(--muted);margin:.5rem 0 1.5rem">'+lvlInfo.title+'</div><button class="btn btn-primary" onclick="closeModal()">Super !</button></div>';
-  showModal();
-}
+function showLevelUpModal(l){document.getElementById('modal-content').innerHTML='<div style="text-align:center;padding:1rem"><div style="font-size:4rem;margin-bottom:1rem">'+l.emoji+'</div><div style="font-size:1.5rem;font-weight:800;color:var(--purple)">Niveau '+l.level+' !</div><div style="color:var(--muted);margin:.5rem 0 1.5rem">'+l.title+'</div><button class="btn btn-primary" onclick="closeModal()">Super !</button></div>';showModal();}
 function checkBadge(id,condition){
-  if(!DB.gamification)DB.gamification={xp:0,badges:[],streak:0,lastJournalDate:'',lastCheckin:''};
+  if(!DB.gamification)DB.gamification={xp:0,badges:[],streak:0,lastJournalDate:'',lastCheckin:'',xpDone:{}};
   if(!DB.gamification.badges)DB.gamification.badges=[];
   if(condition&&DB.gamification.badges.indexOf(id)<0){
     DB.gamification.badges.push(id);
@@ -936,19 +852,16 @@ function checkBadge(id,condition){
   }
 }
 function updateStreak(){
-  if(!DB.gamification)DB.gamification={xp:0,badges:[],streak:0,lastJournalDate:'',lastCheckin:''};
+  if(!DB.gamification)DB.gamification={xp:0,badges:[],streak:0,lastJournalDate:'',lastCheckin:'',xpDone:{}};
   var g=DB.gamification,today=todayStr();
-  var yesterday=new Date();yesterday.setDate(yesterday.getDate()-1);
-  var yStr=yesterday.toISOString().split('T')[0];
+  var yesterday=new Date();yesterday.setDate(yesterday.getDate()-1);var yStr=yesterday.toISOString().split('T')[0];
   if(g.lastJournalDate===today)return;
   if(g.lastJournalDate===yStr||!g.lastJournalDate){g.streak=(g.streak||0)+1;if(g.streak>=7){addXP(50,'Streak 7 jours !','streak_7');checkBadge('week_streak',true);}else{addXP(10,'Journal du jour','journal_daily');}}
   else{g.streak=1;addXP(10,'Journal du jour','journal_daily');}
   g.lastJournalDate=today;dbSave();
 }
 function renderAvatarXP(){
-  var g=DB.gamification||{xp:0,badges:[],streak:0};
-  var lvl=getLevelInfo(g.xp||0);
-  var p=DB.profile||{};
+  var g=DB.gamification||{xp:0,badges:[],streak:0},lvl=getLevelInfo(g.xp||0),p=DB.profile||{};
   var set=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};
   var setW=function(id,v){var el=document.getElementById(id);if(el)el.style.width=v;};
   set('avatar-name',p.prenom||'');set('avatar-level',lvl.level);set('avatar-emoji',lvl.emoji);
@@ -977,11 +890,9 @@ function runWeeklyCheckin(){
   var g=DB.gamification,today=todayStr(),now=new Date();
   if(now.getDay()!==1||g.lastCheckin===today)return;
   g.lastCheckin=today;
-  var last7=last7Days();
-  var weekWeights=DB.weight.filter(function(w){return last7.indexOf(w.date)>=0;});
+  var last7=last7Days(),weekWeights=DB.weight.filter(function(w){return last7.indexOf(w.date)>=0;});
   if(weekWeights.length<2){dbSave();return;}
-  var avgWeight=weekWeights.reduce(function(s,w){return s+w.val;},0)/weekWeights.length;
-  var diff=Math.round((avgWeight-weekWeights[0].val)*10)/10;
+  var diff=Math.round((weekWeights[weekWeights.length-1].val-weekWeights[0].val)*10)/10;
   var obj=DB.profile.objectif,shouldAdjust=false,adjustment=0,message='';
   if(obj==='perte'&&diff>=0){shouldAdjust=true;adjustment=-100;message='Votre poids ne descend pas. Je suggère de réduire de 100 kcal.';}
   else if(obj==='perte'&&diff<-1){shouldAdjust=true;adjustment=50;message='Bonne progression ! Augmentons légèrement pour préserver le muscle.';}
@@ -990,15 +901,25 @@ function runWeeklyCheckin(){
   else{message='Bonne semaine ! Votre progression est dans les clous.';}
   var banner=document.getElementById('checkin-banner');if(!banner)return;
   banner.classList.remove('hidden');
-  if(shouldAdjust){
-    banner.innerHTML='<div style="font-weight:700;margin-bottom:6px">📊 Check-in hebdomadaire</div><div style="font-size:.9rem;margin-bottom:10px">'+message+'</div><div class="flex gap-8"><button onclick="applyCheckinAdjustment('+adjustment+')" style="background:#fff3;border:none;border-radius:8px;padding:6px 12px;color:#fff;font-size:.85rem;font-weight:600;cursor:pointer">Appliquer ('+adjustment+' kcal)</button><button onclick="dismissCheckin()" style="background:none;border:none;color:#ffffffaa;font-size:.85rem;cursor:pointer">Ignorer</button></div>';
-  }else{
-    banner.innerHTML='<div style="font-weight:700;margin-bottom:4px">📊 Check-in hebdomadaire</div><div style="font-size:.9rem">'+message+'</div><button onclick="dismissCheckin()" style="background:none;border:none;color:#ffffffaa;font-size:.85rem;cursor:pointer;margin-top:8px">Fermer</button>';
-  }
+  if(shouldAdjust){banner.innerHTML='<div style="font-weight:700;margin-bottom:6px">📊 Check-in hebdomadaire</div><div style="font-size:.9rem;margin-bottom:10px">'+message+'</div><div class="flex gap-8"><button onclick="applyCheckinAdjustment('+adjustment+')" style="background:#fff3;border:none;border-radius:8px;padding:6px 12px;color:#fff;font-size:.85rem;font-weight:600;cursor:pointer">Appliquer ('+adjustment+' kcal)</button><button onclick="dismissCheckin()" style="background:none;border:none;color:#ffffffaa;font-size:.85rem;cursor:pointer">Ignorer</button></div>';}
+  else{banner.innerHTML='<div style="font-weight:700;margin-bottom:4px">📊 Check-in hebdomadaire</div><div style="font-size:.9rem">'+message+'</div><button onclick="dismissCheckin()" style="background:none;border:none;color:#ffffffaa;font-size:.85rem;cursor:pointer;margin-top:8px">Fermer</button>';}
   dbSave();
 }
 function applyCheckinAdjustment(adj){DB.goals.cal=Math.max(1200,DB.goals.cal+adj);dbSave();renderDashboard();document.getElementById('checkin-banner').classList.add('hidden');notif('Objectif calorique ajusté : '+DB.goals.cal+' kcal');}
 function dismissCheckin(){document.getElementById('checkin-banner').classList.add('hidden');}
+
+// ── SQUAD STATS ──
+function updateSquadStats(){
+  if(!currentUser||!currentUser.user||!currentUser.user.id||!DB.profile)return;
+  var today=todayStr();
+  var tCal=(DB.journal[today]||[]).reduce(function(s,f){return s+f.cal;},0);
+  var calPct=Math.min(100,Math.round(tCal/DB.goals.cal*100));
+  var waterPct=Math.min(100,Math.round((DB.water[today]||0)/DB.goals.eau*100));
+  var sportToday=DB.workoutHistory.some(function(w){return w.date===today;});
+  var streak=(DB.gamification&&DB.gamification.streak)||0;
+  var lvl=getLevelInfo((DB.gamification&&DB.gamification.xp)||0);
+  supaFetch('/rest/v1/squad_stats',{method:'POST',headers:{'Prefer':'return=minimal,resolution=merge-duplicates'},body:JSON.stringify({user_id:currentUser.user.id,display_name:DB.profile.prenom||'?',cal_pct:calPct,water_pct:waterPct,sport_today:sportToday,streak:streak,level:lvl.level,xp:DB.gamification.xp||0,updated_at:new Date().toISOString()})}).catch(function(){});
+}
 
 // ── DASHBOARD ──
 function renderDashboard(){
@@ -1008,16 +929,13 @@ function renderDashboard(){
   var months=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
   document.getElementById('dash-greeting').textContent='Bonjour, '+p.prenom+' !';
   document.getElementById('dash-date').textContent=days[now.getDay()]+' '+now.getDate()+' '+months[now.getMonth()];
-  var today=todayStr();
-  var todaySessions=DB.planning.filter(function(e){return e.type==='seance'&&e.date===today;});
+  var today=todayStr(),todaySessions=DB.planning.filter(function(e){return e.type==='seance'&&e.date===today;});
   document.getElementById('dash-next-session').innerHTML=todaySessions.length?'<span class="badge-pill badge-green">Séance</span>':'<span class="badge-pill badge-purple">Repos</span>';
-  var dayFoods=DB.journal[today]||[];
-  var tCal=0,tProt=0,tGluc=0,tLip=0;
+  var dayFoods=DB.journal[today]||[],tCal=0,tProt=0,tGluc=0,tLip=0;
   dayFoods.forEach(function(f){tCal+=f.cal;tProt+=f.prot;tGluc+=f.gluc;tLip+=f.lip;});
   document.getElementById('cal-display').textContent=Math.round(tCal);
   document.getElementById('cal-goal-display').textContent='/ '+DB.goals.cal+' kcal';
-  var rem=DB.goals.cal-Math.round(tCal);
-  var remEl=document.getElementById('cal-remaining');
+  var rem=DB.goals.cal-Math.round(tCal),remEl=document.getElementById('cal-remaining');
   if(remEl){if(rem>0)remEl.innerHTML='<span style="color:var(--green)">-'+rem+'</span>';else if(rem<0)remEl.innerHTML='<span style="color:var(--red)">+'+Math.abs(rem)+'</span>';else remEl.innerHTML='<span style="color:var(--purple)">OK</span>';}
   document.getElementById('d-prot').textContent=Math.round(tProt)+'/'+DB.goals.prot+'g';
   document.getElementById('d-gluc').textContent=Math.round(tGluc)+'/'+DB.goals.gluc+'g';
@@ -1035,7 +953,7 @@ function renderDashboard(){
   document.getElementById('dash-sessions').innerHTML=todaySessions.length?todaySessions.map(function(e){return '<div class="text-sm mb-4">'+e.name+'</div><button class="btn btn-primary btn-sm" onclick="launchSession(\''+e.sessionId+'\')">Lancer</button>';}).join(''):'<div class="text-muted text-sm">Aucune séance</div>';
   var tips=['Buvez '+DB.goals.eau+'ml d\'eau aujourd\'hui.','Dormez 7 à 9h pour récupérer.','Cible : '+DB.goals.prot+'g de protéines.','Échauffez-vous avant chaque séance.','Variez vos exercices pour progresser.'];
   document.getElementById('dash-tip').textContent=tips[now.getDay()%tips.length];
-  renderAvatarXP();renderWeekSummary();
+  renderAvatarXP();renderWeekSummary();runWeeklyCheckin();
 }
 function renderWeekSummary(){
   var days7=last7Days();
@@ -1050,8 +968,7 @@ function renderWeekSummary(){
 }
 function drawMacroPie(prot,gluc,lip){
   var c=document.getElementById('macro-pie');if(!c)return;
-  var dpr=window.devicePixelRatio||1,size=80;
-  c.width=size*dpr;c.height=size*dpr;c.style.width=size+'px';c.style.height=size+'px';
+  var dpr=window.devicePixelRatio||1,size=80;c.width=size*dpr;c.height=size*dpr;c.style.width=size+'px';c.style.height=size+'px';
   var ctx=c.getContext('2d');ctx.scale(dpr,dpr);ctx.clearRect(0,0,size,size);
   var cx=40,cy=40,r=34,ri=20,total=prot*4+gluc*4+lip*9;
   if(total<1){ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fillStyle='#22222f';ctx.fill();ctx.beginPath();ctx.arc(cx,cy,ri,0,Math.PI*2);ctx.fillStyle='#1a1a24';ctx.fill();return;}
@@ -1060,75 +977,139 @@ function drawMacroPie(prot,gluc,lip){
   ctx.beginPath();ctx.arc(cx,cy,ri,0,Math.PI*2);ctx.fillStyle='#1a1a24';ctx.fill();
 }
 
+// ── SUGGESTIONS & ANALYSE (algo local) ──
+function closeAI(){document.getElementById('ai-panel').classList.add('hidden');}
+
+function openAI(mode){
+  document.getElementById('ai-panel').classList.remove('hidden');
+  var content=document.getElementById('ai-content');
+  var p=DB.profile||{},g=DB.goals||{};
+
+  if(mode==='suggestions'){
+    document.getElementById('ai-panel-title').textContent='Suggestions repas';
+    document.getElementById('ai-panel-sub').textContent='Basé sur vos macros restantes';
+    var today=todayStr(),foods=DB.journal[today]||[];
+    var tCal=foods.reduce(function(s,f){return s+f.cal;},0);
+    var tProt=foods.reduce(function(s,f){return s+f.prot;},0);
+    var tGluc=foods.reduce(function(s,f){return s+f.gluc;},0);
+    var tLip=foods.reduce(function(s,f){return s+f.lip;},0);
+    var remCal=Math.max(0,g.cal-Math.round(tCal));
+    var remProt=Math.max(0,g.prot-Math.round(tProt));
+    var remGluc=Math.max(0,g.gluc-Math.round(tGluc));
+    var remLip=Math.max(0,g.lip-Math.round(tLip));
+    var obj=p.objectif||'maintien';
+    var scored=DB.foods.map(function(f){
+      var score=0;
+      if(obj==='masse'||obj==='renforcement')score=f.prot*3+f.cal*0.5;
+      else if(obj==='perte')score=f.prot*3-f.lip-f.cal*0.2;
+      else score=f.prot*2+f.gluc*0.5-f.lip*0.5;
+      return{f:f,score:score};
+    }).sort(function(a,b){return b.score-a.score;});
+    var mealsEaten={};foods.forEach(function(f){mealsEaten[f.meal]=true;});
+    var allMeals=[{key:'petit-dejeuner',name:'🌅 Petit-déjeuner',calPct:.25},{key:'dejeuner',name:'☀️ Déjeuner',calPct:.40},{key:'diner',name:'🌙 Dîner',calPct:.35}];
+    var remaining=allMeals.filter(function(m){return !mealsEaten[m.key];});
+    if(!remaining.length)remaining=allMeals;
+    var suggestions=[];
+    remaining.slice(0,3).forEach(function(meal){
+      var targetCal=Math.min(remCal,Math.round(g.cal*meal.calPct));
+      if(targetCal<100)return;
+      var items=[],usedCal=0;
+      var protein=scored.find(function(x){return x.f.cat==='viande';});
+      if(protein){var qty=Math.round(Math.min(200,(targetCal*0.4/protein.f.cal*100))/50)*50||100;var r=qty/100;items.push({name:protein.f.name,emoji:protein.f.emoji,qty:qty,unit:protein.f.unit,cal:Math.round(protein.f.cal*r),prot:Math.round(protein.f.prot*r),gluc:Math.round(protein.f.gluc*r),lip:Math.round(protein.f.lip*r),mealKey:meal.key});usedCal+=protein.f.cal*r;}
+      if(obj!=='perte'||remGluc>50){var carb=scored.find(function(x){return x.f.cat==='feculents';});if(carb&&usedCal<targetCal){var qty2=Math.round(Math.min(150,((targetCal-usedCal)*0.5/carb.f.cal*100))/50)*50||100;var r2=qty2/100;items.push({name:carb.f.name,emoji:carb.f.emoji,qty:qty2,unit:carb.f.unit,cal:Math.round(carb.f.cal*r2),prot:Math.round(carb.f.prot*r2),gluc:Math.round(carb.f.gluc*r2),lip:Math.round(carb.f.lip*r2),mealKey:meal.key});usedCal+=carb.f.cal*r2;}}
+      var veg=scored.find(function(x){return x.f.cat==='legumes';});
+      if(veg&&usedCal<targetCal){var qty3=150;var r3=qty3/100;items.push({name:veg.f.name,emoji:veg.f.emoji,qty:qty3,unit:veg.f.unit,cal:Math.round(veg.f.cal*r3),prot:Math.round(veg.f.prot*r3),gluc:Math.round(veg.f.gluc*r3),lip:Math.round(veg.f.lip*r3),mealKey:meal.key});}
+      if(items.length){var totC=items.reduce(function(s,i){return s+i.cal;},0),totP=items.reduce(function(s,i){return s+i.prot;},0),totG=items.reduce(function(s,i){return s+i.gluc;},0),totL=items.reduce(function(s,i){return s+i.lip;},0);suggestions.push({meal:meal.name,mealKey:meal.key,items:items,totalCal:Math.round(totC),totalProt:Math.round(totP),totalGluc:Math.round(totG),totalLip:Math.round(totL)});}
+    });
+    var html='<div class="card mb-12" style="background:var(--el)"><div class="flex justify-between text-sm mb-4"><span class="text-muted">Calories restantes</span><span style="font-weight:700;color:var(--orange)">'+remCal+' kcal</span></div><div class="flex justify-between text-sm mb-4"><span class="text-muted">Protéines restantes</span><span style="font-weight:700;color:var(--blue)">'+remProt+'g</span></div><div class="flex justify-between text-sm mb-4"><span class="text-muted">Glucides restants</span><span style="font-weight:700;color:var(--orange)">'+remGluc+'g</span></div><div class="flex justify-between text-sm"><span class="text-muted">Lipides restants</span><span style="font-weight:700;color:var(--green)">'+remLip+'g</span></div></div>';
+    if(!suggestions.length){html+='<div class="card"><div class="text-muted text-sm">Objectifs atteints pour aujourd\'hui ! 🎉</div></div>';}
+    else{
+      suggestions.forEach(function(s,si){
+        html+='<div class="card mb-8"><div style="font-weight:700;margin-bottom:10px">'+s.meal+'</div>'+s.items.map(function(i){return '<div class="flex justify-between items-center mb-6"><div class="flex items-center gap-8"><span>'+i.emoji+'</span><div><div class="text-sm">'+i.name+'</div><div class="text-xs text-muted">'+i.qty+i.unit+' · '+i.cal+' kcal</div></div></div><div class="text-xs text-muted">P:'+i.prot+'g G:'+i.gluc+'g L:'+i.lip+'g</div></div>';}).join('')+'<div class="flex justify-between items-center mt-8 pt-8" style="border-top:1px solid var(--border)"><span class="text-xs text-muted">Total</span><span style="font-weight:700;color:var(--orange)">'+s.totalCal+' kcal · P:'+s.totalProt+'g</span></div><button class="btn btn-primary btn-sm mt-8" id="sugg-btn-'+si+'">+ Ajouter au journal</button></div>';
+      });
+    }
+    content.innerHTML=html;
+    suggestions.forEach(function(s,si){var btn=document.getElementById('sugg-btn-'+si);if(btn)btn.onclick=function(){addSuggestionToJournal(s.items,s.mealKey);};});
+
+  }else if(mode==='analyse'){
+    document.getElementById('ai-panel-title').textContent='Analyse de semaine';
+    document.getElementById('ai-panel-sub').textContent='7 derniers jours';
+    var days7=last7Days();
+    var nbSeances=DB.workoutHistory.filter(function(w){return days7.indexOf(w.date)>=0;}).length;
+    var avgCal2=Math.round(days7.reduce(function(s,d){var f=DB.journal[d]||[];return s+f.reduce(function(a,x){return a+x.cal;},0);},0)/7);
+    var avgWater2=Math.round(days7.reduce(function(s,d){return s+(DB.water[d]||0);},0)/7);
+    var sleepArr2=DB.sleep.filter(function(s){return days7.indexOf(s.date)>=0;});
+    var avgSleep2=sleepArr2.length?Math.round(sleepArr2.reduce(function(s,n){return s+calcSleepDurNum(n.bed,n.wake);},0)/sleepArr2.length*10)/10:0;
+    var poidsArr=DB.weight.slice(-2),weightTrend=poidsArr.length===2?Math.round((poidsArr[1].val-poidsArr[0].val)*10)/10:null;
+    var obj2=p.objectif||'maintien',lvl2=getLevelInfo((DB.gamification&&DB.gamification.xp)||0);
+    var calOk=Math.abs(avgCal2-g.cal)<200,waterOk=avgWater2>=g.eau*0.8,sleepOk=avgSleep2>=7,sportOk=nbSeances>=3;
+    var poidsOk=weightTrend===null?true:((obj2==='perte'&&weightTrend<=0)||(obj2==='masse'&&weightTrend>=0)||(obj2==='maintien'&&Math.abs(weightTrend)<0.5)||(obj2==='renforcement'));
+    var points=[],amelio=[],conseils=[];
+    if(calOk)points.push('🍽️ Calories dans la cible ('+avgCal2+' kcal/j moy.)');else amelio.push('🍽️ Calories '+(avgCal2>g.cal?'trop élevées':'trop basses')+' ('+avgCal2+' vs '+g.cal+' kcal)');
+    if(waterOk)points.push('💧 Bonne hydratation ('+avgWater2+'ml/j moy.)');else amelio.push('💧 Hydratation insuffisante ('+avgWater2+'ml vs '+g.eau+'ml)');
+    if(sleepOk)points.push('😴 Sommeil correct ('+avgSleep2+'h moy.)');else{if(avgSleep2===0)amelio.push('😴 Aucune nuit enregistrée');else amelio.push('😴 Sommeil insuffisant ('+avgSleep2+'h moy.)');}
+    if(sportOk)points.push('💪 Bonne fréquence d\'entraînement ('+nbSeances+' séances)');else amelio.push('💪 Entraînement insuffisant ('+nbSeances+'/3 séances min.)');
+    if(weightTrend!==null){if(poidsOk)points.push('⚖️ Évolution du poids cohérente ('+(weightTrend>0?'+':'')+weightTrend+'kg)');else amelio.push('⚖️ Poids pas aligné avec l\'objectif '+obj2);}
+    if(!calOk){if(avgCal2>g.cal)conseils.push('Réduisez les portions de féculents et lipides au dîner.');else conseils.push('Ajoutez une collation protéinée entre les repas.');}
+    if(!waterOk)conseils.push('Posez un verre d\'eau sur votre bureau comme rappel visuel.');
+    if(!sleepOk&&avgSleep2>0)conseils.push('Couchez-vous 30 min plus tôt, évitez les écrans après 22h.');
+    if(!sportOk)conseils.push('Planifiez vos séances dans le calendrier dès le début de semaine.');
+    if(conseils.length<3)conseils.push('Maintenez votre streak de '+((DB.gamification&&DB.gamification.streak)||0)+' jour(s) !');
+    var score=Math.round([calOk,waterOk,sleepOk,sportOk,poidsOk].filter(Boolean).length/5*100);
+    var scoreColor=score>=80?'var(--green)':score>=60?'var(--orange)':'var(--red)';
+    content.innerHTML='<div class="card mb-12" style="text-align:center"><div style="font-size:2.5rem;margin-bottom:6px">'+(score>=80?'🏆':score>=60?'💪':'📈')+'</div><div style="font-size:2.5rem;font-weight:800;color:'+scoreColor+'">'+score+'%</div><div class="text-muted text-sm mb-10">Score de la semaine</div><div class="score-bar"><div class="score-fill" style="width:'+score+'%;background:'+scoreColor+'"></div></div><div class="text-xs text-muted mt-8">Niv. '+lvl2.level+' '+lvl2.emoji+' · '+lvl2.title+'</div></div>'
+      +(points.length?'<div class="card mb-8"><div style="font-weight:700;color:var(--green);margin-bottom:10px">✅ Points forts</div>'+points.map(function(x){return '<div class="text-sm mb-6">'+x+'</div>';}).join('')+'</div>':'')
+      +(amelio.length?'<div class="card mb-8"><div style="font-weight:700;color:var(--orange);margin-bottom:10px">⚠️ À améliorer</div>'+amelio.map(function(x){return '<div class="text-sm mb-6">'+x+'</div>';}).join('')+'</div>':'')
+      +'<div class="card"><div style="font-weight:700;color:var(--purple);margin-bottom:10px">💡 Conseils</div>'+conseils.map(function(c,i){return '<div class="text-sm mb-8"><span style="color:var(--purple);font-weight:700">'+(i+1)+'.</span> '+c+'</div>';}).join('')+'</div>';
+  }
+}
+function addSuggestionToJournal(items,mealKey){
+  var today=todayStr();if(!DB.journal[today])DB.journal[today]=[];
+  items.forEach(function(item){DB.journal[today].push({id:Date.now()+Math.random()+'',name:item.name,emoji:item.emoji,meal:mealKey||'collation',qty:item.qty,unit:item.unit,cal:item.cal,prot:item.prot,gluc:item.gluc,lip:item.lip});});
+  dbSave();notif('Repas ajouté au journal !');closeAI();nav('nutrition');
+}
+
 // ── SCANNER ──
-var _scannerActive=false;
 function startScanner(){
   if(_scannerActive)return;
   document.getElementById('scanner-overlay').classList.remove('hidden');
   document.getElementById('scanner-status').textContent='Pointez la caméra vers un code-barres';
   _scannerActive=true;
   html5QrCode=new Html5Qrcode('reader');
-  html5QrCode.start(
-    {facingMode:'environment'},
-    {fps:10,qrbox:{width:220,height:220}},
-    function(code){
-      if(!_scannerActive)return;
-      _scannerActive=false;
-      document.getElementById('scanner-status').textContent='Trouvé : '+code;
-      html5QrCode.stop().then(function(){html5QrCode=null;lookupBarcode(code);}).catch(function(){html5QrCode=null;lookupBarcode(code);});
-    },
-    function(){}
-  ).catch(function(e){
-    _scannerActive=false;
-    document.getElementById('scanner-status').textContent='Erreur caméra : '+e;
-  });
+  html5QrCode.start({facingMode:'environment'},{fps:10,qrbox:{width:220,height:220}},function(code){
+    if(!_scannerActive)return;_scannerActive=false;
+    html5QrCode.stop().then(function(){html5QrCode=null;lookupBarcode(code);}).catch(function(){html5QrCode=null;lookupBarcode(code);});
+  },function(){}).catch(function(e){_scannerActive=false;document.getElementById('scanner-status').textContent='Erreur caméra : '+e;});
 }
 function stopScanner(){
   _scannerActive=false;
-  if(html5QrCode){
-    html5QrCode.stop().catch(function(){}).finally(function(){html5QrCode=null;document.getElementById('scanner-overlay').classList.add('hidden');document.getElementById('reader').innerHTML='';});
-  }else{
-    document.getElementById('scanner-overlay').classList.add('hidden');
-    document.getElementById('reader').innerHTML='';
-  }
+  if(html5QrCode){html5QrCode.stop().catch(function(){}).finally(function(){html5QrCode=null;document.getElementById('scanner-overlay').classList.add('hidden');document.getElementById('reader').innerHTML='';});}
+  else{document.getElementById('scanner-overlay').classList.add('hidden');document.getElementById('reader').innerHTML='';}
 }
 function lookupBarcode(code){
   document.getElementById('scanner-status').textContent='Recherche en cours...';
-  var controller=new AbortController();
-  var timeout=setTimeout(function(){controller.abort();},8000);
+  var controller=new AbortController(),timeout=setTimeout(function(){controller.abort();},8000);
   fetch('https://world.openfoodfacts.org/api/v0/product/'+code+'.json',{signal:controller.signal})
     .then(function(r){clearTimeout(timeout);return r.json();})
     .then(function(data){
       stopScanner();
       if(data.status!==1||!data.product){notif('Produit introuvable');return;}
-      var p=data.product,n=p.nutriments||{};
-      window._scannedFood={id:'f'+Date.now(),name:p.product_name||p.product_name_fr||'Produit scanné',emoji:'📦',cat:'autre',cal:Math.round(n['energy-kcal_100g']||0),prot:Math.round((n.proteins_100g||0)*10)/10,gluc:Math.round((n.carbohydrates_100g||0)*10)/10,lip:Math.round((n.fat_100g||0)*10)/10,unit:'g'};
+      var pr=data.product,n=pr.nutriments||{};
+      window._scannedFood={id:'f'+Date.now(),name:pr.product_name||pr.product_name_fr||'Produit scanné',emoji:'📦',cat:'autre',cal:Math.round(n['energy-kcal_100g']||0),prot:Math.round((n.proteins_100g||0)*10)/10,gluc:Math.round((n.carbohydrates_100g||0)*10)/10,lip:Math.round((n.fat_100g||0)*10)/10,unit:'g'};
       var f=window._scannedFood;
       document.getElementById('modal-content').innerHTML='<h2>📦 Produit scanné</h2><div class="food-item" style="cursor:default;margin-bottom:12px"><span class="food-emoji">'+f.emoji+'</span><div><div style="font-weight:700">'+f.name+'</div><div class="text-xs text-muted">'+f.cal+' kcal · P:'+f.prot+'g G:'+f.gluc+'g L:'+f.lip+'g /100g</div></div></div><div class="flex gap-8"><button class="btn btn-secondary" style="flex:.5" onclick="addScannedToAliments(window._scannedFood)">+ Aliments</button><button class="btn btn-primary" style="flex:.5" onclick="addScannedToJournal(window._scannedFood)">+ Journal</button></div><button class="btn btn-secondary mt-8" onclick="closeModal()">Annuler</button>';
       showModal();
-    })
-    .catch(function(e){
-      clearTimeout(timeout);
-      stopScanner();
-      notif(e.name==='AbortError'?'Délai dépassé, réessayez':'Erreur connexion');
-    });
+    }).catch(function(e){clearTimeout(timeout);stopScanner();notif(e.name==='AbortError'?'Délai dépassé, réessayez':'Erreur connexion');});
 }
 function addScannedToAliments(food){DB.foods.push(food);dbSave();closeModal();renderAliments();notif(food.name+' ajouté');}
-function addScannedToJournal(food){
-  DB.foods.push(food);selectedFood=food;
-  document.getElementById('food-add-form').classList.remove('hidden');
-  document.getElementById('food-add-name').textContent=food.emoji+' '+food.name;
-  document.getElementById('food-add-macros').textContent=food.cal+' kcal / 100g';
-  document.getElementById('food-unit-disp').textContent='g';
-  closeModal();notif('Entrez la quantité et cliquez Ajouter');
-}
+function addScannedToJournal(food){DB.foods.push(food);selectedFood=food;document.getElementById('food-add-form').classList.remove('hidden');document.getElementById('food-add-name').textContent=food.emoji+' '+food.name;document.getElementById('food-add-macros').textContent=food.cal+' kcal / 100g';document.getElementById('food-unit-disp').textContent='g';closeModal();notif('Entrez la quantité et cliquez Ajouter');}
 
 // ── WATER ──
 function addWater(ml){
   var today=todayStr();if(!DB.water[today])DB.water[today]=0;DB.water[today]+=ml;
-  if(DB.water[today]>=DB.goals.eau&&DB.water[today]-ml<DB.goals.eau){addXP(15,'Objectif eau atteint !','eau_objectif');}
-  var hydro7=last7Days().filter(function(d){return(DB.water[d]||0)>=DB.goals.eau;}).length;
-  checkBadge('hydro_hero',hydro7>=7);
+  if(DB.water[today]>=DB.goals.eau&&DB.water[today]-ml<DB.goals.eau)addXP(15,'Objectif eau atteint !','eau_objectif');
+  var h7=last7Days().filter(function(d){return(DB.water[d]||0)>=DB.goals.eau;}).length;
+  checkBadge('hydro_hero',h7>=7);
   dbSave();updateSquadStats();notif('+'+ml+'ml');renderDashboard();
   if(document.getElementById('page-plus').classList.contains('active'))renderHydra();
 }
@@ -1157,7 +1138,7 @@ function addFoodToJournal(){
   DB.journal[today].push({id:Date.now()+'',name:selectedFood.name,emoji:selectedFood.emoji,meal:currentMeal,qty:qty,unit:selectedFood.unit,cal:selectedFood.cal*ratio,prot:selectedFood.prot*ratio,gluc:selectedFood.gluc*ratio,lip:selectedFood.lip*ratio});
   updateStreak();
   var tCal=DB.journal[today].reduce(function(s,f){return s+f.cal;},0);
-  if(tCal>=DB.goals.cal*0.8&&tCal<=DB.goals.cal*1.1){addXP(5,'Objectif calorique respecté','cal_objectif');}
+  if(tCal>=DB.goals.cal*0.8&&tCal<=DB.goals.cal*1.1)addXP(5,'Objectif calorique respecté','cal_objectif');
   dbSave();updateSquadStats();cancelFoodAdd();renderJournal();renderDashboard();notif('Ajouté');
 }
 function openCopyDayModal(){
@@ -1168,7 +1149,7 @@ function openCopyDayModal(){
 }
 function copyDayJournal(fromDate){
   var today=todayStr();if(!DB.journal[today])DB.journal[today]=[];
-  DB.journal[today]=DB.journal[today].concat((DB.journal[fromDate]||[]).map(function(f){return Object.assign({},f,{id:Date.now()+Math.random()+''}); }));
+  DB.journal[today]=DB.journal[today].concat((DB.journal[fromDate]||[]).map(function(f){return Object.assign({},f,{id:Date.now()+Math.random()+''});}));
   dbSave();closeModal();renderJournal();renderDashboard();notif('Journal copié');
 }
 function renderJournal(){
@@ -1214,7 +1195,6 @@ function renderRecettes(){
   document.getElementById('recettes-count').textContent=DB.recipes.length+' recette(s)';
   document.getElementById('recettes-list').innerHTML=DB.recipes.map(function(r){return '<div class="card"><div class="flex justify-between items-center mb-8"><div><span style="font-size:1.3rem">'+r.emoji+'</span> <strong>'+r.name+'</strong></div><div class="flex gap-8"><button class="btn btn-primary btn-sm" onclick="addRecipeToJournal(\''+r.id+'\')">+Journal</button><button class="btn btn-secondary btn-sm" onclick="addRecipeToCourses(\''+r.id+'\')">+Courses</button><button class="btn-icon" onclick="deleteRecipe(\''+r.id+'\')">🗑</button></div></div><div class="text-xs text-muted">'+Math.round(r.totalCal||0)+' kcal · '+(r.prepTime||0)+'min</div></div>';}).join('')||'<div class="text-muted text-sm">Aucune recette</div>';
 }
-
 function openRecetteModal(){
   document.getElementById('modal-content').innerHTML='<h2>Nouvelle recette</h2><div class="form-row"><div class="form-group"><label>Emoji</label><input type="text" id="er-emoji" value="🍽" style="width:70px"></div><div class="form-group"><label>Nom</label><input type="text" id="er-name"></div></div><div class="form-row"><div class="form-group"><label>Catégorie</label><select id="er-cat"><option value="petit-dejeuner">Petit-déj</option><option value="plat">Plat</option><option value="snack">Snack</option><option value="dessert">Dessert</option></select></div><div class="form-group"><label>Temps (min)</label><input type="number" id="er-time" value="30" inputmode="numeric"></div></div><div class="form-group"><label>Ingrédients</label><div id="er-ingr-list"></div><button class="btn btn-secondary btn-sm mt-8" onclick="addIngredientRow()">+ Ingrédient</button></div><div class="flex gap-8 mt-12"><button class="btn btn-secondary" style="flex:.4" onclick="closeModal()">Annuler</button><button class="btn btn-primary" style="flex:1" onclick="saveRecette()">Créer</button></div>';
   showModal();
@@ -1230,27 +1210,15 @@ function saveRecette(){
   var ingredients=[],tCal=0,tProt=0,tGluc=0,tLip=0;
   rows.forEach(function(sel,i){var fid=sel.value,qty=parseFloat(qtys[i].value)||100,food=DB.foods.find(function(f){return f.id===fid;});if(food){var r=qty/100;ingredients.push({foodId:fid,name:food.name,qty:qty,unit:food.unit});tCal+=food.cal*r;tProt+=food.prot*r;tGluc+=food.gluc*r;tLip+=food.lip*r;}});
   var rec={id:'r'+Date.now(),name:document.getElementById('er-name').value,emoji:document.getElementById('er-emoji').value,cat:document.getElementById('er-cat').value,prepTime:parseInt(document.getElementById('er-time').value)||30,ingredients:ingredients,totalCal:tCal,totalProt:tProt,totalGluc:tGluc,totalLip:tLip};
-  DB.recipes.push(rec);dbSave();closeModal();renderRecettes();
-  checkBadge('recipe_chef',DB.recipes.length>=3);
-  addXP(20,'Nouvelle recette créée','recette_'+('r'+Date.now()));notif('Recette créée');
+  DB.recipes.push(rec);dbSave();closeModal();renderRecettes();checkBadge('recipe_chef',DB.recipes.length>=3);addXP(20,'Nouvelle recette créée','recette_'+rec.id);notif('Recette créée');
 }
 function deleteRecipe(id){if(confirm('Supprimer ?')){DB.recipes=DB.recipes.filter(function(r){return r.id!==id;});dbSave();renderRecettes();}}
-function addRecipeToJournal(id){
-  var r=DB.recipes.find(function(x){return x.id===id;});if(!r)return;
-  var today=todayStr();if(!DB.journal[today])DB.journal[today]=[];
-  DB.journal[today].push({id:Date.now()+'',name:r.name,emoji:r.emoji,meal:currentMeal,qty:1,unit:'portion',cal:r.totalCal||0,prot:r.totalProt||0,gluc:r.totalGluc||0,lip:r.totalLip||0});
-  dbSave();notif(r.name+' ajouté au journal');
-}
-function addRecipeToCourses(id){
-  var r=DB.recipes.find(function(x){return x.id===id;});if(!r)return;
-  (r.ingredients||[]).forEach(function(ing){DB.courses.push({name:ing.name||'?',qty:ing.qty||0,unit:ing.unit||'g',done:false});});
-  dbSave();notif('Ingrédients ajoutés aux courses');
-}
+function addRecipeToJournal(id){var r=DB.recipes.find(function(x){return x.id===id;});if(!r)return;var today=todayStr();if(!DB.journal[today])DB.journal[today]=[];DB.journal[today].push({id:Date.now()+'',name:r.name,emoji:r.emoji,meal:currentMeal,qty:1,unit:'portion',cal:r.totalCal||0,prot:r.totalProt||0,gluc:r.totalGluc||0,lip:r.totalLip||0});dbSave();notif(r.name+' ajouté au journal');}
+function addRecipeToCourses(id){var r=DB.recipes.find(function(x){return x.id===id;});if(!r)return;(r.ingredients||[]).forEach(function(ing){DB.courses.push({name:ing.name||'?',qty:ing.qty||0,unit:ing.unit||'g',done:false});});dbSave();notif('Ingrédients ajoutés aux courses');}
 
 // ── COURSES ──
 function renderCoursesList(){
-  var list=DB.courses||[];
-  var checked=list.filter(function(i){return i.done;}).length;
+  var list=DB.courses||[],checked=list.filter(function(i){return i.done;}).length;
   var el=document.getElementById('courses-list');
   if(!list.length){el.innerHTML='<div class="text-muted text-sm">Aucun article.</div>';document.getElementById('courses-summary').classList.add('hidden');return;}
   el.innerHTML=list.map(function(item,i){return '<div class="courses-item'+(item.done?' checked':'')+'"><div class="courses-check'+(item.done?' done':'')+'" onclick="toggleCourseItem('+i+')">'+(item.done?'✓':'')+'</div><span style="flex:1">'+item.name+'</span><span class="text-xs text-muted">'+item.qty+' '+item.unit+'</span><button class="btn-icon" onclick="removeCourseItem('+i+')">✕</button></div>';}).join('');
@@ -1264,27 +1232,15 @@ function openAddCourseItemModal(){
   document.getElementById('modal-content').innerHTML='<h2>+ Article</h2><div class="form-group"><label>Nom</label><input type="text" id="ci-name" placeholder="Ex: Poulet"></div><div class="form-row"><div class="form-group"><label>Quantité</label><input type="number" id="ci-qty" value="100" inputmode="decimal"></div><div class="form-group"><label>Unité</label><select id="ci-unit"><option value="g">g</option><option value="ml">ml</option><option value="pièce">pièce(s)</option><option value="kg">kg</option><option value="L">L</option></select></div></div><div class="flex gap-8 mt-12"><button class="btn btn-secondary" style="flex:.4" onclick="closeModal()">Annuler</button><button class="btn btn-primary" style="flex:1" onclick="addCourseItem()">Ajouter</button></div>';
   showModal();
 }
-function addCourseItem(){
-  var name=document.getElementById('ci-name').value;if(!name)return;
-  DB.courses.push({name:name,qty:parseFloat(document.getElementById('ci-qty').value)||1,unit:document.getElementById('ci-unit').value,done:false});
-  dbSave();closeModal();renderCoursesList();notif('Article ajouté');
-}
+function addCourseItem(){var name=document.getElementById('ci-name').value;if(!name)return;DB.courses.push({name:name,qty:parseFloat(document.getElementById('ci-qty').value)||1,unit:document.getElementById('ci-unit').value,done:false});dbSave();closeModal();renderCoursesList();notif('Article ajouté');}
 function genCoursesFromRecipes(){
   if(!DB.recipes.length){notif('Aucune recette disponible');return;}
   document.getElementById('modal-content').innerHTML='<h2>🤖 Générer la liste</h2><div id="recipe-sel-list">'+DB.recipes.map(function(r,i){return '<label style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--el);border-radius:10px;margin-bottom:8px;cursor:pointer"><input type="checkbox" value="'+i+'" checked style="width:18px;height:18px;accent-color:var(--purple)"><span>'+r.emoji+' '+r.name+'</span></label>';}).join('')+'</div><div class="flex gap-8 mt-12"><button class="btn btn-secondary" style="flex:.4" onclick="closeModal()">Annuler</button><button class="btn btn-primary" style="flex:1" onclick="doGenCourses()">Générer</button></div>';
   showModal();
 }
 function doGenCourses(){
-  var checkboxes=document.querySelectorAll('#recipe-sel-list input[type=checkbox]:checked');
-  var aggregated={};
-  checkboxes.forEach(function(cb){
-    var recipe=DB.recipes[parseInt(cb.value)];
-    (recipe.ingredients||[]).forEach(function(ing){
-      var key=(ing.name||'')+'__'+(ing.unit||'g');
-      if(!aggregated[key])aggregated[key]={name:ing.name||'?',qty:0,unit:ing.unit||'g',done:false};
-      aggregated[key].qty+=parseFloat(ing.qty)||0;
-    });
-  });
+  var checkboxes=document.querySelectorAll('#recipe-sel-list input[type=checkbox]:checked'),aggregated={};
+  checkboxes.forEach(function(cb){var recipe=DB.recipes[parseInt(cb.value)];(recipe.ingredients||[]).forEach(function(ing){var key=(ing.name||'')+'__'+(ing.unit||'g');if(!aggregated[key])aggregated[key]={name:ing.name||'?',qty:0,unit:ing.unit||'g',done:false};aggregated[key].qty+=parseFloat(ing.qty)||0;});});
   var newItems=Object.values(aggregated).map(function(item){item.qty=Math.round(item.qty*10)/10;return item;});
   DB.courses=(DB.courses||[]).filter(function(i){return !newItems.find(function(ni){return ni.name===i.name;});}).concat(newItems);
   dbSave();closeModal();renderCoursesList();switchTab('nutri','courses');notif('Liste générée !');
@@ -1410,8 +1366,7 @@ function calcSleepDurNum(bed,wake){if(!bed||!wake)return 0;var bh=parseInt(bed.s
 function calcSleepDur(bed,wake){var h=calcSleepDurNum(bed,wake);return Math.floor(h)+'h'+Math.round((h%1)*60).toString().padStart(2,'0');}
 function saveSleep(){
   DB.sleep.push({id:'sl'+Date.now(),bed:document.getElementById('sleep-bed').value,wake:document.getElementById('sleep-wake').value,date:document.getElementById('sleep-date').value,quality:sleepQuality,notes:document.getElementById('sleep-notes').value});
-  addXP(10,'Nuit enregistrée','sommeil_daily');
-  checkBadge('sleep_master',DB.sleep.length>=7);
+  addXP(10,'Nuit enregistrée','sommeil_daily');checkBadge('sleep_master',DB.sleep.length>=7);
   dbSave();renderSommeil();renderDashboard();notif('Nuit enregistrée');
 }
 function deleteSleep(id){DB.sleep=DB.sleep.filter(function(s){return s.id!==id;});dbSave();renderSommeil();}
@@ -1428,8 +1383,7 @@ function saveWeight(){
   var date=document.getElementById('new-weight-date').value;
   DB.weight.push({id:'wt'+Date.now(),val:v,date:date});
   if(date===todayStr()&&DB.profile){var p=DB.profile;p.poids=v;var bmr=p.sexe==='h'?88.36+(13.4*v)+(4.8*p.taille)-(5.7*p.age):447.6+(9.2*v)+(3.1*p.taille)-(4.3*p.age);var tdee=Math.round(bmr*p.activite),obj=p.objectif||'maintien';var cal=obj==='masse'?tdee+300:obj==='perte'?tdee-400:tdee;var prot=Math.round(v*2),lip=Math.round(cal*0.25/9),gluc=Math.round((cal-prot*4-lip*9)/4),eau=calcWaterNeeds(p);DB.goals=Object.assign({},DB.goals,{cal:cal,prot:prot,gluc:gluc,lip:lip,eau:eau});}
-  checkBadge('weight_tracker',DB.weight.length>=5);
-  addXP(5,'Pesée enregistrée','pesee_daily');
+  checkBadge('weight_tracker',DB.weight.length>=5);addXP(5,'Pesée enregistrée','pesee_daily');
   dbSave();closeModal();renderWeightChart();renderDashboard();notif('Poids enregistré');
 }
 function deleteWeight(id){DB.weight=DB.weight.filter(function(w){return w.id!==id;});dbSave();renderWeightChart();}
@@ -1471,10 +1425,8 @@ function renderProfil(){
 }
 function saveProfile(){
   var v=parseFloat(document.getElementById('p-poids').value)||(DB.profile&&DB.profile.poids)||70;
-  var act=parseFloat(document.getElementById('p-activite').value)||1.55;
-  var age=parseInt(document.getElementById('p-age').value)||25;
-  var sexe=document.getElementById('p-sexe').value;
-  var taille=parseInt(document.getElementById('p-taille').value)||170;
+  var act=parseFloat(document.getElementById('p-activite').value)||1.55,age=parseInt(document.getElementById('p-age').value)||25;
+  var sexe=document.getElementById('p-sexe').value,taille=parseInt(document.getElementById('p-taille').value)||170;
   DB.profile=Object.assign({},DB.profile,{prenom:document.getElementById('p-prenom').value,age:age,sexe:sexe,taille:taille,poids:v,activite:act});
   var bmr=sexe==='h'?88.36+(13.4*v)+(4.8*taille)-(5.7*age):447.6+(9.2*v)+(3.1*taille)-(4.3*age);
   var tdee=Math.round(bmr*act),obj=DB.profile.objectif||'maintien';
@@ -1488,20 +1440,17 @@ function saveGoals(){DB.goals={cal:parseInt(document.getElementById('p-cal').val
 function resetAllData(){if(confirm('Réinitialiser toutes les données ?')){DB={};initDefaults();dbSave();location.reload();}}
 
 // ── ESCOUADE ──
-var _squadId=null,_chatInterval=null;
 function renderEscouade(){
   var el=document.getElementById('squad-content');if(!el)return;
   document.getElementById('squad-chat').classList.add('hidden');
   if(_chatInterval){clearInterval(_chatInterval);_chatInterval=null;}
-  el.innerHTML='<div class="ai-loading"><div>👥</div><div>Chargement...</div></div>';
+  el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--muted)">👥 Chargement...</div>';
   supaFetch('/rest/v1/squad_members?user_id=eq.'+currentUser.user.id+'&select=squad_id,squads(id,name,code)').then(function(r){return r.json();}).then(function(rows){
     if(!rows||!rows.length){_squadId=null;renderNoSquad(el);}
     else{_squadId=rows[0].squads.id;renderSquadView(el,rows[0].squads);}
   }).catch(function(){renderNoSquad(el);});
 }
-function renderNoSquad(el){
-  el.innerHTML='<div style="text-align:center;padding:2rem 1rem"><div style="font-size:4rem;margin-bottom:1rem">👥</div><div style="font-size:1.1rem;font-weight:700;margin-bottom:.5rem">Rejoignez une escouade</div><div class="text-muted text-sm mb-16">Motivez-vous ensemble et suivez la progression de vos amis !</div><button class="btn btn-primary mb-8" onclick="openCreateSquadModal()">Créer une escouade</button><button class="btn btn-secondary" onclick="openJoinSquadModal()">Rejoindre avec un code</button></div>';
-}
+function renderNoSquad(el){el.innerHTML='<div style="text-align:center;padding:2rem 1rem"><div style="font-size:4rem;margin-bottom:1rem">👥</div><div style="font-size:1.1rem;font-weight:700;margin-bottom:.5rem">Rejoignez une escouade</div><div class="text-muted text-sm mb-16">Motivez-vous ensemble !</div><button class="btn btn-primary mb-8" onclick="openCreateSquadModal()">Créer une escouade</button><button class="btn btn-secondary" onclick="openJoinSquadModal()">Rejoindre avec un code</button></div>';}
 function renderSquadView(el,squad){
   supaFetch('/rest/v1/squad_members?squad_id=eq.'+squad.id+'&select=user_id,display_name').then(function(r){return r.json();}).then(function(members){
     var memberIds=members.map(function(m){return m.user_id;});
@@ -1510,172 +1459,37 @@ function renderSquadView(el,squad){
     var html='<div class="card mb-12" style="background:var(--purple)15;border-color:var(--purple)33"><div class="flex justify-between items-center"><div><div style="font-weight:700">'+squad.name+'</div><div class="text-xs text-muted">Code : <strong>'+squad.code+'</strong></div></div><button class="btn btn-danger btn-sm" onclick="leaveSquad()">Quitter</button></div></div>';
     (stats||[]).forEach(function(m){
       var isMe=m.user_id===currentUser.user.id;
-      html+='<div class="squad-member"><div class="flex items-center gap-12 mb-12"><div style="font-size:1.5rem;background:var(--el);width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center">🏋️</div><div><div style="font-weight:700">'+m.display_name+(isMe?' (moi)':'')+'</div><div class="text-xs text-muted">Niv. '+m.level+' · Streak '+m.streak+'j'+(m.sport_today?' · 💪 Séance aujourd\'hui':'')+'</div></div></div><div class="grid-3">'+renderRing(m.cal_pct,'#f59e42','🍽️','Calories')+renderRing(m.water_pct,'#378add','💧','Eau')+renderRing(m.sport_today?100:0,'#3dba7a','🏋️','Sport')+'</div></div>';
+      html+='<div class="squad-member"><div class="flex items-center gap-12 mb-12"><div style="font-size:1.5rem;background:var(--el);width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center">🏋️</div><div><div style="font-weight:700">'+m.display_name+(isMe?' (moi)':'')+'</div><div class="text-xs text-muted">Niv. '+m.level+' · Streak '+m.streak+'j'+(m.sport_today?' · 💪':'')+'</div></div></div><div class="grid-3">'+renderRing(m.cal_pct,'#f59e42','🍽️','Calories')+renderRing(m.water_pct,'#378add','💧','Eau')+renderRing(m.sport_today?100:0,'#3dba7a','🏋️','Sport')+'</div></div>';
     });
     el.innerHTML=html;
-    // Afficher le chat
     document.getElementById('squad-chat').classList.remove('hidden');
     loadChatMessages();
     if(_chatInterval)clearInterval(_chatInterval);
     _chatInterval=setInterval(loadChatMessages,8000);
   }).catch(function(){el.innerHTML='<div class="text-muted text-sm">Erreur de chargement</div>';});
 }
+function renderRing(pct,color,emoji,label){var r=22,circ=2*Math.PI*r,offset=circ-(pct/100*circ);return '<div style="text-align:center"><div class="ring-wrap" style="margin:0 auto"><svg width="56" height="56" viewBox="0 0 56 56"><circle cx="28" cy="28" r="'+r+'" fill="none" stroke="var(--el)" stroke-width="5"/><circle cx="28" cy="28" r="'+r+'" fill="none" stroke="'+color+'" stroke-width="5" stroke-dasharray="'+circ.toFixed(1)+'" stroke-dashoffset="'+offset.toFixed(1)+'" stroke-linecap="round" transform="rotate(-90 28 28)"/></svg><div class="ring-emoji">'+emoji+'</div></div><div class="text-xs text-muted mt-4">'+pct+'%</div><div class="text-xs" style="font-weight:600">'+label+'</div></div>';}
 function loadChatMessages(){
   if(!_squadId)return;
   supaFetch('/rest/v1/squad_messages?squad_id=eq.'+_squadId+'&order=created_at.asc&limit=50&select=*').then(function(r){return r.json();}).then(function(msgs){
     var box=document.getElementById('chat-messages');if(!box)return;
     if(!msgs||!msgs.length){box.innerHTML='<div class="text-muted text-xs" style="text-align:center;margin-top:1rem">Aucun message. Soyez le premier !</div>';return;}
     var me=currentUser.user.id;
-    box.innerHTML=msgs.map(function(m){
-      var isMe=m.user_id===me;
-      return '<div style="display:flex;flex-direction:column;align-items:'+(isMe?'flex-end':'flex-start')+'">'
-        +'<div style="font-size:.65rem;color:var(--muted);margin-bottom:2px">'+(isMe?'Moi':m.display_name)+'</div>'
-        +'<div style="background:'+(isMe?'var(--purple)':'var(--el)')+';color:'+(isMe?'#fff':'var(--text)')+';padding:8px 12px;border-radius:14px;max-width:80%;font-size:.9rem;line-height:1.4">'+escHtml(m.message)+'</div>'
-        +'</div>';
-    }).join('');
+    box.innerHTML=msgs.map(function(m){var isMe=m.user_id===me;return '<div style="display:flex;flex-direction:column;align-items:'+(isMe?'flex-end':'flex-start')+'"><div style="font-size:.65rem;color:var(--muted);margin-bottom:2px">'+(isMe?'Moi':m.display_name)+'</div><div style="background:'+(isMe?'var(--purple)':'var(--el)')+';color:'+(isMe?'#fff':'var(--text)')+';padding:8px 12px;border-radius:14px;max-width:80%;font-size:.9rem;line-height:1.4">'+escHtml(m.message)+'</div></div>';}).join('');
     box.scrollTop=box.scrollHeight;
   }).catch(function(){});
 }
-function sendChatMsg(){
-  var inp=document.getElementById('chat-input');
-  var msg=(inp.value||'').trim();if(!msg||!_squadId)return;
-  inp.value='';
-  supaFetch('/rest/v1/squad_messages',{method:'POST',headers:{'Prefer':'return=minimal'},body:JSON.stringify({squad_id:_squadId,user_id:currentUser.user.id,display_name:DB.profile?DB.profile.prenom||'?':'?',message:msg})}).then(function(){loadChatMessages();}).catch(function(){notif('Erreur envoi');});
-}
+function sendChatMsg(){var inp=document.getElementById('chat-input');var msg=(inp.value||'').trim();if(!msg||!_squadId)return;inp.value='';supaFetch('/rest/v1/squad_messages',{method:'POST',headers:{'Prefer':'return=minimal'},body:JSON.stringify({squad_id:_squadId,user_id:currentUser.user.id,display_name:DB.profile?DB.profile.prenom||'?':'?',message:msg})}).then(function(){loadChatMessages();}).catch(function(){notif('Erreur envoi');});}
 function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-function renderRing(pct,color,emoji,label){
-  var r=22,circ=2*Math.PI*r,offset=circ-(pct/100*circ);
-  return '<div style="text-align:center"><div class="ring-wrap" style="margin:0 auto"><svg width="56" height="56" viewBox="0 0 56 56"><circle cx="28" cy="28" r="'+r+'" fill="none" stroke="var(--el)" stroke-width="5"/><circle cx="28" cy="28" r="'+r+'" fill="none" stroke="'+color+'" stroke-width="5" stroke-dasharray="'+circ.toFixed(1)+'" stroke-dashoffset="'+offset.toFixed(1)+'" stroke-linecap="round" transform="rotate(-90 28 28)"/></svg><div class="ring-emoji">'+emoji+'</div></div><div class="text-xs text-muted mt-4">'+pct+'%</div><div class="text-xs" style="font-weight:600">'+label+'</div></div>';
-}
-function openCreateSquadModal(){
-  document.getElementById('modal-content').innerHTML='<h2>👥 Créer une escouade</h2><div class="form-group"><label>Nom</label><input type="text" id="squad-name" placeholder="Ex: Les Warriors"></div><div class="flex gap-8 mt-12"><button class="btn btn-secondary" style="flex:.4" onclick="closeModal()">Annuler</button><button class="btn btn-primary" style="flex:1" onclick="createSquad()">Créer</button></div>';
-  showModal();
-}
-function createSquad(){
-  var name=document.getElementById('squad-name').value;if(!name)return;
-  var code=Math.random().toString(36).substr(2,6).toUpperCase();
-  supaFetch('/rest/v1/squads',{method:'POST',headers:{'Prefer':'return=representation'},body:JSON.stringify({name:name,code:code,created_by:currentUser.user.id})}).then(function(r){return r.json();}).then(function(rows){
-    var squad=Array.isArray(rows)?rows[0]:rows;
-    return supaFetch('/rest/v1/squad_members',{method:'POST',body:JSON.stringify({squad_id:squad.id,user_id:currentUser.user.id,display_name:DB.profile.prenom||'?'})});
-  }).then(function(){closeModal();checkBadge('squad_member',true);notif('Escouade créée ! Code : '+code);renderEscouade();}).catch(function(e){notif('Erreur : '+e.message);});
-}
-function openJoinSquadModal(){
-  document.getElementById('modal-content').innerHTML='<h2>🔑 Rejoindre une escouade</h2><div class="form-group"><label>Code d\'invitation</label><input type="text" id="squad-code" placeholder="ABC123" style="text-transform:uppercase;letter-spacing:.15em;font-size:1.2rem;text-align:center"></div><div class="flex gap-8 mt-12"><button class="btn btn-secondary" style="flex:.4" onclick="closeModal()">Annuler</button><button class="btn btn-primary" style="flex:1" onclick="joinSquad()">Rejoindre</button></div>';
-  showModal();
-}
-function joinSquad(){
-  var code=document.getElementById('squad-code').value.toUpperCase().trim();if(!code)return;
-  supaFetch('/rest/v1/squads?code=eq.'+code+'&select=id,name').then(function(r){return r.json();}).then(function(rows){
-    if(!rows||!rows.length)throw new Error('Code invalide');
-    var squad=rows[0];
-    return supaFetch('/rest/v1/squad_members',{method:'POST',body:JSON.stringify({squad_id:squad.id,user_id:currentUser.user.id,display_name:DB.profile.prenom||'?'})}).then(function(){return squad;});
-  }).then(function(squad){closeModal();checkBadge('squad_member',true);notif('Bienvenue dans '+squad.name+' !');renderEscouade();}).catch(function(e){notif('Erreur : '+e.message);});
-}
-function leaveSquad(){
-  if(!confirm('Quitter l\'escouade ?'))return;
-  if(_chatInterval){clearInterval(_chatInterval);_chatInterval=null;}
-  _squadId=null;
-  supaFetch('/rest/v1/squad_members?user_id=eq.'+currentUser.user.id,{method:'DELETE'}).then(function(){notif('Vous avez quitté l\'escouade');renderEscouade();}).catch(function(){notif('Erreur');});
-}
-
-// ── SQUAD STATS (push après chaque action) ──
-function updateSquadStats(){
-  if(!currentUser||!currentUser.user||!currentUser.user.id||!DB.profile)return;
-  var today=todayStr();
-  var dayFoods=DB.journal[today]||[];
-  var tCal=dayFoods.reduce(function(s,f){return s+f.cal;},0);
-  var calPct=Math.min(100,Math.round(tCal/DB.goals.cal*100));
-  var waterPct=Math.min(100,Math.round((DB.water[today]||0)/DB.goals.eau*100));
-  var sportToday=DB.workoutHistory.some(function(w){return w.date===today;});
-  var streak=(DB.gamification&&DB.gamification.streak)||0;
-  var lvl=getLevelInfo((DB.gamification&&DB.gamification.xp)||0);
-  supaFetch('/rest/v1/squad_stats',{
-    method:'POST',
-    headers:{'Prefer':'return=minimal,resolution=merge-duplicates'},
-    body:JSON.stringify({
-      user_id:currentUser.user.id,
-      display_name:DB.profile.prenom||'?',
-      cal_pct:calPct,
-      water_pct:waterPct,
-      sport_today:sportToday,
-      streak:streak,
-      level:lvl.level,
-      xp:DB.gamification.xp||0,
-      updated_at:new Date().toISOString()
-    })
-  }).catch(function(){});
-}
-
-// ── APPEL IA ──
-// Option A : Edge Function Supabase (recommandé, nécessite ai-proxy déployée)
-// Option B : clé directe avec proxy CORS (temporaire)
-
-function closeAI(){document.getElementById('ai-panel').classList.add('hidden');}
-function renderAIText(text){var html=text.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n\n/g,'</p><p style="margin:8px 0">').replace(/\n/g,'<br>');return '<div class="card" style="line-height:1.6;font-size:.95rem"><p style="margin:8px 0">'+html+'</p></div>';}
-function openAI(mode){
-  document.getElementById('ai-panel').classList.remove('hidden');
-  var content=document.getElementById('ai-content');
-  var titleEl=document.getElementById('ai-panel-title');
-  var subEl=document.getElementById('ai-panel-sub');
-  var p=DB.profile||{},g=DB.goals||{};
-  content.innerHTML='<div class="ai-loading"><div>🤖</div><div>Génération en cours...</div></div>';
-  var prompt='';
-  if(mode==='suggestions'){
-    titleEl.textContent='Suggestions repas';subEl.textContent='Macros restantes';
-    var today=todayStr(),foods=DB.journal[today]||[];
-    var tCal=foods.reduce(function(s,f){return s+f.cal;},0),tProt=foods.reduce(function(s,f){return s+f.prot;},0),tGluc=foods.reduce(function(s,f){return s+f.gluc;},0),tLip=foods.reduce(function(s,f){return s+f.lip;},0);
-    prompt='Coach nutrition. Utilisateur: '+(p.prenom||'?')+', objectif '+(p.objectif||'maintien')+'. Macros restantes: '+Math.max(0,Math.round(g.cal-tCal))+' kcal, prot '+Math.max(0,Math.round(g.prot-tProt))+'g, gluc '+Math.max(0,Math.round(g.gluc-tGluc))+'g, lip '+Math.max(0,Math.round(g.lip-tLip))+'g. Aliments dispo: '+DB.foods.map(function(f){return f.name;}).join(', ')+'. Propose 3 repas adaptés avec ingrédients, quantités et macros. Français, concis.';
-  }else if(mode==='analyse'){
-    titleEl.textContent='Analyse de semaine';subEl.textContent='7 derniers jours';
-    var days7=last7Days();
-    var seances=DB.workoutHistory.filter(function(w){return days7.indexOf(w.date)>=0;});
-    var avgCal=Math.round(days7.reduce(function(s,d){var f=DB.journal[d]||[];return s+f.reduce(function(a,x){return a+x.cal;},0);},0)/7);
-    var avgWater=Math.round(days7.reduce(function(s,d){return s+(DB.water[d]||0);},0)/7);
-    var sleepArr=DB.sleep.filter(function(s){return days7.indexOf(s.date)>=0;});
-    var avgSleep=sleepArr.length?Math.round(sleepArr.reduce(function(s,n){return s+calcSleepDurNum(n.bed,n.wake);},0)/sleepArr.length*10)/10:0;
-    var poidsArr=DB.weight.slice(-2);var weightTrend=poidsArr.length===2?Math.round((poidsArr[1].val-poidsArr[0].val)*10)/10:null;
-    var lvl=getLevelInfo((DB.gamification&&DB.gamification.xp)||0);
-    prompt='Coach fitness. Analyse semaine de '+(p.prenom||'?')+'. Profil: '+(p.objectif||'maintien')+', '+(p.poids||'?')+'kg. Données: '+seances.length+' séances, cal moy '+avgCal+'/'+g.cal+', eau moy '+avgWater+'ml/'+g.eau+'ml, sommeil moy '+avgSleep+'h. Poids: '+(weightTrend!==null?(weightTrend>0?'+':'')+weightTrend+'kg':'non mesuré')+'. Niveau: '+lvl.level+' ('+lvl.title+'). Analyse: 1) Points forts 2) À améliorer 3) 3 conseils actionnables 4) Objectif prioritaire. Français, motivant.';
-  }
-  callAI(prompt).then(function(text){
-    content.innerHTML=renderAIText(text);
-  }).catch(function(e){
-    console.error('IA error:', e);
-    content.innerHTML='<div class="card" style="color:var(--red);font-size:.8rem">Erreur : '+(e.message||'inconnue')+'</div>';
-  });
-}
+function openCreateSquadModal(){document.getElementById('modal-content').innerHTML='<h2>👥 Créer une escouade</h2><div class="form-group"><label>Nom</label><input type="text" id="squad-name" placeholder="Ex: Les Warriors"></div><div class="flex gap-8 mt-12"><button class="btn btn-secondary" style="flex:.4" onclick="closeModal()">Annuler</button><button class="btn btn-primary" style="flex:1" onclick="createSquad()">Créer</button></div>';showModal();}
+function createSquad(){var name=document.getElementById('squad-name').value;if(!name)return;var code=Math.random().toString(36).substr(2,6).toUpperCase();supaFetch('/rest/v1/squads',{method:'POST',headers:{'Prefer':'return=representation'},body:JSON.stringify({name:name,code:code,created_by:currentUser.user.id})}).then(function(r){return r.json();}).then(function(rows){var squad=Array.isArray(rows)?rows[0]:rows;return supaFetch('/rest/v1/squad_members',{method:'POST',body:JSON.stringify({squad_id:squad.id,user_id:currentUser.user.id,display_name:DB.profile.prenom||'?'})});}).then(function(){closeModal();checkBadge('squad_member',true);notif('Escouade créée ! Code : '+code);renderEscouade();}).catch(function(e){notif('Erreur : '+e.message);});}
+function openJoinSquadModal(){document.getElementById('modal-content').innerHTML='<h2>🔑 Rejoindre une escouade</h2><div class="form-group"><label>Code</label><input type="text" id="squad-code" placeholder="ABC123" style="text-transform:uppercase;letter-spacing:.15em;font-size:1.2rem;text-align:center"></div><div class="flex gap-8 mt-12"><button class="btn btn-secondary" style="flex:.4" onclick="closeModal()">Annuler</button><button class="btn btn-primary" style="flex:1" onclick="joinSquad()">Rejoindre</button></div>';showModal();}
+function joinSquad(){var code=document.getElementById('squad-code').value.toUpperCase().trim();if(!code)return;supaFetch('/rest/v1/squads?code=eq.'+code+'&select=id,name').then(function(r){return r.json();}).then(function(rows){if(!rows||!rows.length)throw new Error('Code invalide');var squad=rows[0];return supaFetch('/rest/v1/squad_members',{method:'POST',body:JSON.stringify({squad_id:squad.id,user_id:currentUser.user.id,display_name:DB.profile.prenom||'?'})}).then(function(){return squad;});}).then(function(squad){closeModal();checkBadge('squad_member',true);notif('Bienvenue dans '+squad.name+' !');renderEscouade();}).catch(function(e){notif('Erreur : '+e.message);});}
+function leaveSquad(){if(!confirm('Quitter l\'escouade ?'))return;if(_chatInterval){clearInterval(_chatInterval);_chatInterval=null;}_squadId=null;supaFetch('/rest/v1/squad_members?user_id=eq.'+currentUser.user.id,{method:'DELETE'}).then(function(){notif('Vous avez quitté l\'escouade');renderEscouade();}).catch(function(){notif('Erreur');});}
 
 // ── CHARTS ──
-function drawBarChart(id,data,maxVal,unit,color){
-  var c=document.getElementById(id);if(!c)return;
-  var ctx=c.getContext('2d'),W=c.offsetWidth||300,H=c.height;
-  c.width=W;ctx.clearRect(0,0,W,H);
-  var n=data.length;if(!n)return;
-  var maxV=Math.max.apply(null,[maxVal].concat(data.map(function(d){return d.val;})).concat([1]));
-  var bw=Math.max(4,(W-30)/n-3);
-  data.forEach(function(d,i){
-    var x=30+i*((W-30)/n),h2=d.val/maxV*(H-20);
-    ctx.fillStyle=color+'33';ctx.fillRect(x,H-18-h2,bw,h2);
-    if(d.val>0){ctx.fillStyle=color;ctx.fillRect(x,H-18-h2,bw,3);}
-    if(i%2===0){ctx.fillStyle='#666';ctx.font='9px system-ui';ctx.fillText(d.label,x-2,H-4);}
-  });
-  ctx.strokeStyle='#2e2e3f';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(28,0);ctx.lineTo(28,H-18);ctx.stroke();
-  ctx.fillStyle='#555';ctx.font='9px system-ui';ctx.fillText(Math.round(maxV)+unit,0,10);
-}
-function drawLineChart(id,data,unit,color){
-  var c=document.getElementById(id);if(!c)return;
-  var ctx=c.getContext('2d'),W=c.offsetWidth||300,H=c.height;
-  c.width=W;ctx.clearRect(0,0,W,H);
-  var n=data.length;if(n<2)return;
-  var maxV=Math.max.apply(null,data.map(function(d){return d.val;}));
-  var minV=Math.min.apply(null,data.map(function(d){return d.val;}));
-  var pts=data.map(function(d,i){return{x:30+i*(W-40)/(n-1),y:(H-20)-(d.val-minV)/(maxV-minV||1)*(H-30)};});
-  ctx.beginPath();ctx.moveTo(pts[0].x,H-18);pts.forEach(function(p){ctx.lineTo(p.x,p.y);});ctx.lineTo(pts[n-1].x,H-18);ctx.closePath();ctx.fillStyle=color+'22';ctx.fill();
-  ctx.beginPath();ctx.strokeStyle=color;ctx.lineWidth=2;ctx.lineJoin='round';
-  pts.forEach(function(p,i){if(i===0)ctx.moveTo(p.x,p.y);else ctx.lineTo(p.x,p.y);});ctx.stroke();
-  pts.forEach(function(p){ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();});
-  data.forEach(function(d,i){if(i%Math.ceil(n/5)===0){ctx.fillStyle='#666';ctx.font='9px system-ui';ctx.fillText(d.label,pts[i].x-8,H-4);}});
-}
+function drawBarChart(id,data,maxVal,unit,color){var c=document.getElementById(id);if(!c)return;var ctx=c.getContext('2d'),W=c.offsetWidth||300,H=c.height;c.width=W;ctx.clearRect(0,0,W,H);var n=data.length;if(!n)return;var maxV=Math.max.apply(null,[maxVal].concat(data.map(function(d){return d.val;})).concat([1]));var bw=Math.max(4,(W-30)/n-3);data.forEach(function(d,i){var x=30+i*((W-30)/n),h2=d.val/maxV*(H-20);ctx.fillStyle=color+'33';ctx.fillRect(x,H-18-h2,bw,h2);if(d.val>0){ctx.fillStyle=color;ctx.fillRect(x,H-18-h2,bw,3);}if(i%2===0){ctx.fillStyle='#666';ctx.font='9px system-ui';ctx.fillText(d.label,x-2,H-4);}});ctx.strokeStyle='#2e2e3f';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(28,0);ctx.lineTo(28,H-18);ctx.stroke();ctx.fillStyle='#555';ctx.font='9px system-ui';ctx.fillText(Math.round(maxV)+unit,0,10);}
+function drawLineChart(id,data,unit,color){var c=document.getElementById(id);if(!c)return;var ctx=c.getContext('2d'),W=c.offsetWidth||300,H=c.height;c.width=W;ctx.clearRect(0,0,W,H);var n=data.length;if(n<2)return;var maxV=Math.max.apply(null,data.map(function(d){return d.val;}));var minV=Math.min.apply(null,data.map(function(d){return d.val;}));var pts=data.map(function(d,i){return{x:30+i*(W-40)/(n-1),y:(H-20)-(d.val-minV)/(maxV-minV||1)*(H-30)};});ctx.beginPath();ctx.moveTo(pts[0].x,H-18);pts.forEach(function(p){ctx.lineTo(p.x,p.y);});ctx.lineTo(pts[n-1].x,H-18);ctx.closePath();ctx.fillStyle=color+'22';ctx.fill();ctx.beginPath();ctx.strokeStyle=color;ctx.lineWidth=2;ctx.lineJoin='round';pts.forEach(function(p,i){if(i===0)ctx.moveTo(p.x,p.y);else ctx.lineTo(p.x,p.y);});ctx.stroke();pts.forEach(function(p){ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();});data.forEach(function(d,i){if(i%Math.ceil(n/5)===0){ctx.fillStyle='#666';ctx.font='9px system-ui';ctx.fillText(d.label,pts[i].x-8,H-4);}});}
 </script>
 </body>
 </html>
