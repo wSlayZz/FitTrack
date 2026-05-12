@@ -756,7 +756,7 @@ function initDefaults(){
   if(!DB.sleep)DB.sleep=[];if(!DB.weight)DB.weight=[];
   if(!DB.planning)DB.planning=[];if(!DB.workoutHistory)DB.workoutHistory=[];
   if(!DB.courses)DB.courses=[];
-  if(!DB.gamification)DB.gamification={xp:0,badges:[],streak:0,lastJournalDate:'',lastCheckin:''};
+  if(!DB.gamification)DB.gamification={xp:0,badges:[],streak:0,lastJournalDate:'',lastCheckin:'',xpDone:{}};
 }
 
 function defaultFoods(){return[
@@ -890,8 +890,18 @@ function getLevelInfo(xp){
   var pct=lvl.level>=LEVELS.length?100:Math.round((xp-lvl.xpNeeded)/(next.xpNeeded-lvl.xpNeeded)*100);
   return{level:lvl.level,title:lvl.title,emoji:lvl.emoji,pct:Math.min(100,pct),xpNeeded:next.xpNeeded,xp:xp};
 }
-function addXP(amount,reason){
-  if(!DB.gamification)DB.gamification={xp:0,badges:[],streak:0,lastJournalDate:'',lastCheckin:''};
+function addXP(amount,reason,dailyKey){
+  if(!DB.gamification)DB.gamification={xp:0,badges:[],streak:0,lastJournalDate:'',lastCheckin:'',xpDone:{}};
+  if(!DB.gamification.xpDone)DB.gamification.xpDone={};
+  // Si une clé journalière est fournie, on ne donne l'XP qu'une fois par jour
+  if(dailyKey){
+    var key=todayStr()+'_'+dailyKey;
+    if(DB.gamification.xpDone[key])return;
+    DB.gamification.xpDone[key]=true;
+    // Nettoyer les clés de plus de 7 jours
+    var cutoff=new Date();cutoff.setDate(cutoff.getDate()-7);var cutStr=cutoff.toISOString().split('T')[0];
+    Object.keys(DB.gamification.xpDone).forEach(function(k){if(k.slice(0,10)<cutStr)delete DB.gamification.xpDone[k];});
+  }
   DB.gamification.xp=(DB.gamification.xp||0)+amount;
   notif('+'+amount+' XP — '+reason);
   checkLevelUp();dbSave();renderAvatarXP();
@@ -922,8 +932,8 @@ function updateStreak(){
   var yesterday=new Date();yesterday.setDate(yesterday.getDate()-1);
   var yStr=yesterday.toISOString().split('T')[0];
   if(g.lastJournalDate===today)return;
-  if(g.lastJournalDate===yStr||!g.lastJournalDate){g.streak=(g.streak||0)+1;if(g.streak>=7){addXP(50,'Streak 7 jours !');checkBadge('week_streak',true);}else{addXP(10,'Journal du jour');}}
-  else{g.streak=1;addXP(10,'Journal du jour');}
+  if(g.lastJournalDate===yStr||!g.lastJournalDate){g.streak=(g.streak||0)+1;if(g.streak>=7){addXP(50,'Streak 7 jours !','streak_7');checkBadge('week_streak',true);}else{addXP(10,'Journal du jour','journal_daily');}}
+  else{g.streak=1;addXP(10,'Journal du jour','journal_daily');}
   g.lastJournalDate=today;dbSave();
 }
 function renderAvatarXP(){
@@ -1107,7 +1117,7 @@ function addScannedToJournal(food){
 // ── WATER ──
 function addWater(ml){
   var today=todayStr();if(!DB.water[today])DB.water[today]=0;DB.water[today]+=ml;
-  if(DB.water[today]>=DB.goals.eau&&DB.water[today]-ml<DB.goals.eau){addXP(15,'Objectif eau atteint !');}
+  if(DB.water[today]>=DB.goals.eau&&DB.water[today]-ml<DB.goals.eau){addXP(15,'Objectif eau atteint !','eau_objectif');}
   var hydro7=last7Days().filter(function(d){return(DB.water[d]||0)>=DB.goals.eau;}).length;
   checkBadge('hydro_hero',hydro7>=7);
   dbSave();updateSquadStats();notif('+'+ml+'ml');renderDashboard();
@@ -1138,7 +1148,7 @@ function addFoodToJournal(){
   DB.journal[today].push({id:Date.now()+'',name:selectedFood.name,emoji:selectedFood.emoji,meal:currentMeal,qty:qty,unit:selectedFood.unit,cal:selectedFood.cal*ratio,prot:selectedFood.prot*ratio,gluc:selectedFood.gluc*ratio,lip:selectedFood.lip*ratio});
   updateStreak();
   var tCal=DB.journal[today].reduce(function(s,f){return s+f.cal;},0);
-  if(tCal>=DB.goals.cal*0.8&&tCal<=DB.goals.cal*1.1){addXP(5,'Objectif calorique respecté');}
+  if(tCal>=DB.goals.cal*0.8&&tCal<=DB.goals.cal*1.1){addXP(5,'Objectif calorique respecté','cal_objectif');}
   dbSave();updateSquadStats();cancelFoodAdd();renderJournal();renderDashboard();notif('Ajouté');
 }
 function openCopyDayModal(){
@@ -1203,16 +1213,16 @@ function importRecetteFromUrl(){
   var url=document.getElementById('import-url').value.trim();if(!url){notif('Entrez une URL');return;}
   document.getElementById('import-status').classList.remove('hidden');
   var prompt='URL de recette : '+url+'. Extrais les infos et retourne UNIQUEMENT ce JSON valide (sans backticks): {"name":"nom","emoji":"🍽","cat":"plat","prepTime":30,"ingredients":[{"name":"nom","qty":100,"unit":"g"}],"steps":"etapes"}. Pour cat: petit-dejeuner, plat, snack, ou dessert. Reponds UNIQUEMENT avec le JSON.';
-  fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})}).then(function(r){return r.json();}).then(function(d){
-    var text=d.content&&d.content[0]?d.content[0].text:'';
-    try{
-      var rec=JSON.parse(text.replace(/```json|```/g,'').trim());
-      rec.id='r'+Date.now();rec.totalCal=0;rec.totalProt=0;rec.totalGluc=0;rec.totalLip=0;
-      DB.recipes.push(rec);dbSave();closeModal();renderRecettes();
-      checkBadge('recipe_chef',DB.recipes.length>=3);
-      notif('Recette importée : '+rec.name);
-    }catch(e){notif('Impossible d\'analyser cette page');document.getElementById('import-status').classList.add('hidden');}
-  }).catch(function(){notif('Erreur connexion');document.getElementById('import-status').classList.add('hidden');});
+  callAI(prompt).then(function(text){
+    var rec=JSON.parse(text.replace(/```json|```/g,'').trim());
+    rec.id='r'+Date.now();rec.totalCal=0;rec.totalProt=0;rec.totalGluc=0;rec.totalLip=0;
+    DB.recipes.push(rec);dbSave();closeModal();renderRecettes();
+    checkBadge('recipe_chef',DB.recipes.length>=3);
+    notif('Recette importée : '+rec.name);
+  }).catch(function(e){
+    notif('Erreur : '+(e.message||'impossible d\'analyser'));
+    document.getElementById('import-status').classList.add('hidden');
+  });
 }
 function openRecetteModal(){
   document.getElementById('modal-content').innerHTML='<h2>Nouvelle recette</h2><div class="form-row"><div class="form-group"><label>Emoji</label><input type="text" id="er-emoji" value="🍽" style="width:70px"></div><div class="form-group"><label>Nom</label><input type="text" id="er-name"></div></div><div class="form-row"><div class="form-group"><label>Catégorie</label><select id="er-cat"><option value="petit-dejeuner">Petit-déj</option><option value="plat">Plat</option><option value="snack">Snack</option><option value="dessert">Dessert</option></select></div><div class="form-group"><label>Temps (min)</label><input type="number" id="er-time" value="30" inputmode="numeric"></div></div><div class="form-group"><label>Ingrédients</label><div id="er-ingr-list"></div><button class="btn btn-secondary btn-sm mt-8" onclick="addIngredientRow()">+ Ingrédient</button></div><div class="flex gap-8 mt-12"><button class="btn btn-secondary" style="flex:.4" onclick="closeModal()">Annuler</button><button class="btn btn-primary" style="flex:1" onclick="saveRecette()">Créer</button></div>';
@@ -1231,7 +1241,7 @@ function saveRecette(){
   var rec={id:'r'+Date.now(),name:document.getElementById('er-name').value,emoji:document.getElementById('er-emoji').value,cat:document.getElementById('er-cat').value,prepTime:parseInt(document.getElementById('er-time').value)||30,ingredients:ingredients,totalCal:tCal,totalProt:tProt,totalGluc:tGluc,totalLip:tLip};
   DB.recipes.push(rec);dbSave();closeModal();renderRecettes();
   checkBadge('recipe_chef',DB.recipes.length>=3);
-  addXP(20,'Nouvelle recette créée');notif('Recette créée');
+  addXP(20,'Nouvelle recette créée','recette_'+('r'+Date.now()));notif('Recette créée');
 }
 function deleteRecipe(id){if(confirm('Supprimer ?')){DB.recipes=DB.recipes.filter(function(r){return r.id!==id;});dbSave();renderRecettes();}}
 function addRecipeToJournal(id){
@@ -1343,7 +1353,7 @@ function endWorkout(){
   if(s.type==='musculation'){(s.exercises||[]).forEach(function(ex,i){record.exercises.push({id:ex.id,name:ex.name,series:ex.series.map(function(s2,si){var wi=document.getElementById('wm-w-'+i+'-'+si),ri=document.getElementById('wm-r-'+i+'-'+si);return{weight:wi?parseFloat(wi.value)||s2.weight:s2.weight,reps:ri?parseInt(ri.value)||s2.reps:s2.reps};})});});}
   else{var di=document.getElementById('wm-dist'),duri=document.getElementById('wm-dur'),ali=document.getElementById('wm-allure'),fci=document.getElementById('wm-fc');record.dist=di?parseFloat(di.value)||0:0;record.dur=duri?parseInt(duri.value)||0:0;record.allure=ali?parseFloat(ali.value)||0:0;record.fc=fci?parseInt(fci.value)||0:0;}
   DB.workoutHistory.push(record);
-  addXP(30,'Séance terminée !');
+  addXP(30,'Séance terminée !','seance_'+todayStr()+'_'+record.sessionId);
   checkBadge('first_workout',DB.workoutHistory.length>=1);
   dbSave();updateSquadStats();document.getElementById('workout-mode').classList.add('hidden');notif('Séance terminée ! +30 XP');currentWorkout=null;
 }
@@ -1409,7 +1419,7 @@ function calcSleepDurNum(bed,wake){if(!bed||!wake)return 0;var bh=parseInt(bed.s
 function calcSleepDur(bed,wake){var h=calcSleepDurNum(bed,wake);return Math.floor(h)+'h'+Math.round((h%1)*60).toString().padStart(2,'0');}
 function saveSleep(){
   DB.sleep.push({id:'sl'+Date.now(),bed:document.getElementById('sleep-bed').value,wake:document.getElementById('sleep-wake').value,date:document.getElementById('sleep-date').value,quality:sleepQuality,notes:document.getElementById('sleep-notes').value});
-  addXP(10,'Nuit enregistrée');
+  addXP(10,'Nuit enregistrée','sommeil_daily');
   checkBadge('sleep_master',DB.sleep.length>=7);
   dbSave();renderSommeil();renderDashboard();notif('Nuit enregistrée');
 }
@@ -1428,7 +1438,7 @@ function saveWeight(){
   DB.weight.push({id:'wt'+Date.now(),val:v,date:date});
   if(date===todayStr()&&DB.profile){var p=DB.profile;p.poids=v;var bmr=p.sexe==='h'?88.36+(13.4*v)+(4.8*p.taille)-(5.7*p.age):447.6+(9.2*v)+(3.1*p.taille)-(4.3*p.age);var tdee=Math.round(bmr*p.activite),obj=p.objectif||'maintien';var cal=obj==='masse'?tdee+300:obj==='perte'?tdee-400:tdee;var prot=Math.round(v*2),lip=Math.round(cal*0.25/9),gluc=Math.round((cal-prot*4-lip*9)/4),eau=calcWaterNeeds(p);DB.goals=Object.assign({},DB.goals,{cal:cal,prot:prot,gluc:gluc,lip:lip,eau:eau});}
   checkBadge('weight_tracker',DB.weight.length>=5);
-  addXP(5,'Pesée enregistrée');
+  addXP(5,'Pesée enregistrée','pesee_daily');
   dbSave();closeModal();renderWeightChart();renderDashboard();notif('Poids enregistré');
 }
 function deleteWeight(id){DB.weight=DB.weight.filter(function(w){return w.id!==id;});dbSave();renderWeightChart();}
@@ -1605,7 +1615,16 @@ function updateSquadStats(){
   }).catch(function(){});
 }
 
-// ── IA ──
+// ── APPEL IA via proxy Supabase ──
+function callAI(prompt, maxTokens){
+  return supaFetch('/functions/v1/ai-proxy', {
+    method: 'POST',
+    body: JSON.stringify({ prompt: prompt, max_tokens: maxTokens || 1000 })
+  }).then(function(r){ return r.json(); }).then(function(d){
+    if(d.error) throw new Error(d.error);
+    return d.content && d.content[0] ? d.content[0].text : '';
+  });
+}
 function closeAI(){document.getElementById('ai-panel').classList.add('hidden');}
 function renderAIText(text){var html=text.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n\n/g,'</p><p style="margin:8px 0">').replace(/\n/g,'<br>');return '<div class="card" style="line-height:1.6;font-size:.95rem"><p style="margin:8px 0">'+html+'</p></div>';}
 function openAI(mode){
