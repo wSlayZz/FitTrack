@@ -637,6 +637,16 @@ select option{background:var(--card)}
 
 <script>
 var SUPA_URL='https://yvkcoyofnllawjfvlthz.supabase.co';
+// Bloquer tout appel direct à Anthropic (debug)
+var _origFetch=window.fetch;
+window.fetch=function(url){
+  if(typeof url==='string'&&url.indexOf('anthropic.com')>=0){
+    console.error('APPEL ANTHROPIC DIRECT DETECTE - stack:',new Error().stack);
+    // Rediriger vers le proxy
+    arguments[0]=SUPA_URL+'/functions/v1/bright-api';
+  }
+  return _origFetch.apply(this,arguments);
+};
 var SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2a2NveW9mbmxsYXdqZnZsdGh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxMjQ2MzksImV4cCI6MjA5MzcwMDYzOX0.TmqANNlMVWO25zf658gjpRLmvfGucURtCec7oK7MzdA';
 var currentUser=null,DB={};
 var currentMeal='petit-dejeuner',selectedFood=null,foodFilter='all';
