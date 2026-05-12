@@ -458,6 +458,10 @@ select option{background:var(--card)}
           <span id="cal-month-label" style="font-weight:600;font-size:.9rem"></span>
           <button class="btn btn-secondary btn-sm" onclick="calNavMonth(1)">›</button>
         </div>
+        <div class="flex gap-8 mb-12">
+          <button class="btn btn-primary btn-sm" onclick="openPlanModal('seance')">+ Séance</button>
+          <button class="btn btn-secondary btn-sm" onclick="openPlanModal('event')">+ Événement</button>
+        </div>
         <div id="cal-month-view"></div>
       </div>
     </div>
@@ -570,6 +574,16 @@ select option{background:var(--card)}
       </div>
       <div id="plus-tab-escouade" class="tab-content">
         <div id="squad-content"></div>
+        <div id="squad-chat" class="hidden">
+          <div class="card mt-12" style="padding:.75rem">
+            <div style="font-weight:700;margin-bottom:8px">💬 Chat escouade</div>
+            <div id="chat-messages" style="height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:10px;padding:4px"></div>
+            <div class="flex gap-8">
+              <input type="text" id="chat-input" placeholder="Votre message..." style="flex:1;background:var(--el);border:1.5px solid var(--border);color:var(--text);padding:10px;border-radius:10px;font-size:.9rem" onkeydown="if(event.key==='Enter')sendChatMsg()">
+              <button class="btn btn-primary btn-sm" onclick="sendChatMsg()">➤</button>
+            </div>
+          </div>
+        </div>
       </div>
       <div id="plus-tab-profil" class="tab-content">
         <div class="card">
@@ -1028,25 +1042,57 @@ function drawMacroPie(prot,gluc,lip){
 }
 
 // ── SCANNER ──
+var _scannerActive=false;
 function startScanner(){
+  if(_scannerActive)return;
   document.getElementById('scanner-overlay').classList.remove('hidden');
+  document.getElementById('scanner-status').textContent='Pointez la caméra vers un code-barres';
+  _scannerActive=true;
   html5QrCode=new Html5Qrcode('reader');
-  html5QrCode.start({facingMode:'environment'},{fps:10,qrbox:{width:220,height:220}},function(code){
-    document.getElementById('scanner-status').textContent='Trouvé : '+code;
-    lookupBarcode(code);
-  },function(){}).catch(function(e){document.getElementById('scanner-status').textContent='Erreur caméra : '+e;});
+  html5QrCode.start(
+    {facingMode:'environment'},
+    {fps:10,qrbox:{width:220,height:220}},
+    function(code){
+      if(!_scannerActive)return;
+      _scannerActive=false;
+      document.getElementById('scanner-status').textContent='Trouvé : '+code;
+      html5QrCode.stop().then(function(){html5QrCode=null;lookupBarcode(code);}).catch(function(){html5QrCode=null;lookupBarcode(code);});
+    },
+    function(){}
+  ).catch(function(e){
+    _scannerActive=false;
+    document.getElementById('scanner-status').textContent='Erreur caméra : '+e;
+  });
 }
-function stopScanner(){if(html5QrCode){html5QrCode.stop().catch(function(){});html5QrCode=null;}document.getElementById('scanner-overlay').classList.add('hidden');}
+function stopScanner(){
+  _scannerActive=false;
+  if(html5QrCode){
+    html5QrCode.stop().catch(function(){}).finally(function(){html5QrCode=null;document.getElementById('scanner-overlay').classList.add('hidden');document.getElementById('reader').innerHTML='';});
+  }else{
+    document.getElementById('scanner-overlay').classList.add('hidden');
+    document.getElementById('reader').innerHTML='';
+  }
+}
 function lookupBarcode(code){
-  fetch('https://world.openfoodfacts.org/api/v0/product/'+code+'.json').then(function(r){return r.json();}).then(function(data){
-    stopScanner();
-    if(data.status!==1||!data.product){notif('Produit introuvable');return;}
-    var p=data.product,n=p.nutriments||{};
-    window._scannedFood={id:'f'+Date.now(),name:p.product_name||p.product_name_fr||'Produit scanné',emoji:'📦',cat:'autre',cal:Math.round(n['energy-kcal_100g']||0),prot:Math.round((n.proteins_100g||0)*10)/10,gluc:Math.round((n.carbohydrates_100g||0)*10)/10,lip:Math.round((n.fat_100g||0)*10)/10,unit:'g'};
-    var f=window._scannedFood;
-    document.getElementById('modal-content').innerHTML='<h2>📦 Produit scanné</h2><div class="food-item" style="cursor:default;margin-bottom:12px"><span class="food-emoji">'+f.emoji+'</span><div><div style="font-weight:700">'+f.name+'</div><div class="text-xs text-muted">'+f.cal+' kcal · P:'+f.prot+'g G:'+f.gluc+'g L:'+f.lip+'g /100g</div></div></div><div class="flex gap-8"><button class="btn btn-secondary" style="flex:.5" onclick="addScannedToAliments(window._scannedFood)">+ Aliments</button><button class="btn btn-primary" style="flex:.5" onclick="addScannedToJournal(window._scannedFood)">+ Journal</button></div><button class="btn btn-secondary mt-8" onclick="closeModal()">Annuler</button>';
-    showModal();
-  }).catch(function(){notif('Erreur connexion');stopScanner();});
+  document.getElementById('scanner-status').textContent='Recherche en cours...';
+  var controller=new AbortController();
+  var timeout=setTimeout(function(){controller.abort();},8000);
+  fetch('https://world.openfoodfacts.org/api/v0/product/'+code+'.json',{signal:controller.signal})
+    .then(function(r){clearTimeout(timeout);return r.json();})
+    .then(function(data){
+      stopScanner();
+      if(data.status!==1||!data.product){notif('Produit introuvable');return;}
+      var p=data.product,n=p.nutriments||{};
+      window._scannedFood={id:'f'+Date.now(),name:p.product_name||p.product_name_fr||'Produit scanné',emoji:'📦',cat:'autre',cal:Math.round(n['energy-kcal_100g']||0),prot:Math.round((n.proteins_100g||0)*10)/10,gluc:Math.round((n.carbohydrates_100g||0)*10)/10,lip:Math.round((n.fat_100g||0)*10)/10,unit:'g'};
+      var f=window._scannedFood;
+      document.getElementById('modal-content').innerHTML='<h2>📦 Produit scanné</h2><div class="food-item" style="cursor:default;margin-bottom:12px"><span class="food-emoji">'+f.emoji+'</span><div><div style="font-weight:700">'+f.name+'</div><div class="text-xs text-muted">'+f.cal+' kcal · P:'+f.prot+'g G:'+f.gluc+'g L:'+f.lip+'g /100g</div></div></div><div class="flex gap-8"><button class="btn btn-secondary" style="flex:.5" onclick="addScannedToAliments(window._scannedFood)">+ Aliments</button><button class="btn btn-primary" style="flex:.5" onclick="addScannedToJournal(window._scannedFood)">+ Journal</button></div><button class="btn btn-secondary mt-8" onclick="closeModal()">Annuler</button>';
+      showModal();
+    })
+    .catch(function(e){
+      clearTimeout(timeout);
+      stopScanner();
+      notif(e.name==='AbortError'?'Délai dépassé, réessayez':'Erreur connexion');
+    });
 }
 function addScannedToAliments(food){DB.foods.push(food);dbSave();closeModal();renderAliments();notif(food.name+' ajouté');}
 function addScannedToJournal(food){
@@ -1441,12 +1487,15 @@ function saveGoals(){DB.goals={cal:parseInt(document.getElementById('p-cal').val
 function resetAllData(){if(confirm('Réinitialiser toutes les données ?')){DB={};initDefaults();dbSave();location.reload();}}
 
 // ── ESCOUADE ──
+var _squadId=null,_chatInterval=null;
 function renderEscouade(){
   var el=document.getElementById('squad-content');if(!el)return;
+  document.getElementById('squad-chat').classList.add('hidden');
+  if(_chatInterval){clearInterval(_chatInterval);_chatInterval=null;}
   el.innerHTML='<div class="ai-loading"><div>👥</div><div>Chargement...</div></div>';
   supaFetch('/rest/v1/squad_members?user_id=eq.'+currentUser.user.id+'&select=squad_id,squads(id,name,code)').then(function(r){return r.json();}).then(function(rows){
-    if(!rows||!rows.length)renderNoSquad(el);
-    else renderSquadView(el,rows[0].squads);
+    if(!rows||!rows.length){_squadId=null;renderNoSquad(el);}
+    else{_squadId=rows[0].squads.id;renderSquadView(el,rows[0].squads);}
   }).catch(function(){renderNoSquad(el);});
 }
 function renderNoSquad(el){
@@ -1463,8 +1512,36 @@ function renderSquadView(el,squad){
       html+='<div class="squad-member"><div class="flex items-center gap-12 mb-12"><div style="font-size:1.5rem;background:var(--el);width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center">🏋️</div><div><div style="font-weight:700">'+m.display_name+(isMe?' (moi)':'')+'</div><div class="text-xs text-muted">Niv. '+m.level+' · Streak '+m.streak+'j'+(m.sport_today?' · 💪 Séance aujourd\'hui':'')+'</div></div></div><div class="grid-3">'+renderRing(m.cal_pct,'#f59e42','🍽️','Calories')+renderRing(m.water_pct,'#378add','💧','Eau')+renderRing(m.sport_today?100:0,'#3dba7a','🏋️','Sport')+'</div></div>';
     });
     el.innerHTML=html;
+    // Afficher le chat
+    document.getElementById('squad-chat').classList.remove('hidden');
+    loadChatMessages();
+    if(_chatInterval)clearInterval(_chatInterval);
+    _chatInterval=setInterval(loadChatMessages,8000);
   }).catch(function(){el.innerHTML='<div class="text-muted text-sm">Erreur de chargement</div>';});
 }
+function loadChatMessages(){
+  if(!_squadId)return;
+  supaFetch('/rest/v1/squad_messages?squad_id=eq.'+_squadId+'&order=created_at.asc&limit=50&select=*').then(function(r){return r.json();}).then(function(msgs){
+    var box=document.getElementById('chat-messages');if(!box)return;
+    if(!msgs||!msgs.length){box.innerHTML='<div class="text-muted text-xs" style="text-align:center;margin-top:1rem">Aucun message. Soyez le premier !</div>';return;}
+    var me=currentUser.user.id;
+    box.innerHTML=msgs.map(function(m){
+      var isMe=m.user_id===me;
+      return '<div style="display:flex;flex-direction:column;align-items:'+(isMe?'flex-end':'flex-start')+'">'
+        +'<div style="font-size:.65rem;color:var(--muted);margin-bottom:2px">'+(isMe?'Moi':m.display_name)+'</div>'
+        +'<div style="background:'+(isMe?'var(--purple)':'var(--el)')+';color:'+(isMe?'#fff':'var(--text)')+';padding:8px 12px;border-radius:14px;max-width:80%;font-size:.9rem;line-height:1.4">'+escHtml(m.message)+'</div>'
+        +'</div>';
+    }).join('');
+    box.scrollTop=box.scrollHeight;
+  }).catch(function(){});
+}
+function sendChatMsg(){
+  var inp=document.getElementById('chat-input');
+  var msg=(inp.value||'').trim();if(!msg||!_squadId)return;
+  inp.value='';
+  supaFetch('/rest/v1/squad_messages',{method:'POST',headers:{'Prefer':'return=minimal'},body:JSON.stringify({squad_id:_squadId,user_id:currentUser.user.id,display_name:DB.profile?DB.profile.prenom||'?':'?',message:msg})}).then(function(){loadChatMessages();}).catch(function(){notif('Erreur envoi');});
+}
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function renderRing(pct,color,emoji,label){
   var r=22,circ=2*Math.PI*r,offset=circ-(pct/100*circ);
   return '<div style="text-align:center"><div class="ring-wrap" style="margin:0 auto"><svg width="56" height="56" viewBox="0 0 56 56"><circle cx="28" cy="28" r="'+r+'" fill="none" stroke="var(--el)" stroke-width="5"/><circle cx="28" cy="28" r="'+r+'" fill="none" stroke="'+color+'" stroke-width="5" stroke-dasharray="'+circ.toFixed(1)+'" stroke-dashoffset="'+offset.toFixed(1)+'" stroke-linecap="round" transform="rotate(-90 28 28)"/></svg><div class="ring-emoji">'+emoji+'</div></div><div class="text-xs text-muted mt-4">'+pct+'%</div><div class="text-xs" style="font-weight:600">'+label+'</div></div>';
@@ -1495,6 +1572,8 @@ function joinSquad(){
 }
 function leaveSquad(){
   if(!confirm('Quitter l\'escouade ?'))return;
+  if(_chatInterval){clearInterval(_chatInterval);_chatInterval=null;}
+  _squadId=null;
   supaFetch('/rest/v1/squad_members?user_id=eq.'+currentUser.user.id,{method:'DELETE'}).then(function(){notif('Vous avez quitté l\'escouade');renderEscouade();}).catch(function(){notif('Erreur');});
 }
 
