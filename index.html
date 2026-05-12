@@ -1615,7 +1615,7 @@ function updateSquadStats(){
   }).catch(function(){});
 }
 
-// ── APPEL IA via proxy Supabase ──
+// ── APPEL IA via Edge Function Supabase ──
 function callAI(prompt, maxTokens){
   return supaFetch('/functions/v1/ai-proxy', {
     method: 'POST',
