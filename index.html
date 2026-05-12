@@ -1110,10 +1110,10 @@ function addWater(ml){
   if(DB.water[today]>=DB.goals.eau&&DB.water[today]-ml<DB.goals.eau){addXP(15,'Objectif eau atteint !');}
   var hydro7=last7Days().filter(function(d){return(DB.water[d]||0)>=DB.goals.eau;}).length;
   checkBadge('hydro_hero',hydro7>=7);
-  dbSave();notif('+'+ml+'ml');renderDashboard();
+  dbSave();updateSquadStats();notif('+'+ml+'ml');renderDashboard();
   if(document.getElementById('page-plus').classList.contains('active'))renderHydra();
 }
-function removeWater(ml){var today=todayStr();DB.water[today]=Math.max(0,(DB.water[today]||0)-ml);dbSave();renderDashboard();if(document.getElementById('page-plus').classList.contains('active'))renderHydra();}
+function removeWater(ml){var today=todayStr();DB.water[today]=Math.max(0,(DB.water[today]||0)-ml);dbSave();updateSquadStats();renderDashboard();if(document.getElementById('page-plus').classList.contains('active'))renderHydra();}
 function addCustomWater(){var v=parseInt(document.getElementById('custom-water').value)||0;if(v>0){addWater(v);document.getElementById('custom-water').value='';}}
 
 // ── NUTRITION ──
@@ -1139,7 +1139,7 @@ function addFoodToJournal(){
   updateStreak();
   var tCal=DB.journal[today].reduce(function(s,f){return s+f.cal;},0);
   if(tCal>=DB.goals.cal*0.8&&tCal<=DB.goals.cal*1.1){addXP(5,'Objectif calorique respecté');}
-  dbSave();cancelFoodAdd();renderJournal();renderDashboard();notif('Ajouté');
+  dbSave();updateSquadStats();cancelFoodAdd();renderJournal();renderDashboard();notif('Ajouté');
 }
 function openCopyDayModal(){
   var days=Object.keys(DB.journal).filter(function(d){return d!==todayStr()&&(DB.journal[d]||[]).length>0;}).sort().reverse().slice(0,10);
@@ -1345,7 +1345,7 @@ function endWorkout(){
   DB.workoutHistory.push(record);
   addXP(30,'Séance terminée !');
   checkBadge('first_workout',DB.workoutHistory.length>=1);
-  dbSave();document.getElementById('workout-mode').classList.add('hidden');notif('Séance terminée ! +30 XP');currentWorkout=null;
+  dbSave();updateSquadStats();document.getElementById('workout-mode').classList.add('hidden');notif('Séance terminée ! +30 XP');currentWorkout=null;
 }
 function startRestTimer(sec){timerSeconds=sec;document.getElementById('timer-num').textContent=sec;document.getElementById('timer-overlay').classList.remove('hidden');if(timerInterval)clearInterval(timerInterval);timerInterval=setInterval(function(){timerSeconds--;document.getElementById('timer-num').textContent=timerSeconds;if(timerSeconds<=0){clearInterval(timerInterval);skipTimer();}},1000);}
 function skipTimer(){clearInterval(timerInterval);document.getElementById('timer-overlay').classList.add('hidden');}
@@ -1575,6 +1575,34 @@ function leaveSquad(){
   if(_chatInterval){clearInterval(_chatInterval);_chatInterval=null;}
   _squadId=null;
   supaFetch('/rest/v1/squad_members?user_id=eq.'+currentUser.user.id,{method:'DELETE'}).then(function(){notif('Vous avez quitté l\'escouade');renderEscouade();}).catch(function(){notif('Erreur');});
+}
+
+// ── SQUAD STATS (push après chaque action) ──
+function updateSquadStats(){
+  if(!currentUser||!currentUser.user||!currentUser.user.id||!DB.profile)return;
+  var today=todayStr();
+  var dayFoods=DB.journal[today]||[];
+  var tCal=dayFoods.reduce(function(s,f){return s+f.cal;},0);
+  var calPct=Math.min(100,Math.round(tCal/DB.goals.cal*100));
+  var waterPct=Math.min(100,Math.round((DB.water[today]||0)/DB.goals.eau*100));
+  var sportToday=DB.workoutHistory.some(function(w){return w.date===today;});
+  var streak=(DB.gamification&&DB.gamification.streak)||0;
+  var lvl=getLevelInfo((DB.gamification&&DB.gamification.xp)||0);
+  supaFetch('/rest/v1/squad_stats',{
+    method:'POST',
+    headers:{'Prefer':'return=minimal,resolution=merge-duplicates'},
+    body:JSON.stringify({
+      user_id:currentUser.user.id,
+      display_name:DB.profile.prenom||'?',
+      cal_pct:calPct,
+      water_pct:waterPct,
+      sport_today:sportToday,
+      streak:streak,
+      level:lvl.level,
+      xp:DB.gamification.xp||0,
+      updated_at:new Date().toISOString()
+    })
+  }).catch(function(){});
 }
 
 // ── IA ──
