@@ -379,7 +379,6 @@ select option{background:var(--card)}
         <div class="flex justify-between items-center mb-12">
           <span class="text-muted text-sm" id="recettes-count"></span>
           <div class="flex gap-8">
-            <button class="btn btn-secondary btn-sm" onclick="openImportRecetteModal()">🔗 Importer</button>
             <button class="btn btn-primary btn-sm" onclick="openRecetteModal()">+ Recette</button>
           </div>
         </div>
@@ -1215,29 +1214,7 @@ function renderRecettes(){
   document.getElementById('recettes-count').textContent=DB.recipes.length+' recette(s)';
   document.getElementById('recettes-list').innerHTML=DB.recipes.map(function(r){return '<div class="card"><div class="flex justify-between items-center mb-8"><div><span style="font-size:1.3rem">'+r.emoji+'</span> <strong>'+r.name+'</strong></div><div class="flex gap-8"><button class="btn btn-primary btn-sm" onclick="addRecipeToJournal(\''+r.id+'\')">+Journal</button><button class="btn btn-secondary btn-sm" onclick="addRecipeToCourses(\''+r.id+'\')">+Courses</button><button class="btn-icon" onclick="deleteRecipe(\''+r.id+'\')">🗑</button></div></div><div class="text-xs text-muted">'+Math.round(r.totalCal||0)+' kcal · '+(r.prepTime||0)+'min</div></div>';}).join('')||'<div class="text-muted text-sm">Aucune recette</div>';
 }
-function openImportRecetteModal(){
-  document.getElementById('modal-content').innerHTML='<h2>🔗 Importer une recette</h2><div class="text-muted text-sm mb-12">URL d\'une page de recette (Marmiton, Cuisine AZ...)</div><div class="form-group"><label>URL</label><input type="url" id="import-url" placeholder="https://www.marmiton.org/recettes/..." style="background:var(--el);border:1.5px solid var(--border);color:var(--text);padding:12px;border-radius:12px;width:100%;font-size:1rem"></div><div id="import-status" class="hidden" style="text-align:center;padding:1rem;color:var(--muted)">🤖 Analyse en cours...</div><div class="flex gap-8 mt-12"><button class="btn btn-secondary" style="flex:.4" onclick="closeModal()">Annuler</button><button class="btn btn-primary" style="flex:1" onclick="importRecetteFromUrl()">Importer</button></div>';
-  showModal();
-}
-function importRecetteFromUrl(){
-  var url=document.getElementById('import-url').value.trim();if(!url){notif('Entrez une URL');return;}
-  var statusEl=document.getElementById('import-status');
-  statusEl.classList.remove('hidden');
-  statusEl.textContent='🤖 Analyse en cours...';
-  var prompt='Voici une URL de recette : '+url+'. Imagine ou invente une recette réaliste correspondant à cette URL et retourne UNIQUEMENT ce JSON valide (sans backticks ni markdown): {"name":"nom","emoji":"🍽","cat":"plat","prepTime":30,"ingredients":[{"name":"nom","qty":100,"unit":"g"}],"steps":"etapes courtes"}. Pour cat utilise: petit-dejeuner, plat, snack, ou dessert. REPONDS UNIQUEMENT AVEC LE JSON, rien d\'autre.';
-  callAI(prompt,800).then(function(text){
-    var clean=text.replace(/```json|```/g,'').trim();
-    var rec=JSON.parse(clean);
-    rec.id='r'+Date.now();rec.totalCal=0;rec.totalProt=0;rec.totalGluc=0;rec.totalLip=0;
-    DB.recipes.push(rec);dbSave();closeModal();renderRecettes();
-    checkBadge('recipe_chef',DB.recipes.length>=3);
-    notif('Recette importée : '+rec.name);
-  }).catch(function(e){
-    console.error('Import recette error:',e);
-    notif('Erreur : '+(e.message||'impossible d\'analyser'));
-    statusEl.classList.add('hidden');
-  });
-}
+
 function openRecetteModal(){
   document.getElementById('modal-content').innerHTML='<h2>Nouvelle recette</h2><div class="form-row"><div class="form-group"><label>Emoji</label><input type="text" id="er-emoji" value="🍽" style="width:70px"></div><div class="form-group"><label>Nom</label><input type="text" id="er-name"></div></div><div class="form-row"><div class="form-group"><label>Catégorie</label><select id="er-cat"><option value="petit-dejeuner">Petit-déj</option><option value="plat">Plat</option><option value="snack">Snack</option><option value="dessert">Dessert</option></select></div><div class="form-group"><label>Temps (min)</label><input type="number" id="er-time" value="30" inputmode="numeric"></div></div><div class="form-group"><label>Ingrédients</label><div id="er-ingr-list"></div><button class="btn btn-secondary btn-sm mt-8" onclick="addIngredientRow()">+ Ingrédient</button></div><div class="flex gap-8 mt-12"><button class="btn btn-secondary" style="flex:.4" onclick="closeModal()">Annuler</button><button class="btn btn-primary" style="flex:1" onclick="saveRecette()">Créer</button></div>';
   showModal();
@@ -1632,32 +1609,7 @@ function updateSquadStats(){
 // ── APPEL IA ──
 // Option A : Edge Function Supabase (recommandé, nécessite ai-proxy déployée)
 // Option B : clé directe avec proxy CORS (temporaire)
-function callAI(prompt, maxTokens){
-  return fetch(SUPA_URL + '/functions/v1/bright-api', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + SUPA_KEY,
-      'apikey': SUPA_KEY
-    },
-    body: JSON.stringify({ prompt: prompt, max_tokens: maxTokens || 1000 })
-  }).then(function(r){
-    if(!r.ok) return r.text().then(function(t){throw new Error('HTTP '+r.status+' : '+t);});
-    return r.json();
-  }).then(function(d){
-    console.log('Réponse IA brute:', JSON.stringify(d));
-    if(d._debug) console.log('DEBUG Gemini:', JSON.stringify(d._debug));
-    if(d.error) throw new Error(JSON.stringify(d.error));
-    // Chercher le texte dans tous les formats possibles
-    var text = '';
-    if(d.content && d.content[0] && d.content[0].text) text = d.content[0].text;
-    else if(d.candidates && d.candidates[0]) text = d.candidates[0]?.content?.parts?.[0]?.text || '';
-    else if(typeof d.text === 'string') text = d.text;
-    console.log('Texte extrait:', text);
-    if(!text) throw new Error('Réponse vide du modèle');
-    return text;
-  });
-}
+
 function closeAI(){document.getElementById('ai-panel').classList.add('hidden');}
 function renderAIText(text){var html=text.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n\n/g,'</p><p style="margin:8px 0">').replace(/\n/g,'<br>');return '<div class="card" style="line-height:1.6;font-size:.95rem"><p style="margin:8px 0">'+html+'</p></div>';}
 function openAI(mode){
