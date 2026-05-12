@@ -1646,6 +1646,7 @@ function callAI(prompt, maxTokens){
     return r.json();
   }).then(function(d){
     console.log('Réponse IA brute:', JSON.stringify(d));
+    if(d._debug) console.log('DEBUG Gemini:', JSON.stringify(d._debug));
     if(d.error) throw new Error(JSON.stringify(d.error));
     // Chercher le texte dans tous les formats possibles
     var text = '';
