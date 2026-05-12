@@ -1637,7 +1637,7 @@ function callAI(prompt, maxTokens){
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + (currentUser ? currentUser.access_token : SUPA_KEY),
+      'Authorization': 'Bearer ' + SUPA_KEY,
       'apikey': SUPA_KEY
     },
     body: JSON.stringify({ prompt: prompt, max_tokens: maxTokens || 1000 })
@@ -1676,7 +1676,12 @@ function openAI(mode){
     var lvl=getLevelInfo((DB.gamification&&DB.gamification.xp)||0);
     prompt='Coach fitness. Analyse semaine de '+(p.prenom||'?')+'. Profil: '+(p.objectif||'maintien')+', '+(p.poids||'?')+'kg. Données: '+seances.length+' séances, cal moy '+avgCal+'/'+g.cal+', eau moy '+avgWater+'ml/'+g.eau+'ml, sommeil moy '+avgSleep+'h. Poids: '+(weightTrend!==null?(weightTrend>0?'+':'')+weightTrend+'kg':'non mesuré')+'. Niveau: '+lvl.level+' ('+lvl.title+'). Analyse: 1) Points forts 2) À améliorer 3) 3 conseils actionnables 4) Objectif prioritaire. Français, motivant.';
   }
-  fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})}).then(function(r){return r.json();}).then(function(d){content.innerHTML=renderAIText(d.content&&d.content[0]?d.content[0].text:'Pas de réponse');}).catch(function(){content.innerHTML='<div class="card" style="color:var(--red)">Erreur de connexion.</div>';});
+  callAI(prompt).then(function(text){
+    content.innerHTML=renderAIText(text);
+  }).catch(function(e){
+    console.error('IA error:', e);
+    content.innerHTML='<div class="card" style="color:var(--red);font-size:.8rem">Erreur : '+(e.message||'inconnue')+'</div>';
+  });
 }
 
 // ── CHARTS ──
