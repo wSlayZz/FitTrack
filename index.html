@@ -141,7 +141,8 @@ select option{background:var(--card)}
 .mpc-emoji{font-size:.9rem}
 .mpc-del{position:absolute;top:2px;right:2px;font-size:.7rem;color:var(--red);cursor:pointer;background:var(--card);border:none;border-radius:4px;padding:1px 3px;line-height:1}
 /* ÉTIREMENTS */
-.stretch-item{background:var(--el);border-radius:14px;padding:1rem;margin-bottom:10px;cursor:pointer;border:1.5px solid transparent;transition:.15s}
+.stab{padding:8px 16px;border-radius:20px;cursor:pointer;font-size:.85rem;color:var(--muted);border:1.5px solid var(--border);background:none;white-space:nowrap;font-weight:500}
+.stab.stab-active{background:var(--purple);color:#fff;border-color:var(--purple)}border-radius:14px;padding:1rem;margin-bottom:10px;cursor:pointer;border:1.5px solid transparent;transition:.15s}
 .stretch-item:active{border-color:var(--purple)}
 .stretch-item.active-stretch{border-color:var(--purple);background:var(--purple)10}
 .stretch-timer{font-size:2.5rem;font-weight:800;color:var(--purple);font-variant-numeric:tabular-nums;text-align:center;margin:8px 0}
@@ -469,14 +470,14 @@ select option{background:var(--card)}
           <span class="text-muted text-sm">Catalogue d'étirements</span>
           <button class="btn btn-primary btn-sm" onclick="openStretchSessionBuilder()">▶ Séance guidée</button>
         </div>
-        <div class="tabs" style="margin-bottom:12px">
-          <button class="tab active" onclick="filterStretches('all',this)">Tous</button>
-          <button class="tab" onclick="filterStretches('cou',this)">Cou</button>
-          <button class="tab" onclick="filterStretches('epaules',this)">Épaules</button>
-          <button class="tab" onclick="filterStretches('dos',this)">Dos</button>
-          <button class="tab" onclick="filterStretches('hanches',this)">Hanches</button>
-          <button class="tab" onclick="filterStretches('jambes',this)">Jambes</button>
-          <button class="tab" onclick="filterStretches('full',this)">Full body</button>
+        <div style="display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px">
+          <button class="stab stab-active" onclick="filterStretches('all',this)">Tous</button>
+          <button class="stab" onclick="filterStretches('cou',this)">Cou</button>
+          <button class="stab" onclick="filterStretches('epaules',this)">Épaules</button>
+          <button class="stab" onclick="filterStretches('dos',this)">Dos</button>
+          <button class="stab" onclick="filterStretches('hanches',this)">Hanches</button>
+          <button class="stab" onclick="filterStretches('jambes',this)">Jambes</button>
+          <button class="stab" onclick="filterStretches('full',this)">Full body</button>
         </div>
         <div id="stretch-list"></div>
       </div>
@@ -1377,7 +1378,7 @@ function renderStretches(){
   }).join('');
 }
 function zoneLabel(z){var m={cou:'Cou',epaules:'Épaules',dos:'Dos',hanches:'Hanches',jambes:'Jambes',full:'Full body'};return m[z]||z;}
-function filterStretches(zone,el){stretchFilter=zone;document.querySelectorAll('#prog-tab-etirements .tab').forEach(function(t){t.classList.remove('active');});el.classList.add('active');renderStretches();}
+function filterStretches(zone,el){stretchFilter=zone;document.querySelectorAll('#prog-tab-etirements .stab').forEach(function(t){t.classList.remove('stab-active');});el.classList.add('stab-active');renderStretches();}
 
 var _activeStretchId=null,_stretchTimerCb=null;
 function startStretchTimer(id){
