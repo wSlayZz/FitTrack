@@ -854,9 +854,11 @@ function nav(page){
 function switchTab(prefix,tab){
   document.querySelectorAll('[id^="'+prefix+'-tab-"]').forEach(function(c){c.classList.remove('active');});
   var el=document.getElementById(prefix+'-tab-'+tab);if(el)el.classList.add('active');
-  document.querySelectorAll('.tab').forEach(function(t){
+  // Ne désactiver que les onglets du bon groupe
+  var parentTabs=document.querySelectorAll('[onclick^="switchTab(\''+prefix+'\'"]');
+  parentTabs.forEach(function(t){
     if(t.getAttribute('onclick')==="switchTab('"+prefix+"','"+tab+"')")t.classList.add('active');
-    else if(t.getAttribute('onclick')&&t.getAttribute('onclick').indexOf("switchTab('"+prefix+"'")===0)t.classList.remove('active');
+    else t.classList.remove('active');
   });
   if(prefix==='prog2'){if(tab==='poids')renderWeightChart();else if(tab==='muscu')renderMuscu();else if(tab==='course')renderCourseHistory();else if(tab==='forme')renderFormeScore();}
   if(prefix==='plus'){if(tab==='hydra')renderHydra();else if(tab==='sommeil')renderSommeil();else if(tab==='profil')renderProfil();else if(tab==='progres')renderWeightChart();else if(tab==='badges')renderAvatarXP();else if(tab==='escouade')renderEscouade();}
