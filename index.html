@@ -36,14 +36,14 @@ select option{background:var(--card)}
 .btn-danger{background:var(--red)22;color:var(--red);border:1.5px solid var(--red)44}
 .btn:active{transform:scale(.97)}
 #app{position:fixed;inset:0;display:flex;flex-direction:column}
-#content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-top:calc(var(--safe-top)+56px);padding-bottom:calc(var(--safe-bot)+80px)}
+#content{flex:1;overflow-y:scroll;-webkit-overflow-scrolling:touch;padding-top:80px;padding-bottom:80px;min-height:0}
 #topbar{position:fixed;top:0;left:0;right:0;height:calc(var(--safe-top)+56px);padding-top:var(--safe-top);background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;padding-left:1rem;padding-right:1rem;z-index:100;gap:10px}
 #bottomnav{position:fixed;bottom:0;left:0;right:0;height:calc(var(--safe-bot)+60px);padding-bottom:var(--safe-bot);background:var(--card);border-top:1px solid var(--border);display:grid;grid-template-columns:repeat(5,1fr);z-index:100}
 .nav-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;background:none;border:none;color:var(--muted);font-size:.6rem;padding:4px 2px;transition:.15s}
 .nav-btn svg{width:20px;height:20px;stroke-width:1.8}
 .nav-btn.active{color:var(--purple)}
-.page{display:none;padding:1rem;padding-top:1.2rem}
-.page.active{display:block}
+.page{display:none;padding:1rem}
+.page.active{display:block;min-height:100%}
 .card{background:var(--card);border-radius:16px;padding:1.1rem;border:1px solid var(--border);margin-bottom:12px}
 .card h3{font-size:.9rem;font-weight:600;margin-bottom:.85rem;color:var(--text2)}
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
