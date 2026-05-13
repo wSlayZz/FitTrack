@@ -273,13 +273,13 @@ select option{background:var(--card)}
         <div><div id="dash-greeting" style="font-size:1.2rem;font-weight:700"></div><div id="dash-date" class="text-muted text-sm"></div></div>
         <div id="dash-next-session"></div>
       </div>
-      <div class="card mb-12">
+      <div class="card mb-12" style="overflow:hidden">
         <div class="flex items-center gap-12">
-          <div class="avatar-ring" id="avatar-ring" style="background:var(--el)">
+          <div class="avatar-ring" id="avatar-ring" style="background:var(--el);flex-shrink:0">
             <span id="avatar-emoji">🏋️</span>
             <div class="avatar-level" id="avatar-level">1</div>
           </div>
-          <div style="flex:1;min-width:0">
+          <div style="flex:1;min-width:0;overflow:hidden">
             <div class="flex justify-between items-center mb-4"><span style="font-weight:700" id="avatar-name"></span><span class="text-xs text-muted" id="xp-label"></span></div>
             <div class="xp-bar-wrap"><div class="xp-bar-fill" id="xp-bar" style="width:0%"></div><div class="xp-bar-text" id="xp-bar-text"></div></div>
             <div class="flex gap-8 mt-8" id="streak-row"></div>
