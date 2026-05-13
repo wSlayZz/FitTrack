@@ -114,7 +114,7 @@ select option{background:var(--card)}
 .courses-item.checked{opacity:.5}
 .courses-check{width:22px;height:22px;border-radius:50%;border:2px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.15s}
 .courses-check.done{background:var(--green);border-color:var(--green);color:#fff}
-.xp-bar-wrap{background:var(--el);border-radius:20px;height:14px;overflow:hidden;position:relative}
+.xp-bar-wrap{background:var(--el);border-radius:20px;height:14px;overflow:hidden;position:relative;width:100%;min-width:0}
 .xp-bar-fill{height:100%;border-radius:20px;transition:width .5s;background:linear-gradient(90deg,var(--purple),var(--blue))}
 .xp-bar-text{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:#fff}
 .avatar-ring{width:70px;height:70px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;position:relative;flex-shrink:0}
@@ -279,7 +279,7 @@ select option{background:var(--card)}
             <span id="avatar-emoji">🏋️</span>
             <div class="avatar-level" id="avatar-level">1</div>
           </div>
-          <div style="flex:1">
+          <div style="flex:1;min-width:0">
             <div class="flex justify-between items-center mb-4"><span style="font-weight:700" id="avatar-name"></span><span class="text-xs text-muted" id="xp-label"></span></div>
             <div class="xp-bar-wrap"><div class="xp-bar-fill" id="xp-bar" style="width:0%"></div><div class="xp-bar-text" id="xp-bar-text"></div></div>
             <div class="flex gap-8 mt-8" id="streak-row"></div>
