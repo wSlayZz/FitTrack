@@ -211,7 +211,7 @@ select option{background:var(--card)}
 #checkin-banner{background:linear-gradient(135deg,var(--accent),var(--blue));border-radius:14px;padding:.9rem;margin-bottom:11px;color:#fff}
 
 /* ── SETUP & AUTH ── */
-#auth-screen{position:fixed;inset:0;background:var(--bg);z-index:2000;display:flex;align-items:center;justify-content:center;padding:1.5rem;overflow-y:auto}
+#auth-screen{position:fixed;inset:0;background:var(--bg);z-index:2000;display:flex;align-items:center;justify-content:center;padding:1.5rem;overflow-y:auto;pointer-events:auto}
 .auth-box{width:100%;max-width:380px}
 .auth-err{background:var(--red)22;border:1px solid var(--red)44;color:var(--red);padding:10px 13px;border-radius:10px;font-size:.88rem;margin-bottom:11px}
 .auth-ok{background:var(--green)22;border:1px solid var(--green)44;color:var(--green);padding:10px 13px;border-radius:10px;font-size:.88rem;margin-bottom:11px;text-align:center}
@@ -391,8 +391,8 @@ select option{background:var(--card)}
   </div>
 </div>
 
-<!-- APP -->
-<div id="app" class="hidden">
+<!-- APP (caché jusqu'à connexion) -->
+<div id="app" class="hidden" style="pointer-events:none">
   <div id="topbar">
     <span style="font-size:1.05rem;font-weight:800;color:var(--accent)">FT</span>
     <span id="topbar-title" style="font-size:1.05rem;font-weight:700;flex:1;margin-left:6px">Dashboard</span>
@@ -932,7 +932,12 @@ function notif(msg,col){var el=document.getElementById('notif');el.textContent=m
 function showModal(){document.getElementById('modal-overlay').classList.remove('hidden');}
 function closeModal(){document.getElementById('modal-overlay').classList.add('hidden');}
 function closeModalOutside(e){if(e.target.id==='modal-overlay')closeModal();}
-function initApp(){document.getElementById('app').classList.remove('hidden');renderAvatarXP();runWeeklyCheckin();checkAllBadges();renderDashboard();}
+function initApp(){
+  var appEl=document.getElementById('app');
+  appEl.classList.remove('hidden');
+  appEl.style.pointerEvents='auto';
+  renderAvatarXP();runWeeklyCheckin();checkAllBadges();renderDashboard();
+}
 
 window.onload=function(){
   document.getElementById('sleep-date').value=todayStr();applyTheme();
