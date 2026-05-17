@@ -37,10 +37,11 @@ select option{background:var(--card)}
 .btn:active{transform:scale(.97)}
 #app{position:fixed;inset:0;display:flex;flex-direction:column;overflow:hidden}
 #content{flex:1;overflow-y:scroll;-webkit-overflow-scrolling:touch;padding-top:70px;padding-bottom:85px;min-height:0}
-#topbar{position:fixed;top:0;left:0;right:0;height:calc(var(--safe-top)+56px);padding-top:var(--safe-top);background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;padding-left:1rem;padding-right:1rem;z-index:100;gap:10px}
-#bottomnav{position:fixed;bottom:0;left:0;right:0;height:calc(var(--safe-bot)+60px);padding-bottom:var(--safe-bot);background:var(--card);border-top:1px solid var(--border);display:grid;grid-template-columns:repeat(5,1fr);z-index:100}
-.nav-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;background:none;border:none;color:var(--muted);font-size:.6rem;padding:4px 2px;transition:.15s}
-.nav-btn svg{width:20px;height:20px;stroke-width:1.8}
+#topbar{position:fixed;top:0;left:0;right:0;height:calc(var(--safe-top)+68px);padding-top:var(--safe-top);background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;padding-left:1.1rem;padding-right:1.1rem;z-index:100;gap:10px}
+#content{flex:1;overflow-y:scroll;-webkit-overflow-scrolling:touch;padding-top:82px;padding-bottom:72px;min-height:0}
+#bottomnav{position:fixed;bottom:0;left:0;right:0;height:calc(var(--safe-bot)+52px);padding-bottom:var(--safe-bot);background:var(--card);border-top:1px solid var(--border);display:grid;grid-template-columns:repeat(5,1fr);z-index:100}
+.nav-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;background:none;border:none;color:var(--muted);font-size:.55rem;padding:3px 2px;transition:.15s}
+.nav-btn svg{width:19px;height:19px;stroke-width:1.8}
 .nav-btn.active{color:var(--purple)}
 .page{display:none;padding:1rem}
 .page.active{display:block;min-height:100%}
@@ -1205,14 +1206,14 @@ function renderCreateStep1(){
   return '<h2>Nouvelle séance</h2>'
     +'<div style="font-size:.8rem;color:var(--muted);margin-bottom:1rem;background:var(--el);padding:8px 12px;border-radius:10px">Étape 1 sur 2 — Informations générales</div>'
     +'<div class="form-group"><label>Nom de la séance</label><input type="text" id="cs-name" class="modal-input" placeholder="Ex: Push Day A"></div>'
-    +'<div class="form-group"><label>Catégorie</label><select id="cs-cat" class="modal-select"><option value="full-body">Full Body</option><option value="haut">Haut du corps</option><option value="bas">Bas du corps</option><option value="push">Push</option><option value="pull">Pull</option><option value="core">Core</option></select></div>'
     +'<div class="form-group"><label>Type de séance</label>'
     +'<div class="flex gap-8">'
     +'<button class="type-btn selected" id="tb-muscu" onclick="selectCreateType(\'musculation\')">🏋️<br>Musculation</button>'
     +'<button class="type-btn" id="tb-course" onclick="selectCreateType(\'course\')">🏃<br>Course</button>'
     +'<button class="type-btn" id="tb-etir" onclick="selectCreateType(\'etirements\')">🧘<br>Étirements</button>'
     +'</div></div>'
-    +'<div class="form-group"><label>Repos entre séries</label><select id="cs-rest" class="modal-select"><option value="30">30s</option><option value="45">45s</option><option value="60" selected>60s</option><option value="90">90s</option><option value="120">2min</option><option value="180">3min</option></select></div>'
+    +'<div id="cs-cat-wrap" class="form-group"><label>Catégorie muscu</label><select id="cs-cat" class="modal-select"><option value="full-body">Full Body</option><option value="haut">Haut du corps</option><option value="bas">Bas du corps</option><option value="push">Push</option><option value="pull">Pull</option><option value="core">Core</option></select></div>'
+    +'<div id="cs-rest-wrap" class="form-group"><label>Repos entre séries</label><select id="cs-rest" class="modal-select"><option value="30">30s</option><option value="45">45s</option><option value="60" selected>60s</option><option value="90">90s</option><option value="120">2min</option><option value="180">3min</option></select></div>'
     +'<div class="flex gap-8 mt-12"><button class="btn btn-secondary" style="flex:.4" onclick="closeModal()">Annuler</button><button class="btn btn-primary" style="flex:1" onclick="goCreateStep2()">Suivant →</button></div>';
 }
 function selectCreateType(type){
@@ -1222,6 +1223,11 @@ function selectCreateType(type){
   document.getElementById('tb-etir').classList.remove('selected');
   var map={musculation:'muscu',course:'course',etirements:'etir'};
   var el=document.getElementById('tb-'+map[type]);if(el)el.classList.add('selected');
+  // Affiche catégorie et repos seulement pour muscu
+  var catWrap=document.getElementById('cs-cat-wrap');
+  var restWrap=document.getElementById('cs-rest-wrap');
+  if(catWrap)catWrap.style.display=type==='musculation'?'':'none';
+  if(restWrap)restWrap.style.display=type==='musculation'?'':'none';
 }
 function goCreateStep2(){
   var name=document.getElementById('cs-name').value.trim();
@@ -1267,11 +1273,54 @@ function renderCreateStep2Muscu(){
   return html;
 }
 function renderCreateStep2Course(){
+  // Récupère les meilleures perfs de course passées
+  var courseHistory=(DB.workoutHistory||[]).filter(function(w){return w.type==='course';});
+  var bestDist=courseHistory.length?Math.max.apply(null,courseHistory.map(function(c){return c.dist||0;})):0;
+  var lastRun=courseHistory.length?courseHistory[courseHistory.length-1]:null;
+  var hint='';
+  if(lastRun){hint='<div style="background:var(--el);border-radius:10px;padding:10px;margin-bottom:14px;font-size:.8rem;color:var(--muted)">📅 Dernière course : <strong style="color:var(--text)">'+(lastRun.dist||'?')+'km</strong> en <strong style="color:var(--text)">'+(lastRun.dur||'?')+'min</strong>'+(lastRun.allure?' · <strong style="color:var(--text)">'+lastRun.allure+'min/km</strong>':'')+'</div>';}
   return '<h2>'+window._csName+'</h2>'
-    +'<div style="font-size:.8rem;color:var(--muted);margin-bottom:1rem;background:var(--el);padding:8px 12px;border-radius:10px">Étape 2 sur 2 — Paramètres de course</div>'
-    +'<div class="form-row"><div class="form-group"><label>Type</label><select id="cs-course-type" class="modal-select"><option value="endurance">Endurance</option><option value="tempo">Tempo</option><option value="fractionne">Fractionné</option><option value="recuperation">Récup.</option></select></div><div class="form-group"><label>Distance (km)</label><input type="number" id="cs-dist" class="modal-input" placeholder="5" step="0.5" inputmode="decimal"></div></div>'
-    +'<div class="form-row"><div class="form-group"><label>Durée (min)</label><input type="number" id="cs-dur" class="modal-input" placeholder="30" inputmode="numeric"></div><div class="form-group"><label>Zone FC</label><select id="cs-fc" class="modal-select"><option>Z1</option><option>Z2</option><option>Z3</option><option>Z4</option><option>Z5</option></select></div></div>'
+    +'<div style="font-size:.8rem;color:var(--muted);margin-bottom:1rem;background:var(--el);padding:8px 12px;border-radius:10px">Étape 2 sur 2 — Type de course</div>'
+    +hint
+    +'<div class="form-group"><label>Type d\'effort</label>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+    +'<button class="type-btn selected" id="ctype-libre" onclick="selectCourseType(\'libre\')">🎯<br><span style="font-size:.8rem">Libre</span><br><span style="font-size:.65rem;color:var(--muted)">Distance décidée sur place</span></button>'
+    +'<button class="type-btn" id="ctype-endurance" onclick="selectCourseType(\'endurance\')">🐢<br><span style="font-size:.8rem">Endurance</span><br><span style="font-size:.65rem;color:var(--muted)">Effort modéré, longue durée</span></button>'
+    +'<button class="type-btn" id="ctype-tempo" onclick="selectCourseType(\'tempo\')">⚡<br><span style="font-size:.8rem">Tempo</span><br><span style="font-size:.65rem;color:var(--muted)">Allure soutenue</span></button>'
+    +'<button class="type-btn" id="ctype-fractionne" onclick="selectCourseType(\'fractionne\')">🔥<br><span style="font-size:.8rem">Fractionné</span><br><span style="font-size:.65rem;color:var(--muted)">Intervalles intensité haute</span></button>'
+    +'</div></div>'
+    +'<div id="cs-course-target" style="margin-top:4px">'
+    +'<div style="background:var(--purple)15;border:1px solid var(--purple)33;border-radius:12px;padding:12px;font-size:.85rem;color:var(--text2)">💡 <strong>Mode Libre</strong> — vous n\'avez pas besoin de prédéfinir la distance. Renseignez-la après la séance dans le bilan.</div>'
+    +'</div>'
+    +'<div id="cs-course-objective" class="hidden" style="margin-top:12px">'
+    +'<div class="form-group"><label>Objectif distance (optionnel)</label>'
+    +'<div style="display:flex;gap:8px;flex-wrap:wrap">'+[3,5,8,10,15,21,42].map(function(d){var isBest=d<=bestDist;return '<button style="padding:8px 14px;border-radius:20px;border:1.5px solid '+(isBest?'var(--green)':'var(--border)')+';background:'+(isBest?'var(--green)18':'var(--el)')+';color:'+(isBest?'var(--green)':'var(--muted)')+';font-size:.85rem;font-weight:600;cursor:pointer" onclick="setCourseTargetDist('+d+',this)">'+d+'km'+(isBest?' ✓':'')+'</button>';}).join('')+'</div>'
+    +'<input type="number" id="cs-dist" class="modal-input mt-8" placeholder="ou saisir une distance" step="0.5" inputmode="decimal">'
+    +'</div>'
+    +'<div class="form-group"><label>Durée cible (min) — optionnel</label><input type="number" id="cs-dur" class="modal-input" placeholder="Ex: 30" inputmode="numeric"></div>'
+    +'</div>'
     +'<div class="flex gap-8 mt-12"><button class="btn btn-secondary" style="flex:.4" onclick="openCreateSessionModal()">← Retour</button><button class="btn btn-primary" style="flex:1" onclick="saveNewSession()">💾 Sauvegarder</button></div>';
+}
+var _selectedCourseType='libre';
+function selectCourseType(type){
+  _selectedCourseType=type;
+  ['libre','endurance','tempo','fractionne'].forEach(function(t){var el=document.getElementById('ctype-'+t);if(el)el.classList.remove('selected');});
+  var el=document.getElementById('ctype-'+type);if(el)el.classList.add('selected');
+  var targetEl=document.getElementById('cs-course-target');
+  var objEl=document.getElementById('cs-course-objective');
+  var msgs={
+    libre:'💡 <strong>Mode Libre</strong> — vous n\'avez pas besoin de prédéfinir la distance. Renseignez-la après la séance dans le bilan.',
+    endurance:'🐢 <strong>Endurance</strong> — courez à une allure où vous pouvez tenir une conversation. Zone 2, effort long.',
+    tempo:'⚡ <strong>Tempo</strong> — allure soutenue, inconfortable mais tenable 20-40min. Idéal pour progresser.',
+    fractionne:'🔥 <strong>Fractionné</strong> — alternez sprint intense et récupération. Ex: 8×400m avec 90s de repos.'
+  };
+  if(targetEl)targetEl.innerHTML='<div style="background:var(--purple)15;border:1px solid var(--purple)33;border-radius:12px;padding:12px;font-size:.85rem;color:var(--text2)">'+msgs[type]+'</div>';
+  if(objEl)objEl.classList.toggle('hidden',type==='libre');
+}
+function setCourseTargetDist(d,btn){
+  var inp=document.getElementById('cs-dist');if(inp)inp.value=d;
+  document.querySelectorAll('#cs-course-objective button').forEach(function(b){b.style.background='var(--el)';b.style.borderColor='var(--border)';b.style.color='var(--muted)';});
+  btn.style.background='var(--purple)22';btn.style.borderColor='var(--purple)';btn.style.color='var(--purple)';
 }
 function csRemoveEx(i){newExercises.splice(i,1);document.getElementById('modal-content').innerHTML=renderCreateStep2Muscu();}
 function csAddSerie(i){
@@ -1327,8 +1376,11 @@ function saveNewSession(){
   if(_createType==='musculation'){
     session.exercises=newExercises.map(function(e){return Object.assign({},e,{series:e.series.map(function(s){return{reps:s.reps,weight:s.weight};})});});
   } else if(_createType==='course'){
-    var ct=document.getElementById('cs-course-type'),cd=document.getElementById('cs-dist'),cdur=document.getElementById('cs-dur'),cf=document.getElementById('cs-fc');
-    session.courseType=ct?ct.value:'endurance';session.dist=cd?parseFloat(cd.value)||0:0;session.dur=cdur?parseInt(cdur.value)||0:0;session.fc=cf?cf.value:'Z2';
+    session.courseType=_selectedCourseType||'libre';
+    var cd=document.getElementById('cs-dist'),cdur=document.getElementById('cs-dur');
+    session.dist=cd&&cd.value?parseFloat(cd.value)||0:0;
+    session.dur=cdur&&cdur.value?parseInt(cdur.value)||0:0;
+    session.libre=(_selectedCourseType==='libre');
   }
   DB.sessions.push(session);dbSave();newExercises=[];closeModal();renderProgSeances();notif('Séance créée !');}
 function deleteSession(id){if(confirm('Supprimer cette séance ?')){DB.sessions=DB.sessions.filter(function(s){return s.id!==id;});dbSave();renderProgSeances();}}
