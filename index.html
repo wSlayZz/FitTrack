@@ -1914,3 +1914,6 @@ function updateSquadStats(){
   var sportToday=(DB.workoutHistory||[]).some(function(w){return w.date===today;}),streak=(DB.gamification&&DB.gamification.streak)||0,lvl=getLevelInfo((DB.gamification&&DB.gamification.xp)||0);
   supaFetch('/rest/v1/squad_stats',{method:'POST',headers:{'Prefer':'return=minimal,resolution=merge-duplicates'},body:JSON.stringify({user_id:currentUser.user.id,display_name:DB.profile.prenom||'?',cal_pct:calPct,water_pct:waterPct,sport_today:sportToday,streak:streak,level:lvl.level,xp:DB.gamification.xp||0,updated_at:new Date().toISOString()})}).catch(function(){});
 }
+</script>
+</body>
+</html>
