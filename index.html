@@ -392,7 +392,7 @@ select option{background:var(--card)}
 </div>
 
 <!-- APP (caché jusqu'à connexion) -->
-<div id="app" class="hidden" style="pointer-events:none">
+<div id="app" class="hidden">
   <div id="topbar">
     <span style="font-size:1.05rem;font-weight:800;color:var(--accent)">FT</span>
     <span id="topbar-title" style="font-size:1.05rem;font-weight:700;flex:1;margin-left:6px">Dashboard</span>
@@ -935,7 +935,7 @@ function closeModalOutside(e){if(e.target.id==='modal-overlay')closeModal();}
 function initApp(){
   var appEl=document.getElementById('app');
   appEl.classList.remove('hidden');
-  appEl.style.pointerEvents='auto';
+  appEl.style.pointerEvents='';
   renderAvatarXP();runWeeklyCheckin();checkAllBadges();renderDashboard();
 }
 
