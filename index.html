@@ -1788,8 +1788,24 @@ function addRecipeToCourses(id){var r=DB.recipes.find(function(x){return x.id===
 function renderCoursesList(){
   var list=DB.courses||[],checked=list.filter(function(i){return i.done;}).length,el=document.getElementById('courses-list');
   if(!list.length){el.innerHTML='<div class="text-muted text-sm">Aucun article.</div>';document.getElementById('courses-summary').classList.add('hidden');return;}
-  el.innerHTML=list.map(function(item,i){var net=Math.max(0,Math.round((item.qty-(item.alreadyHave||0))*10)/10);return '<div style="display:flex;align-items:center;gap:8px;padding:9px;background:var(--el);border-radius:11px;margin-bottom:7px;'+(item.done?'opacity:.5':'')+'"><div class="courses-check'+(item.done?' done':'')+'" onclick="toggleCourseItem('+i+')">'+(item.done?'✓':'')+'</div><div style="flex:1"><div class="flex justify-between items-center"><span class="text-sm">'+item.name+'</span><span class="text-xs text-muted">'+item.qty+' '+item.unit+'</span></div><div class="flex items-center gap-8 mt-4"><label style="display:flex;align-items:center;gap:4px;font-size:.68rem;color:var(--muted)"><span>J\'ai :</span><input type="number" value="'+(item.alreadyHave||0)+'" min="0" inputmode="decimal" style="width:48px;background:var(--card);border:1px solid var(--border);color:var(--text);padding:3px 5px;border-radius:6px;font-size:.72rem;text-align:center" onchange="setAlreadyHave('+i+',this.value)" onclick="event.stopPropagation()"><span>'+item.unit+'</span></label>'+(net>0?'<span style="font-size:.68rem;color:var(--orange);font-weight:600">→ '+net+' '+item.unit+'</span>':'<span style="font-size:.68rem;color:var(--green);font-weight:600">✓ OK</span>')+'</div></div><button class="btn-icon" onclick="removeCourseItem('+i+')">✕</button></div>';}).join('');
-  var sumEl=document.getElementById('courses-summary');sumEl.classList.remove('hidden');var total=list.reduce(function(s,i){return s+(Math.max(0,i.qty-(i.alreadyHave||0))>0?1:0);},0);sumEl.innerHTML='<div class="flex justify-between items-center"><span class="text-sm text-muted">'+checked+'/'+list.length+' cochés · '+total+' à acheter</span><button class="btn btn-danger btn-sm" onclick="clearDoneItems()">Effacer cochés</button></div>';
+  el.innerHTML=list.map(function(item,i){
+    var net=Math.max(0,Math.round((item.qty-(item.alreadyHave||0))*10)/10);
+    var haveLabel="J'ai :";
+    return '<div style="display:flex;align-items:center;gap:8px;padding:9px;background:var(--el);border-radius:11px;margin-bottom:7px;'+(item.done?'opacity:.5':'')+'">'
+      +'<div class="courses-check'+(item.done?' done':'')+'" onclick="toggleCourseItem('+i+')">'+(item.done?'v':'')+'</div>'
+      +'<div style="flex:1"><div class="flex justify-between items-center"><span class="text-sm">'+item.name+'</span><span class="text-xs text-muted">'+item.qty+' '+item.unit+'</span></div>'
+      +'<div class="flex items-center gap-8 mt-4">'
+      +'<label style="display:flex;align-items:center;gap:4px;font-size:.68rem;color:var(--muted)"><span>'+haveLabel+'</span>'
+      +'<input type="number" value="'+(item.alreadyHave||0)+'" min="0" inputmode="decimal" style="width:48px;background:var(--card);border:1px solid var(--border);color:var(--text);padding:3px 5px;border-radius:6px;font-size:.72rem;text-align:center" onchange="setAlreadyHave('+i+',this.value)" onclick="event.stopPropagation()">'
+      +'<span>'+item.unit+'</span></label>'
+      +(net>0?'<span style="font-size:.68rem;color:var(--orange);font-weight:600">-&gt; '+net+' '+item.unit+'</span>':'<span style="font-size:.68rem;color:var(--green);font-weight:600">OK</span>')
+      +'</div></div>'
+      +'<button class="btn-icon" onclick="removeCourseItem('+i+')">X</button>'
+      +'</div>';
+  }).join('');
+  var sumEl=document.getElementById('courses-summary');sumEl.classList.remove('hidden');
+  var total=list.reduce(function(s,i){return s+(Math.max(0,i.qty-(i.alreadyHave||0))>0?1:0);},0);
+  sumEl.innerHTML='<div class="flex justify-between items-center"><span class="text-sm text-muted">'+checked+'/'+list.length+' coches - '+total+' a acheter</span><button class="btn btn-danger btn-sm" onclick="clearDoneItems()">Effacer coches</button></div>';
 }
 function setAlreadyHave(i,val){DB.courses[i].alreadyHave=Math.max(0,parseFloat(val)||0);dbSave();renderCoursesList();}
 function toggleCourseItem(i){DB.courses[i].done=!DB.courses[i].done;dbSave();renderCoursesList();}
