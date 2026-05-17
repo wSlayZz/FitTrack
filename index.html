@@ -978,7 +978,7 @@ function calcGoals(){
   var prot=Math.round(p.poids*2),lip=Math.round(cal*0.25/9),gluc=Math.round((cal-prot*4-lip*9)/4),eau=calcWaterNeeds(p);
   document.getElementById('g-cal').value=cal;document.getElementById('g-prot').value=prot;document.getElementById('g-gluc').value=gluc;document.getElementById('g-lip').value=lip;document.getElementById('g-eau').value=eau;
 }
-function setupStep2(){if(!document.getElementById('s-prenom').value){notif('Entrez votre prénom','var(--red)');return;}document.getElementById('setup-step1').classList.add('hidden');document.getElementById('setup-step2').classList.remove('hidden');document.getElementById('sd1').classList.remove('active');document.getElementById('sd2').classList.add('active');calcGoals();}
+function setupStep2(){if(!document.getElementById('s-prenom').value){notif('Entrez votre prenom','var(--red)');return;}document.getElementById('setup-step1').classList.add('hidden');document.getElementById('setup-step2').classList.remove('hidden');document.getElementById('sd1').classList.remove('active');document.getElementById('sd2').classList.add('active');calcGoals();}
 function setupBack(){document.getElementById('setup-step2').classList.add('hidden');document.getElementById('setup-step1').classList.remove('hidden');document.getElementById('sd2').classList.remove('active');document.getElementById('sd1').classList.add('active');}
 function setupFinish(){
   DB.profile={prenom:document.getElementById('s-prenom').value,age:parseInt(document.getElementById('s-age').value)||25,sexe:document.getElementById('s-sexe').value,taille:parseInt(document.getElementById('s-taille').value)||170,poids:parseFloat(document.getElementById('s-poids').value)||70,activite:parseFloat(document.getElementById('s-activite').value)||1.55,objectif:document.getElementById('s-objectif').value};
@@ -1562,15 +1562,19 @@ function startStretchTimer(id){
   _stretchTimerCb=setInterval(function(){rem--;time.textContent=rem;prog.style.width=Math.round(rem/tot*100)+'%';if(rem<=0){clearInterval(_stretchTimerCb);te.classList.add('hidden');item.classList.remove('active-stretch');_activeStretchId=null;notif('✅ '+s.name+' terminé !');}},1000);
 }
 function openStretchSessionBuilder(){
-  var html='<h2>🧘 Séance guidée</h2><div class="text-muted text-sm mb-12">Sélectionnez :</div>';
+  var html='<h2>Sejance guidee</h2><div class="text-muted text-sm mb-12">Selectionnez :</div>';
   html+=STRETCHES.map(function(s,i){return '<label style="display:flex;align-items:center;gap:10px;padding:7px;background:var(--el);border-radius:10px;margin-bottom:7px;cursor:pointer"><input type="checkbox" class="str-sel" value="'+i+'" style="width:17px;height:17px;accent-color:var(--accent)"><span style="font-size:1.05rem">'+s.emoji+'</span><div><div class="text-sm">'+s.name+'</div><div class="text-xs text-muted">'+s.duration+'s</div></div></label>';}).join('');
-  html+='<div class="flex gap-8 mt-12"><button class="btn btn-secondary" style="flex:.4" onclick="closeModal()">Annuler</button><button class="btn btn-primary" style="flex:1" onclick="launchStretchSession()">Démarrer</button></div>';
+  html+='<div class="flex gap-8 mt-12"><button class="btn btn-secondary" style="flex:.4" onclick="closeModal()">Annuler</button><button class="btn btn-primary" style="flex:1" onclick="launchStretchSession()">Demarrer</button></div>';
   document.getElementById('modal-content').innerHTML=html;showModal();
 }
 function launchStretchSession(){
-  var checked=document.querySelectorAll('.str-sel:checked');if(!checked.length){notif('Sélectionnez au moins un','var(--red)');return;}
-  _stretchSession=[];checked.forEach(function(cb){_stretchSession.push(STRETCHES[parseInt(cb.value)]);});_stretchIdx=0;closeModal();
-  document.getElementById('stretch-session-overlay').classList.remove('hidden');renderStretchSessionStep();
+  var checked=document.querySelectorAll('.str-sel:checked');
+  if(!checked.length){notif('Selectionnez au moins un','var(--red)');return;}
+  _stretchSession=[];
+  checked.forEach(function(cb){_stretchSession.push(STRETCHES[parseInt(cb.value)]);});
+  _stretchIdx=0;closeModal();
+  document.getElementById('stretch-session-overlay').classList.remove('hidden');
+  renderStretchSessionStep();
 }
 function renderStretchSessionStep(){
   if(_stretchIdx>=_stretchSession.length){endStretchSession();return;}
