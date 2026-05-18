@@ -683,6 +683,8 @@ var _createType='musculation',_selectedCourseType='libre';
 var _activeStretchId=null,_stretchTimerCb=null;
 var _currentRPEs={},_currentRessenti='';
 
+window.onerror=function(msg,src,line,col){document.body.innerHTML='<div style="padding:2rem;font-family:monospace;background:#1a1a24;color:#e85555;font-size:.9rem"><strong>ERREUR JS ligne '+line+':</strong><br>'+msg+'</div>';return true;};
+
 // Emojis declares comme variables pour eviter tout probleme d encodage
 var E={
   poulet:'🍗',riz:'🍚',oeuf:'🥚',avoine:'🌾',banane:'🍌',yaourt:'🥛',
