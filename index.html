@@ -13,7 +13,7 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{--bg:#0f0f13;--card:#1a1a24;--el:#22222f;--border:#2e2e3f;--purple:#7c6cf7;--green:#3dba7a;--orange:#f59e42;--red:#e85555;--blue:#378add;--text:#e8e8f0;--muted:#8888a0;--text2:#c0c0d0;--safe-top:env(safe-area-inset-top,0px);--safe-bot:env(safe-area-inset-bottom,0px)}
 body.light{--bg:#f4f4f8;--card:#ffffff;--el:#eaeaf0;--border:#d0d0e0;--text:#1a1a2e;--muted:#7070a0;--text2:#4a4a6a}
-html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:-apple-system,system-ui,sans-serif}
+html,body{height:100%;height:calc(var(--vh, 1vh) * 100);overflow:hidden;background:var(--bg);color:var(--text);font-family:-apple-system,system-ui,sans-serif}
 .hidden{display:none!important}
 #setup{position:fixed;inset:0;background:var(--bg);z-index:1000;overflow-y:auto;padding:calc(var(--safe-top)+2rem) 1.5rem calc(var(--safe-bot)+2rem)}
 .setup-box{max-width:400px;margin:0 auto}
@@ -35,7 +35,7 @@ select option{background:var(--card)}
 .btn-icon{background:none;border:none;cursor:pointer;color:var(--muted);padding:6px;font-size:1.1rem}
 .btn-danger{background:var(--red)22;color:var(--red);border:1.5px solid var(--red)44}
 .btn:active{transform:scale(.97)}
-#app{position:fixed;inset:0;display:flex;flex-direction:column;overflow:hidden}
+#app{position:fixed;inset:0;display:flex;flex-direction:column;overflow:hidden;height:calc(var(--vh, 1vh) * 100);}
 #content{flex:1;overflow-y:scroll;-webkit-overflow-scrolling:touch;padding-top:calc(var(--safe-top) + 56px);padding-bottom:calc(var(--safe-bot) + 76px);min-height:0}
 #topbar{position:fixed;top:0;left:0;right:0;height:calc(var(--safe-top)+56px);padding-top:var(--safe-top);background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;padding-left:1rem;padding-right:1rem;z-index:100;gap:10px}
 #bottomnav{position:fixed;bottom:0;left:0;right:0;height:calc(var(--safe-bot)+60px);padding-bottom:var(--safe-bot);background:var(--card);border-top:1px solid var(--border);display:grid;grid-template-columns:repeat(5,1fr);z-index:100}
@@ -696,6 +696,15 @@ select option{background:var(--card)}
 </div>
 
 <script>
+// Fix hauteur iOS Safari
+function setVH() {
+  var vh = window.innerHeight * 0.01;
+  document.documentElement.style.setProperty('--vh', vh + 'px');
+}
+setVH();
+window.addEventListener('resize', setVH);
+
+var SUPA_URL='https://yvkcoyofnllawjfvlthz.supabase.co';
 var SUPA_URL='https://yvkcoyofnllawjfvlthz.supabase.co';
 var SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2a2NveW9mbmxsYXdqZnZsdGh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxMjQ2MzksImV4cCI6MjA5MzcwMDYzOX0.TmqANNlMVWO25zf658gjpRLmvfGucURtCec7oK7MzdA';
 var currentUser=null,DB={};
