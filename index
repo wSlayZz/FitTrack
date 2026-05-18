@@ -220,6 +220,19 @@ select option{background:var(--card)}
     height: calc(50px + 56px);
   }
 }
+.pwa-mode #content {
+  padding-top: 56px !important;
+  padding-bottom: 60px !important;
+  height: calc(100vh - 116px) !important;
+}
+.pwa-mode #topbar {
+  padding-top: 0px !important;
+  height: 56px !important;
+}
+.pwa-mode #bottomnav {
+  padding-bottom: 0px !important;
+  height: 60px !important;
+}
 </style>
 </head>
 <body>
@@ -869,47 +882,8 @@ function initApp(){document.getElementById('app').classList.remove('hidden');ren
 
 window.onload=function(){
   if(window.navigator.standalone === true) {
-    var topH = 56;
-    var botH = 60;
-    document.getElementById('topbar').style.height = topH + 'px';
-    document.getElementById('bottomnav').style.height = botH + 'px';
-    document.getElementById('content').style.paddingTop = topH + 'px';
-    document.getElementById('content').style.paddingBottom = botH + 'px';
-    document.getElementById('content').style.height = (window.innerHeight - topH - botH) + 'px';
-  }
-
-  document.getElementById('sleep-date').value=todayStr();
-  
-  // Détection PWA iOS
-  if(window.navigator.standalone === true) {
-    document.documentElement.style.setProperty('--safe-top', '50px');
-    document.documentElement.style.setProperty('--safe-bot', '34px');
-  }
-  
-  document.getElementById('sleep-date').value=todayStr();
-  
-  // Fix iOS : force la hauteur réelle
-  document.getElementById('content').style.minHeight = 
-    (window.innerHeight - 56 - 60) + 'px';
-  
-  document.getElementById('sleep-date').value=todayStr();
-  applyTheme();
-  setInterval(function(){if(currentUser)dbSave();},30000);
-  restoreSession().then(function(ok){
-    if(ok){document.getElementById('auth-screen').classList.add('hidden');return dbLoad();}
-    return Promise.resolve();
-  }).then(function(){
-    if(currentUser){initDefaults();if(!DB.profile)document.getElementById('setup').classList.remove('hidden');else initApp();}
-  }).catch(function(e){
-    console.error('Init error:',e);
-    try{var b=localStorage.getItem('fittrack_backup');if(b)DB=JSON.parse(b)||{};}catch(e2){}
-    initDefaults();
-    if(currentUser){if(!DB.profile)document.getElementById('setup').classList.remove('hidden');else initApp();}
-  });
-};
-function toggleTheme(){document.body.classList.toggle('light');var l=document.body.classList.contains('light');document.getElementById('theme-btn').textContent=l?'🌙':'☀️';localStorage.setItem('fittrack_theme',l?'light':'dark');}
-function applyTheme(){if(localStorage.getItem('fittrack_theme')==='light'){document.body.classList.add('light');var btn=document.getElementById('theme-btn');if(btn)btn.textContent='🌙';}}
-
+  document.documentElement.classList.add('pwa-mode');
+}
 // ── AUTH ──
 var authMode='login';
 function authTab(mode){
