@@ -683,28 +683,76 @@ var _createType='musculation',_selectedCourseType='libre';
 var _activeStretchId=null,_stretchTimerCb=null;
 var _currentRPEs={},_currentRessenti='';
 
+// Emojis declares comme variables pour eviter tout probleme d encodage
+var E={
+  poulet:'🍗',riz:'🍚',oeuf:'🥚',avoine:'🌾',banane:'🍌',yaourt:'🥛',
+  epinards:'🥬',saumon:'🐟',patate:'🍠',amandes:'🥜',
+  pompes:'💪',tractions:'🔝',squats:'🦵',fentes:'🦵',dips:'💪',
+  developpe:'🏋️',curl:'💪',extension:'💪',elevation:'🏋️',sdl:'🏋️',
+  rowing:'🏋️',crunch:'🔥',planche:'🔥',hipthrust:'🦵',mollets:'🦵',
+  stretch:'🧘',feu:'🔥',eau:'💧',etoile:'⭐',trophy:'🏆',chef:'👨‍🍳',
+  sommeil:'😴',groupe:'👥',sport:'🏃',soleil:'☀️',lune:'🌙',
+  n1:'🌱',n2:'🏃',n3:'💪',n4:'🏆',n5:'⭐',n6:'🔥',n7:'⚡',n8:'🦁',n9:'💫',n10:'🌟'
+};
+
 var BADGES=[
-  {id:'first_workout',icon:'\u{1F4AA}',name:'Premiere seance',desc:'Terminer 1 seance'},
-  {id:'week_streak',icon:'\u{1F525}',name:'7j de suite',desc:'7 jours de journal'},
-  {id:'hydro_hero',icon:'\u{1F4A7}',name:'Hydro Hero',desc:'Objectif eau 7j'},
-  {id:'weight_tracker',icon:'\u2696\uFE0F',name:'Pisteur',desc:'5 pesees'},
-  {id:'recipe_chef',icon:'\u{1F468}\u200D\u{1F373}',name:'Chef',desc:'3 recettes'},
-  {id:'sleep_master',icon:'\u{1F634}',name:'Dormeur',desc:'7 nuits'},
-  {id:'level5',icon:'\u2B50',name:'Niveau 5',desc:'Atteindre niv. 5'},
-  {id:'squad_member',icon:'\u{1F465}',name:'Escouade',desc:'Rejoindre'}
+  {id:'first_workout',icon:E.pompes,name:'Premiere seance',desc:'Terminer 1 seance'},
+  {id:'week_streak',icon:E.feu,name:'7j de suite',desc:'7 jours de journal'},
+  {id:'hydro_hero',icon:E.eau,name:'Hydro Hero',desc:'Objectif eau 7j'},
+  {id:'weight_tracker',icon:'⚖️',name:'Pisteur',desc:'5 pesees'},
+  {id:'recipe_chef',icon:E.chef,name:'Chef',desc:'3 recettes'},
+  {id:'sleep_master',icon:E.sommeil,name:'Dormeur',desc:'7 nuits'},
+  {id:'level5',icon:E.etoile,name:'Niveau 5',desc:'Atteindre niv. 5'},
+  {id:'squad_member',icon:E.groupe,name:'Escouade',desc:'Rejoindre'}
 ];
 
 var LEVELS=[
-  {level:1,title:'Debutant',emoji:'\u{1F331}',xpNeeded:0},
-  {level:2,title:'Regulier',emoji:'\u{1F3C3}',xpNeeded:100},
-  {level:3,title:'Athlete',emoji:'\u{1F4AA}',xpNeeded:300},
-  {level:4,title:'Champion',emoji:'\u{1F3C6}',xpNeeded:600},
-  {level:5,title:'Elite',emoji:'\u2B50',xpNeeded:1000},
-  {level:6,title:'Legende',emoji:'\u{1F525}',xpNeeded:1500},
-  {level:7,title:'Invincible',emoji:'\u26A1',xpNeeded:2200},
-  {level:8,title:'Titan',emoji:'\u{1F981}',xpNeeded:3000},
-  {level:9,title:'Immortel',emoji:'\u{1F4AB}',xpNeeded:4000},
-  {level:10,title:'Transcendant',emoji:'\u{1F31F}',xpNeeded:5500}
+  {level:1,title:'Debutant',emoji:E.n1,xpNeeded:0},
+  {level:2,title:'Regulier',emoji:E.n2,xpNeeded:100},
+  {level:3,title:'Athlete',emoji:E.n3,xpNeeded:300},
+  {level:4,title:'Champion',emoji:E.n4,xpNeeded:600},
+  {level:5,title:'Elite',emoji:E.n5,xpNeeded:1000},
+  {level:6,title:'Legende',emoji:E.n6,xpNeeded:1500},
+  {level:7,title:'Invincible',emoji:E.n7,xpNeeded:2200},
+  {level:8,title:'Titan',emoji:E.n8,xpNeeded:3000},
+  {level:9,title:'Immortel',emoji:E.n9,xpNeeded:4000},
+  {level:10,title:'Transcendant',emoji:E.n10,xpNeeded:5500}
+];
+
+var STRETCHES=[
+  {id:'s1',zone:'cou',name:'Inclinaison laterale',emoji:E.stretch,duration:30,desc:'Penchez la tete vers chaque epaule.'},
+  {id:'s2',zone:'cou',name:'Rotation du cou',emoji:E.stretch,duration:30,desc:'Tournez la tete doucement de cote.'},
+  {id:'s3',zone:'epaules',name:'Epaule croisee',emoji:E.stretch,duration:30,desc:'Amenez un bras devant vous et tirez.'},
+  {id:'s4',zone:'epaules',name:'Rotation epaules',emoji:E.stretch,duration:30,desc:'Grands cercles avec les epaules.'},
+  {id:'s5',zone:'dos',name:'Chat-Vache',emoji:E.stretch,duration:45,desc:'Alternez dos arrondi et creux a 4 pattes.'},
+  {id:'s6',zone:'dos',name:'Torsion assis',emoji:E.stretch,duration:30,desc:'Tournez le buste assis.'},
+  {id:'s7',zone:'dos',name:'Cobra',emoji:E.stretch,duration:30,desc:'Allonge sur le ventre, levez le buste.'},
+  {id:'s8',zone:'hanches',name:'Fente basse',emoji:E.fentes,duration:45,desc:'Fente, genou arriere au sol.'},
+  {id:'s9',zone:'hanches',name:'Papillon',emoji:E.stretch,duration:45,desc:'Plantes de pieds jointes, genoux ouverts.'},
+  {id:'s10',zone:'jambes',name:'Ischios debout',emoji:E.squats,duration:45,desc:'Jambes tendues, penchez vers avant.'},
+  {id:'s11',zone:'jambes',name:'Quadriceps debout',emoji:E.fentes,duration:30,desc:'Tenez un pied derriere vous.'},
+  {id:'s12',zone:'jambes',name:'Mollets au mur',emoji:E.mollets,duration:30,desc:'Jambe derriere, talon au sol.'},
+  {id:'s13',zone:'full',name:'Salutation soleil',emoji:E.soleil,duration:90,desc:'Enchainement complet de postures.'},
+  {id:'s14',zone:'full',name:'Etirement allonge',emoji:E.lune,duration:30,desc:'Allonge, tendez bras et jambes.'},
+  {id:'s15',zone:'full',name:'Respiration',emoji:E.stretch,duration:60,desc:'Inspirez 4s, retenez 4s, expirez 6s.'}
+];
+
+var exerciseLibrary=[
+  {id:'e1',name:'Pompes',muscle:'Pectoraux, Triceps',emoji:E.pompes,group:'pectoraux'},
+  {id:'e2',name:'Tractions',muscle:'Biceps, Dos',emoji:E.tractions,group:'dos'},
+  {id:'e3',name:'Squats',muscle:'Quadriceps, Fessiers',emoji:E.squats,group:'jambes'},
+  {id:'e4',name:'Fentes',muscle:'Quadriceps, Fessiers',emoji:E.fentes,group:'jambes'},
+  {id:'e5',name:'Dips',muscle:'Triceps, Pectoraux',emoji:E.dips,group:'triceps'},
+  {id:'e6',name:'Developpe halteres',muscle:'Pectoraux, Epaules',emoji:E.developpe,group:'pectoraux'},
+  {id:'e7',name:'Curl biceps',muscle:'Biceps',emoji:E.curl,group:'biceps'},
+  {id:'e8',name:'Extension triceps',muscle:'Triceps',emoji:E.extension,group:'triceps'},
+  {id:'e9',name:'Elevation laterale',muscle:'Epaules',emoji:E.elevation,group:'epaules'},
+  {id:'e10',name:'Souleve de terre',muscle:'Ischio, Fessiers',emoji:E.sdl,group:'dos'},
+  {id:'e11',name:'Rowing haltere',muscle:'Dos, Biceps',emoji:E.rowing,group:'dos'},
+  {id:'e12',name:'Crunch',muscle:'Abdominaux',emoji:E.crunch,group:'abdos'},
+  {id:'e13',name:'Planche',muscle:'Abdominaux',emoji:E.planche,group:'abdos'},
+  {id:'e14',name:'Hip thrust',muscle:'Fessiers',emoji:E.hipthrust,group:'jambes'},
+  {id:'e15',name:'Mollets debout',muscle:'Mollets',emoji:E.mollets,group:'jambes'}
 ];
 
 var STRETCHES=[
@@ -833,16 +881,16 @@ function initDefaults(){
   if(!DB.gamification)DB.gamification={xp:0,badges:[],streak:0,lastJournalDate:'',lastCheckin:'',xpDone:{}};
 }
 function defaultFoods(){return[
-  {id:'f1',name:'Blanc de poulet',emoji:'\u{1F357}',cat:'viande',cal:165,prot:31,gluc:0,lip:3.6,unit:'g'},
-  {id:'f2',name:'Riz cuit',emoji:'\u{1F35A}',cat:'feculents',cal:130,prot:2.7,gluc:28,lip:0.3,unit:'g'},
-  {id:'f3',name:'Oeuf entier',emoji:'\u{1F95A}',cat:'autre',cal:155,prot:13,gluc:1.1,lip:11,unit:'g'},
-  {id:'f4',name:'Flocons avoine',emoji:'\u{1F33E}',cat:'feculents',cal:379,prot:13,gluc:68,lip:6.9,unit:'g'},
-  {id:'f5',name:'Banane',emoji:'\u{1F34C}',cat:'fruits',cal:89,prot:1.1,gluc:23,lip:0.3,unit:'g'},
-  {id:'f6',name:'Yaourt grec',emoji:'\u{1F95B}',cat:'produits-laitiers',cal:59,prot:10,gluc:3.6,lip:0.4,unit:'g'},
-  {id:'f7',name:'Epinards',emoji:'\u{1F96C}',cat:'legumes',cal:23,prot:2.9,gluc:3.6,lip:0.4,unit:'g'},
-  {id:'f8',name:'Saumon',emoji:'\u{1F41F}',cat:'viande',cal:208,prot:20,gluc:0,lip:13,unit:'g'},
-  {id:'f9',name:'Patate douce',emoji:'\u{1F360}',cat:'feculents',cal:86,prot:1.6,gluc:20,lip:0.1,unit:'g'},
-  {id:'f10',name:'Amandes',emoji:'\u{1F95C}',cat:'autre',cal:579,prot:21,gluc:22,lip:50,unit:'g'}
+  {id:'f1',name:'Blanc de poulet',emoji:E.poulet,cat:'viande',cal:165,prot:31,gluc:0,lip:3.6,unit:'g'},
+  {id:'f2',name:'Riz cuit',emoji:E.riz,cat:'feculents',cal:130,prot:2.7,gluc:28,lip:0.3,unit:'g'},
+  {id:'f3',name:'Oeuf entier',emoji:E.oeuf,cat:'autre',cal:155,prot:13,gluc:1.1,lip:11,unit:'g'},
+  {id:'f4',name:'Flocons avoine',emoji:E.avoine,cat:'feculents',cal:379,prot:13,gluc:68,lip:6.9,unit:'g'},
+  {id:'f5',name:'Banane',emoji:E.banane,cat:'fruits',cal:89,prot:1.1,gluc:23,lip:0.3,unit:'g'},
+  {id:'f6',name:'Yaourt grec',emoji:E.yaourt,cat:'produits-laitiers',cal:59,prot:10,gluc:3.6,lip:0.4,unit:'g'},
+  {id:'f7',name:'Epinards',emoji:E.epinards,cat:'legumes',cal:23,prot:2.9,gluc:3.6,lip:0.4,unit:'g'},
+  {id:'f8',name:'Saumon',emoji:E.saumon,cat:'viande',cal:208,prot:20,gluc:0,lip:13,unit:'g'},
+  {id:'f9',name:'Patate douce',emoji:E.patate,cat:'feculents',cal:86,prot:1.6,gluc:20,lip:0.1,unit:'g'},
+  {id:'f10',name:'Amandes',emoji:E.amandes,cat:'autre',cal:579,prot:21,gluc:22,lip:50,unit:'g'}
 ];}
 
 function allExercises(){return exerciseLibrary.concat(DB.customExercises||[]);}
@@ -871,8 +919,8 @@ window.onload=function(){
   });
 };
 
-function toggleTheme(){document.body.classList.toggle('light');var l=document.body.classList.contains('light');document.getElementById('theme-btn').textContent=l?'\uD83C\uDF19':'\u2600\uFE0F';localStorage.setItem('ft_theme',l?'light':'dark');}
-function applyTheme(){if(localStorage.getItem('ft_theme')==='light'){document.body.classList.add('light');var b=document.getElementById('theme-btn');if(b)b.textContent='\uD83C\uDF19';}}
+function toggleTheme(){document.body.classList.toggle('light');var l=document.body.classList.contains('light');document.getElementById('theme-btn').textContent=l?E.lune:E.soleil;localStorage.setItem('ft_theme',l?'light':'dark');}
+function applyTheme(){if(localStorage.getItem('ft_theme')==='light'){document.body.classList.add('light');var b=document.getElementById('theme-btn');if(b)b.textContent=E.lune;}}
 function openWidget(){}
 function closeWidget(){}
 
