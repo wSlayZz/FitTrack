@@ -43,7 +43,7 @@ select option{background:var(--card)}
 .nav-btn svg{width:20px;height:20px;stroke-width:1.8}
 .nav-btn.active{color:var(--purple)}
 .page{display:none;padding:1rem}
-.page.active{display:block;min-height:100%}
+.page.active{display:block;min-height:inherit}
 .card{background:var(--card);border-radius:16px;padding:1.1rem;border:1px solid var(--border);margin-bottom:12px}
 .card h3{font-size:.9rem;font-weight:600;margin-bottom:.85rem;color:var(--text2)}
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -854,7 +854,12 @@ function closeModalOutside(e){if(e.target.id==='modal-overlay')closeModal();}
 function initApp(){document.getElementById('app').classList.remove('hidden');renderAvatarXP();runWeeklyCheckin();checkAllBadges();renderDashboard();}
 
 window.onload=function(){
-  document.getElementById('sleep-date').value=todayStr();applyTheme();
+  // Fix iOS : force la hauteur réelle
+  document.getElementById('content').style.minHeight = 
+    (window.innerHeight - 56 - 60) + 'px';
+  
+  document.getElementById('sleep-date').value=todayStr();
+  applyTheme();
   setInterval(function(){if(currentUser)dbSave();},30000);
   restoreSession().then(function(ok){
     if(ok){document.getElementById('auth-screen').classList.add('hidden');return dbLoad();}
