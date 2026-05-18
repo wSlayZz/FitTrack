@@ -256,14 +256,7 @@ select option{background:var(--card)}
   <div id="ai-content"></div>
 </div>
 
-<div id="widget-screen" class="hidden">
-  <div style="font-size:1.05rem;font-weight:700;margin-bottom:12px">Widget - Resume du jour</div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px" id="widget-grid"></div>
-  <div class="card mt-12">
-    <h3>Personnaliser</h3>
-    <div id="widget-settings"></div>
-  </div>
-</div>
+<!-- Pas de widget screen -->
 
 <!-- AUTH -->
 <div id="auth-screen">
@@ -878,8 +871,10 @@ window.onload=function(){
   });
 };
 
-function toggleTheme(){document.body.classList.toggle('light');var l=document.body.classList.contains('light');document.getElementById('theme-btn').textContent=l?'lune':'soleil';localStorage.setItem('ft_theme',l?'light':'dark');}
-function applyTheme(){if(localStorage.getItem('ft_theme')==='light'){document.body.classList.add('light');var b=document.getElementById('theme-btn');if(b)b.textContent='lune';}}
+function toggleTheme(){document.body.classList.toggle('light');var l=document.body.classList.contains('light');document.getElementById('theme-btn').textContent=l?'\uD83C\uDF19':'\u2600\uFE0F';localStorage.setItem('ft_theme',l?'light':'dark');}
+function applyTheme(){if(localStorage.getItem('ft_theme')==='light'){document.body.classList.add('light');var b=document.getElementById('theme-btn');if(b)b.textContent='\uD83C\uDF19';}}
+function openWidget(){}
+function closeWidget(){}
 
 // ── AUTH ──
 var authMode='login';
