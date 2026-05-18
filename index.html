@@ -868,6 +868,14 @@ function closeModalOutside(e){if(e.target.id==='modal-overlay')closeModal();}
 function initApp(){document.getElementById('app').classList.remove('hidden');renderAvatarXP();runWeeklyCheckin();checkAllBadges();renderDashboard();}
 
 window.onload=function(){
+  // Détection PWA iOS
+  if(window.navigator.standalone === true) {
+    document.documentElement.style.setProperty('--safe-top', '50px');
+    document.documentElement.style.setProperty('--safe-bot', '34px');
+  }
+  
+  document.getElementById('sleep-date').value=todayStr();
+  
   // Fix iOS : force la hauteur réelle
   document.getElementById('content').style.minHeight = 
     (window.innerHeight - 56 - 60) + 'px';
