@@ -868,6 +868,17 @@ function closeModalOutside(e){if(e.target.id==='modal-overlay')closeModal();}
 function initApp(){document.getElementById('app').classList.remove('hidden');renderAvatarXP();runWeeklyCheckin();checkAllBadges();renderDashboard();}
 
 window.onload=function(){
+  // DEBUG temporaire
+  var div = document.createElement('div');
+  div.style.cssText = 'position:fixed;top:60px;left:0;right:0;background:red;color:white;z-index:9999;padding:10px;font-size:12px';
+  div.innerHTML = 'innerHeight:' + window.innerHeight + 
+    ' | standalone:' + window.navigator.standalone +
+    ' | safeTop:' + getComputedStyle(document.documentElement).getPropertyValue('--safe-top') +
+    ' | safeBot:' + getComputedStyle(document.documentElement).getPropertyValue('--safe-bot');
+  document.body.appendChild(div);
+  
+  document.getElementById('sleep-date').value=todayStr();
+  
   // Détection PWA iOS
   if(window.navigator.standalone === true) {
     document.documentElement.style.setProperty('--safe-top', '50px');
