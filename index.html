@@ -1401,7 +1401,8 @@ function saveCourseSession(){
 function saveEtirementsSession(){
   DB.sessions.push({id:'s'+Date.now(),name:window._csName,type:'etirements'});
   dbSave();closeModal();renderProgSeances();notif('Séance créée !');
-  
+}
+
 // ── WORKOUT MODE avec suggestions ──
 function launchSession(id){
   var s=DB.sessions.find(function(x){return x.id===id;});if(!s)return;
