@@ -882,8 +882,23 @@ function initApp(){document.getElementById('app').classList.remove('hidden');ren
 
 window.onload=function(){
   if(window.navigator.standalone === true) {
-  document.documentElement.classList.add('pwa-mode');
-}
+    document.documentElement.classList.add('pwa-mode');
+  }
+  document.getElementById('sleep-date').value=todayStr();
+  applyTheme();
+  setInterval(function(){if(currentUser)dbSave();},30000);
+  restoreSession().then(function(ok){
+    if(ok){document.getElementById('auth-screen').classList.add('hidden');return dbLoad();}
+    return Promise.resolve();
+  }).then(function(){
+    if(currentUser){initDefaults();if(!DB.profile)document.getElementById('setup').classList.remove('hidden');else initApp();}
+  }).catch(function(e){
+    console.error('Init error:',e);
+    try{var b=localStorage.getItem('fittrack_backup');if(b)DB=JSON.parse(b)||{};}catch(e2){}
+    initDefaults();
+    if(currentUser){if(!DB.profile)document.getElementById('setup').classList.remove('hidden');else initApp();}
+  });
+};
 // ── AUTH ──
 var authMode='login';
 function authTab(mode){
