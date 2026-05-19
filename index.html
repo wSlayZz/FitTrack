@@ -1288,7 +1288,7 @@ function csAddEx(id){
   document.getElementById('modal-content').innerHTML=renderCsExercisesStep();
 }
 function saveMusculationSession(){
-  var session={id:'s'+Date.now(),name:window._csName,type:'musculation',cat:window._csCat,restTime:window._csRest,exercises:newExercises.map(function(e){return Object.assign({},e,{series:e.series.map(function(s){return{reps:s.reps,weight:s.weight};}));
+  var session={id:'s'+Date.now(),name:window._csName,type:'musculation',cat:window._csCat,restTime:window._csRest,exercises:newExercises.map(function(e){return Object.assign({},e,{series:e.series.map(function(s){return{reps:s.reps,weight:s.weight};});});})};
   DB.sessions.push(session);dbSave();newExercises=[];closeModal();renderProgSeances();notif('Séance créée !');
 }
 function saveCourseSession(){
