@@ -1659,8 +1659,7 @@ function openAI(mode){
     if(tips.length){html+='<div style="font-weight:700;margin-bottom:10px">💡 Recommandations</div>';tips.forEach(function(tip){html+='<div class="tip-box mb-8">'+tip+'</div>';});}
     else{html+='<div class="tip-box">✅ Excellente semaine ! Continuez comme ça.</div>';}
     content.innerHTML=html;
-  }
-}
+
     html+='</div>';
     var tips=[];
     if(calDiff<-200)tips.push('⚠️ Vous mangez en moyenne '+Math.abs(Math.round(calDiff))+' kcal de moins que votre objectif. Augmentez légèrement les portions.');
