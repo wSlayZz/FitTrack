@@ -1718,43 +1718,61 @@ function openAI(mode){
     var allMeals=[{key:'petit-dejeuner',name:'🌅 Petit-déjeuner',calPct:.25},{key:'dejeuner',name:'☀️ Déjeuner',calPct:.40},{key:'diner',name:'🌙 Dîner',calPct:.35}];
     var remaining=allMeals.filter(function(m){return !mealsEaten[m.key];});if(!remaining.length)remaining=allMeals;
     var suggestions=[];
-    remaining.slice(0,3).forEach(function(meal){
-      var targetCal=Math.min(remCal,Math.round(g.cal*meal.calPct));if(targetCal<100)return;var items=[],usedCal=0;
-      var protein=scored.find(function(x){return x.f.cat==='viande';});if(protein){var qty=Math.round(Math.min(200,(targetCal*0.4/protein.f.cal*100))/50)*50||100;var r=qty/100;items.push({name:protein.f.name,emoji:protein.f.emoji,qty:qty,unit:protein.f.unit,cal:Math.round(protein.f.cal*r),prot:Math.round(protein.f.prot*r),gluc:Math.round(protein.f.gluc*r),lip:Math.round(protein.f.lip*r),mealKey:meal.key});usedCal+=protein.f.cal*r;}
-      if(obj!=='perte'||remGluc>50){var carb=scored.find(function(x){return x.f.cat==='feculents';});if(carb&&usedCal<targetCal){var qty2=Math.round(Math.min(150,((targetCal-usedCal)*0.5/carb.f.cal*100))/50)*50||100;var r2=qty2/100;items.push({name:carb.f.name,emoji:carb.f.emoji,qty:qty2,unit:carb.f.unit,cal:Math.round(carb.f.cal*r2),prot:Math.round(carb.f.prot*r2),gluc:Math.round(carb.f.gluc*r2),lip:Math.round(carb.f.lip*r2),mealKey:meal.key});usedCal+=carb.f.cal*r2;}}
-      var veg=scored.find(function(x){return x.f.cat==='legumes';});if(veg&&usedCal<targetCal){var qty3=150,r3=qty3/100;items.push({name:veg.f.name,emoji:veg.f.emoji,qty:qty3,unit:veg.f.unit,cal:Math.round(veg.f.cal*r3),prot:Math.round(veg.f.prot*r3),gluc:Math.round(veg.f.gluc*r3),lip:Math.round(veg.f.lip*r3),mealKey:meal.key});}
-      if(items.length){var totC=items.reduce(function(s,i){return s+i.cal;},0),totP=items.reduce(function(s,i){return s+i.prot;},0);suggestions.push({meal:meal.name,mealKey:meal.key,items:items,totalCal:Math.round(totC),totalProt:Math.round(totP)});}
-    });
-    var html='<div class="card mb-12" style="background:var(--el)"><div class="flex justify-between text-sm mb-4"><span class="text-muted">Calories restantes</span><span style="font-weight:700;color:var(--orange)">'+remCal+' kcal</span></div><div class="flex justify-between text-sm mb-4"><span class="text-muted">Protéines</span><span style="font-weight:700;color:var(--blue)">'+remProt+'g</span></div><div class="flex justify-between text-sm mb-4"><span class="text-muted">Glucides</span><span style="font-weight:700;color:var(--orange)">'+remGluc+'g</span></div><div class="flex justify-between text-sm"><span class="text-muted">Lipides</span><span style="font-weight:700;color:var(--green)">'+remLip+'g</span></div></div>';
-    if(!suggestions.length){html+='<div class="card"><div class="text-muted text-sm">Objectifs atteints ! 🎉</div></div>';}
-    else{suggestions.forEach(function(s,si){html+='<div class="card mb-8"><div style="font-weight:700;margin-bottom:10px">'+s.meal+'</div>'+s.items.map(function(i){return '<div class="flex justify-between items-center mb-6"><div class="flex items-center gap-8"><span>'+i.emoji+'</span><div><div class="text-sm">'+i.name+'</div><div class="text-xs text-muted">'+i.qty+(i.unit||'g')+' · '+i.cal+' kcal</div></div></div><div class="text-xs text-muted">P:'+i.prot+'g</div></div>';}).join('')+'<div style="border-top:1px solid var(--border);margin-top:8px;padding-top:8px;display:flex;justify-content:space-between;align-items:center"><span class="text-xs text-muted">Total</span><span style="font-weight:700;color:var(--orange)">'+s.totalCal+' kcal · P:'+s.totalProt+'g</span></div><button class="btn btn-primary btn-sm mt-8" id="sugg-btn-'+si+'">+ Journal</button></div>';});}
-    content.innerHTML=html;
-    suggestions.forEach(function(s,si){var btn=document.getElementById('sugg-btn-'+si);if(btn)btn.onclick=function(){addSuggestionToJournal(s.items,s.mealKey);};});
-  } else if(mode==='analyse'){
-    document.getElementById('ai-panel-title').textContent='Analyse de semaine';document.getElementById('ai-panel-sub').textContent='7 derniers jours';
-    var days7=last7Days(),nbSeances=DB.workoutHistory.filter(function(w){return days7.indexOf(w.date)>=0;}).length;
-    var avgCal2=Math.round(days7.reduce(function(s,d){var f=DB.journal[d]||[];return s+f.reduce(function(a,x){return a+x.cal;},0);},0)/7),avgWater2=Math.round(days7.reduce(function(s,d){return s+(DB.water[d]||0);},0)/7);
-    var sleepArr2=DB.sleep.filter(function(s){return days7.indexOf(s.date)>=0;});var avgSleep2=sleepArr2.length?Math.round(sleepArr2.reduce(function(s,n){return s+calcSleepDurNum(n.bed,n.wake);},0)/sleepArr2.length*10)/10:0;
-    var poidsArr=DB.weight.slice(-2),weightTrend=poidsArr.length===2?Math.round((poidsArr[1].val-poidsArr[0].val)*10)/10:null;
-    var obj2=p.objectif||'maintien',lvl2=getLevelInfo((DB.gamification&&DB.gamification.xp)||0);
-    var calOk=Math.abs(avgCal2-g.cal)<200,waterOk=avgWater2>=g.eau*0.8,sleepOk=avgSleep2>=7,sportOk=nbSeances>=3;
-    var poidsOk=weightTrend===null?true:((obj2==='perte'&&weightTrend<=0)||(obj2==='masse'&&weightTrend>=0)||(obj2==='maintien'&&Math.abs(weightTrend)<0.5)||(obj2==='renforcement'));
-    var points=[],amelio=[],conseils=[];
-    if(calOk)points.push('🍽️ Calories OK ('+avgCal2+' kcal/j)');else amelio.push('🍽️ Calories '+(avgCal2>g.cal?'↑':'↓')+' ('+avgCal2+' vs '+g.cal+')');
-    if(waterOk)points.push('💧 Hydratation OK ('+avgWater2+'ml/j)');else amelio.push('💧 Hydratation insuffisante');
-    if(sleepOk)points.push('😴 Sommeil OK ('+avgSleep2+'h)');else amelio.push('😴 Sommeil insuffisant ('+avgSleep2+'h)');
-    if(sportOk)points.push('💪 Sport OK ('+nbSeances+' séances)');else amelio.push('💪 Entraînement insuffisant ('+nbSeances+'/3)');
-    if(weightTrend!==null){if(poidsOk)points.push('⚖️ Poids cohérent ('+(weightTrend>0?'+':'')+weightTrend+'kg)');else amelio.push('⚖️ Poids pas aligné avec objectif');}
-    if(!calOk){if(avgCal2>g.cal)conseils.push('Réduire les portions de féculents au dîner.');else conseils.push('Ajouter une collation protéinée.');}
-    if(!waterOk)conseils.push('Poser un verre d\'eau sur le bureau comme rappel.');
-    if(!sleepOk&&avgSleep2>0)conseils.push('Se coucher 30min plus tôt.');
-    if(!sportOk)conseils.push('Planifier les séances dans le calendrier dès lundi.');
-    if(conseils.length<3)conseils.push('Maintenir le streak de '+((DB.gamification&&DB.gamification.streak)||0)+' jour(s) !');
-    var score=Math.round([calOk,waterOk,sleepOk,sportOk,poidsOk].filter(Boolean).length/5*100),scoreColor=score>=80?'var(--green)':score>=60?'var(--orange)':'var(--red)';
-    content.innerHTML='<div class="card mb-12" style="text-align:center"><div style="font-size:2.5rem;margin-bottom:6px">'+(score>=80?'🏆':score>=60?'💪':'📈')+'</div><div style="font-size:2.5rem;font-weight:800;color:'+scoreColor+'">'+score+'%</div><div class="text-muted text-sm mb-10">Score de la semaine</div><div class="score-bar"><div class="score-fill" style="width:'+score+'%;background:'+scoreColor+'"></div></div><div class="text-xs text-muted mt-8">Niv. '+lvl2.level+' '+lvl2.emoji+'</div></div>'
-      +(points.length?'<div class="card mb-8"><div style="font-weight:700;color:var(--green);margin-bottom:10px">✅ Points forts</div>'+points.map(function(x){return '<div class="text-sm mb-6">'+x+'</div>';}).join('')+'</div>':'')
-      +(amelio.length?'<div class="card mb-8"><div style="font-weight:700;color:var(--orange);margin-bottom:10px">⚠️ À améliorer</div>'+amelio.map(function(x){return '<div class="text-sm mb-6">'+x+'</div>';}).join('')+'</div>':'')
-      +'<div class="card"><div style="font-weight:700;color:var(--purple);margin-bottom:10px">💡 Conseils</div>'+conseils.map(function(c,i){return '<div class="text-sm mb-8"><span style="color:var(--purple);font-weight:700">'+(i+1)+'.</span> '+c+'</div>';}).join('')+'</div>';
+    // ── 1. REMPLACEZ le forEach des suggestions (dans openAI, mode 'suggestions') ──
+// Cherchez : remaining.slice(0,3).forEach(function(meal){
+// Et remplacez TOUT le bloc forEach jusqu'à }); par ceci :
+
+remaining.slice(0,3).forEach(function(meal,si){
+  var targetCal=Math.min(remCal,Math.round(g.cal*meal.calPct));if(targetCal<100)return;var items=[],usedCal=0;
+
+  // Variation selon le repas + heure actuelle (minutes) pour changer dans la journée
+  var seed=new Date().getHours()*10+si;
+  var proteins=scored.filter(function(x){return x.f.cat==='viande';});
+  var carbs=scored.filter(function(x){return x.f.cat==='feculents';});
+  var vegs=scored.filter(function(x){return x.f.cat==='legumes';});
+  var autres=scored.filter(function(x){return x.f.cat==='autre'||x.f.cat==='produits-laitiers'||x.f.cat==='fruits';});
+
+  var protein=proteins.length?proteins[(seed)%proteins.length]:null;
+  if(protein){
+    var qty=Math.round(Math.min(200,(targetCal*0.4/protein.f.cal*100))/50)*50||100;
+    var r=qty/100;
+    items.push({name:protein.f.name,emoji:protein.f.emoji,qty:qty,unit:protein.f.unit,cal:Math.round(protein.f.cal*r),prot:Math.round(protein.f.prot*r),gluc:Math.round(protein.f.gluc*r),lip:Math.round(protein.f.lip*r),mealKey:meal.key});
+    usedCal+=protein.f.cal*r;
+  }
+
+  if(obj!=='perte'||remGluc>50){
+    var carb=carbs.length?carbs[(seed+1)%carbs.length]:null;
+    if(carb&&usedCal<targetCal){
+      var qty2=Math.round(Math.min(150,((targetCal-usedCal)*0.5/carb.f.cal*100))/50)*50||100;
+      var r2=qty2/100;
+      items.push({name:carb.f.name,emoji:carb.f.emoji,qty:qty2,unit:carb.f.unit,cal:Math.round(carb.f.cal*r2),prot:Math.round(carb.f.prot*r2),gluc:Math.round(carb.f.gluc*r2),lip:Math.round(carb.f.lip*r2),mealKey:meal.key});
+      usedCal+=carb.f.cal*r2;
+    }
+  }
+
+  // Légume ou autre selon disponibilité
+  var veg=vegs.length?vegs[(seed+2)%vegs.length]:(autres.length?autres[(seed+2)%autres.length]:null);
+  if(veg&&usedCal<targetCal){
+    var qty3=150,r3=qty3/100;
+    items.push({name:veg.f.name,emoji:veg.f.emoji,qty:qty3,unit:veg.f.unit,cal:Math.round(veg.f.cal*r3),prot:Math.round(veg.f.prot*r3),gluc:Math.round(veg.f.gluc*r3),lip:Math.round(veg.f.lip*r3),mealKey:meal.key});
+  }
+
+  if(items.length){
+    var totC=items.reduce(function(s,i){return s+i.cal;},0),totP=items.reduce(function(s,i){return s+i.prot;},0);
+    suggestions.push({meal:meal.name,mealKey:meal.key,items:items,totalCal:Math.round(totC),totalProt:Math.round(totP)});
+  }
+});
+
+
+// ── 2. AJOUTEZ cette fonction manquante (deleteSession) quelque part dans le JS ──
+// Par exemple juste après renderProgSeances()
+
+function deleteSession(id){
+  if(confirm('Supprimer cette séance ?')){
+    DB.sessions=DB.sessions.filter(function(s){return s.id!==id;});
+    dbSave();
+    renderProgSeances();
+    notif('Séance supprimée');
   }
 }
 function addSuggestionToJournal(items,mealKey){var today=todayStr();if(!DB.journal[today])DB.journal[today]=[];items.forEach(function(item){DB.journal[today].push({id:Date.now()+Math.random()+'',name:item.name,emoji:item.emoji,meal:mealKey||'collation',qty:item.qty,unit:item.unit||'g',cal:item.cal,prot:item.prot,gluc:item.gluc||0,lip:item.lip||0});});dbSave();notif('Repas ajouté !');closeAI();nav('nutrition');}
