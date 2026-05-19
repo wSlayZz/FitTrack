@@ -36,9 +36,9 @@ select option{background:var(--card)}
 .btn-danger{background:var(--red)22;color:var(--red);border:1.5px solid var(--red)44}
 .btn:active{transform:scale(.97)}
 #app{position:fixed;inset:0;display:flex;flex-direction:column;overflow:hidden}
-#content{flex:1;overflow-y:scroll;-webkit-overflow-scrolling:touch;padding-top:calc(var(--safe-top) + 56px);padding-bottom:120px;min-height:0;background:var(--bg)}
+#content{flex:1;overflow-y:scroll;-webkit-overflow-scrolling:touch;padding-top:calc(var(--safe-top) + 56px);padding-bottom:calc(var(--safe-bot) + 80px);min-height:0;background:var(--bg)}
 #topbar{position:fixed;top:0;left:0;right:0;height:calc(var(--safe-top)+56px);padding-top:var(--safe-top);background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;padding-left:1rem;padding-right:1rem;z-index:100;gap:10px}
-#bottomnav{position:fixed;bottom:0;left:0;right:0;height:calc(34px + 60px);padding-bottom:34px;
+#bottomnav{position:fixed;bottom:0;left:0;right:0;height:calc(60px + var(--safe-bot));padding-bottom:var(--safe-bot);background:var(--card);border-top:1px solid var(--border);display:flex;align-items:stretch;z-index:100;}
 .nav-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;background:none;border:none;color:var(--muted);font-size:.6rem;padding:4px 2px;transition:.15s}
 .nav-btn svg{width:20px;height:20px;stroke-width:1.8}
 .nav-btn.active{color:var(--purple)}
@@ -857,14 +857,7 @@ function closeModal(){document.getElementById('modal-overlay').classList.add('hi
 function closeModalOutside(e){if(e.target.id==='modal-overlay')closeModal();}
 function initApp(){document.getElementById('app').classList.remove('hidden');renderAvatarXP();runWeeklyCheckin();checkAllBadges();renderDashboard();}
 
-window.onload=function(){
-  setTimeout(function(){
-    var d=document.createElement('div');
-    d.style.cssText='position:fixed;bottom:0;left:0;right:0;background:red;color:white;z-index:99999;padding:6px;font-size:11px;text-align:center';
-    d.textContent='innerH:'+window.innerHeight+' | outerH:'+window.outerHeight+' | standalone:'+window.navigator.standalone+' | safeBot:'+getComputedStyle(document.documentElement).getPropertyValue('--safe-bot').trim();
-    document.body.appendChild(d);
-  },1000);
-  
+window.onload=function(){  
   document.getElementById('sleep-date').value=todayStr();applyTheme();
   setInterval(function(){if(currentUser)dbSave();},30000);
   restoreSession().then(function(ok){
