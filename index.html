@@ -1463,13 +1463,12 @@ function endWorkout(){
   if(s.type==='musculation'){
     (s.exercises||[]).forEach(function(ex,i){
       record.exercises.push({
-        id:ex.id,name:ex.name,emoji:ex.emoji||'🏋️',
-        series:ex.series.map(function(s2,si){
-          var wi=document.getElementById('wm-w-'+i+'-'+si),ri=document.getElementById('wm-r-'+i+'-'+si);
-          return{weight:wi?parseFloat(wi.value)||0:0,reps:ri?parseInt(ri.value)||0:0};
-        })
-      });
-    });
+  id:ex.id,name:ex.name,emoji:ex.emoji||'🏋️',
+  series:ex.series.map(function(s2,si){
+    var wi=document.getElementById('wm-w-'+i+'-'+si),ri=document.getElementById('wm-r-'+i+'-'+si);
+    return{weight:wi?parseFloat(wi.value)||0:0,reps:ri?parseInt(ri.value)||0:0};
+  })
+});
   } else {
     var di=document.getElementById('wm-dist'),duri=document.getElementById('wm-dur'),ali=document.getElementById('wm-allure'),fci=document.getElementById('wm-fc');
     record.dist=di?parseFloat(di.value)||0:0;record.dur=duri?parseInt(duri.value)||0:0;record.allure=ali?parseFloat(ali.value)||0:0;record.fc=fci?parseInt(fci.value)||0:0;
@@ -1724,43 +1723,17 @@ function openAI(mode){
 
 remaining.slice(0,3).forEach(function(meal,si){
   var targetCal=Math.min(remCal,Math.round(g.cal*meal.calPct));if(targetCal<100)return;var items=[],usedCal=0;
-
-  // Variation selon le repas + heure actuelle (minutes) pour changer dans la journée
   var seed=new Date().getHours()*10+si;
   var proteins=scored.filter(function(x){return x.f.cat==='viande';});
   var carbs=scored.filter(function(x){return x.f.cat==='feculents';});
   var vegs=scored.filter(function(x){return x.f.cat==='legumes';});
   var autres=scored.filter(function(x){return x.f.cat==='autre'||x.f.cat==='produits-laitiers'||x.f.cat==='fruits';});
-
-  var protein=proteins.length?proteins[(seed)%proteins.length]:null;
-  if(protein){
-    var qty=Math.round(Math.min(200,(targetCal*0.4/protein.f.cal*100))/50)*50||100;
-    var r=qty/100;
-    items.push({name:protein.f.name,emoji:protein.f.emoji,qty:qty,unit:protein.f.unit,cal:Math.round(protein.f.cal*r),prot:Math.round(protein.f.prot*r),gluc:Math.round(protein.f.gluc*r),lip:Math.round(protein.f.lip*r),mealKey:meal.key});
-    usedCal+=protein.f.cal*r;
-  }
-
-  if(obj!=='perte'||remGluc>50){
-    var carb=carbs.length?carbs[(seed+1)%carbs.length]:null;
-    if(carb&&usedCal<targetCal){
-      var qty2=Math.round(Math.min(150,((targetCal-usedCal)*0.5/carb.f.cal*100))/50)*50||100;
-      var r2=qty2/100;
-      items.push({name:carb.f.name,emoji:carb.f.emoji,qty:qty2,unit:carb.f.unit,cal:Math.round(carb.f.cal*r2),prot:Math.round(carb.f.prot*r2),gluc:Math.round(carb.f.gluc*r2),lip:Math.round(carb.f.lip*r2),mealKey:meal.key});
-      usedCal+=carb.f.cal*r2;
-    }
-  }
-
-  // Légume ou autre selon disponibilité
+  var protein=proteins.length?proteins[seed%proteins.length]:null;
+  if(protein){var qp=Math.round(Math.min(200,(targetCal*0.4/protein.f.cal*100))/50)*50||100;var rp=qp/100;items.push({name:protein.f.name,emoji:protein.f.emoji,qty:qp,unit:protein.f.unit,cal:Math.round(protein.f.cal*rp),prot:Math.round(protein.f.prot*rp),gluc:Math.round(protein.f.gluc*rp),lip:Math.round(protein.f.lip*rp),mealKey:meal.key});usedCal+=protein.f.cal*rp;}
+  if(obj!=='perte'||remGluc>50){var carb=carbs.length?carbs[(seed+1)%carbs.length]:null;if(carb&&usedCal<targetCal){var qc=Math.round(Math.min(150,((targetCal-usedCal)*0.5/carb.f.cal*100))/50)*50||100;var rc=qc/100;items.push({name:carb.f.name,emoji:carb.f.emoji,qty:qc,unit:carb.f.unit,cal:Math.round(carb.f.cal*rc),prot:Math.round(carb.f.prot*rc),gluc:Math.round(carb.f.gluc*rc),lip:Math.round(carb.f.lip*rc),mealKey:meal.key});usedCal+=carb.f.cal*rc;}}
   var veg=vegs.length?vegs[(seed+2)%vegs.length]:(autres.length?autres[(seed+2)%autres.length]:null);
-  if(veg&&usedCal<targetCal){
-    var qty3=150,r3=qty3/100;
-    items.push({name:veg.f.name,emoji:veg.f.emoji,qty:qty3,unit:veg.f.unit,cal:Math.round(veg.f.cal*r3),prot:Math.round(veg.f.prot*r3),gluc:Math.round(veg.f.gluc*r3),lip:Math.round(veg.f.lip*r3),mealKey:meal.key});
-  }
-
-  if(items.length){
-    var totC=items.reduce(function(s,i){return s+i.cal;},0),totP=items.reduce(function(s,i){return s+i.prot;},0);
-    suggestions.push({meal:meal.name,mealKey:meal.key,items:items,totalCal:Math.round(totC),totalProt:Math.round(totP)});
-  }
+  if(veg&&usedCal<targetCal){var qv=150,rv=qv/100;items.push({name:veg.f.name,emoji:veg.f.emoji,qty:qv,unit:veg.f.unit,cal:Math.round(veg.f.cal*rv),prot:Math.round(veg.f.prot*rv),gluc:Math.round(veg.f.gluc*rv),lip:Math.round(veg.f.lip*rv),mealKey:meal.key});}
+  if(items.length){var totC=items.reduce(function(s,i){return s+i.cal;},0),totP=items.reduce(function(s,i){return s+i.prot;},0);suggestions.push({meal:meal.name,mealKey:meal.key,items:items,totalCal:Math.round(totC),totalProt:Math.round(totP)});}
 });
 
 
@@ -2005,3 +1978,9 @@ function updateSquadStats(){
 </script>
 </body>
 </html>
+
+
+
+
+
+
