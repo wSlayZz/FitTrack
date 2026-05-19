@@ -39,7 +39,7 @@ select option{background:var(--card)}
 #content{flex:1;overflow-y:scroll;-webkit-overflow-scrolling:touch;padding-top:calc(var(--safe-top) + 56px);padding-bottom:calc(var(--safe-bot) + 80px);min-height:0;background:var(--bg)}
 #topbar{position:fixed;top:0;left:0;right:0;height:calc(var(--safe-top)+56px);padding-top:var(--safe-top);background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;padding-left:1rem;padding-right:1rem;z-index:100;gap:10px}
 #bottomnav{position:fixed;bottom:0;left:0;right:0;height:calc(70px + var(--safe-bot));padding-bottom:var(--safe-bot);background:var(--card);border-top:1px solid var(--border);display:flex;align-items:stretch;z-index:100;}
-.nav-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;background:none;border:none;color:var(--muted);font-size:.6rem;padding:4px 2px;transition:.15s}
+.nav-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;background:none;border:none;color:var(--muted);font-size:.6rem;padding:4px 2px;transition:.15s;flex:1;min-width:0}
 .nav-btn svg{width:20px;height:20px;stroke-width:1.8}
 .nav-btn.active{color:var(--purple)}
 .page{display:none;padding:1rem}
@@ -248,7 +248,7 @@ select option{background:var(--card)}
   <div id="scanner-status">Pointez la caméra vers un code-barres</div>
 </div>
 <div id="ai-panel" class="hidden">
-  <div class="flex items-center justify-between mb-16">
+  <div class="flex items-center justify-between mb-16" style="position:sticky;top:0;background:var(--bg);padding:1rem 0 .75rem;z-index:10;margin-bottom:0">
     <div><div style="font-size:1.1rem;font-weight:700" id="ai-panel-title"></div><div class="text-muted text-xs" id="ai-panel-sub"></div></div>
     <button class="btn btn-secondary btn-sm" onclick="closeAI()">✕ Fermer</button>
   </div>
