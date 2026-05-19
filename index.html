@@ -1572,7 +1572,6 @@ function genCoursesFromPlan(){
 // ── SUGGESTIONS & ANALYSE ──
 function closeAI(){
   document.getElementById('ai-panel').classList.add('hidden');
-  document.getElementById('ai-panel-header').classList.add('hidden');
 }
 // ── FONCTION addSuggestionToJournal (au niveau global) ──
 function addSuggestionToJournal(items,mealKey){
@@ -1585,6 +1584,8 @@ function addSuggestionToJournal(items,mealKey){
 
 function openAI(mode){
   document.getElementById('ai-panel').classList.remove('hidden');
+  var content=document.getElementById('ai-content');
+  var p=DB.profile||{},g=DB.goals||{};
   document.getElementById('ai-panel-header').classList.remove('hidden');
   document.getElementById('ai-panel').classList.remove('hidden');
   var content=document.getElementById('ai-content');
