@@ -238,11 +238,11 @@ select option{background:var(--card)}
   <div id="scanner-status">Pointez la caméra vers un code-barres</div>
 </div>
 <div id="ai-panel" class="hidden">
-  <div id="ai-panel-header" style="position:fixed;top:calc(var(--safe-top)+56px);left:0;right:0;background:var(--bg);padding:.75rem 1rem;border-bottom:1px solid var(--border);z-index:10;display:flex;align-items:center;justify-content:space-between">
+  <div id="ai-panel-header" style="position:fixed;top:calc(var(--safe-top)+56px);left:0;right:0;background:var(--bg);padding:.75rem 1rem;border-bottom:1px solid var(--border);z-index:360;display:flex;align-items:center;justify-content:space-between">
     <div><div style="font-size:1.1rem;font-weight:700" id="ai-panel-title"></div><div class="text-muted text-xs" id="ai-panel-sub"></div></div>
     <button class="btn btn-secondary btn-sm" onclick="closeAI()">✕ Fermer</button>
   </div>
-  <div id="ai-content" style="padding-top:64px"></div>
+  <div id="ai-content" style="padding-top:56px"></div>
 </div>
 
 <!-- AUTH -->
@@ -823,13 +823,13 @@ function defaultFoods(){return[
   {id:'f1',name:'Blanc de poulet',emoji:'🍗',cat:'viande',cal:165,prot:31,gluc:0,lip:3.6,unit:'g'},
   {id:'f2',name:'Riz cuit',emoji:'🍚',cat:'feculents',cal:130,prot:2.7,gluc:28,lip:0.3,unit:'g'},
   {id:'f3',name:'Oeuf entier',emoji:'🥚',cat:'autre',cal:155,prot:13,gluc:1.1,lip:11,unit:'g'},
-  {id:'f4',name:'Flocons avoine',emoji:'🌾',cat:'feculents',cal:379,prot:13,gluc:68,lip:6.9,unit:'g'},
-  {id:'f5',name:'Banane',emoji:'🍌',cat:'fruits',cal:89,prot:1.1,gluc:23,lip:0.3,unit:'g'},
-  {id:'f6',name:'Yaourt grec',emoji:'🥛',cat:'produits-laitiers',cal:59,prot:10,gluc:3.6,lip:0.4,unit:'g'},
+  {id:'f4',name:'Flocons avoine',emoji:'🌾',cat:'feculents',cal:379,prot:13,gluc:68,lip:6.9,unit:'g'},tags:['petit-dej']},
+  {id:'f5',name:'Banane',emoji:'🍌',cat:'fruits',cal:89,prot:1.1,gluc:23,lip:0.3,unit:'g'},tags:['petit-dej']},
+  {id:'f6',name:'Yaourt grec',emoji:'🥛',cat:'produits-laitiers',cal:59,prot:10,gluc:3.6,lip:0.4,unit:'g'},tags:['petit-dej']},
   {id:'f7',name:'Épinards',emoji:'🥬',cat:'legumes',cal:23,prot:2.9,gluc:3.6,lip:0.4,unit:'g'},
   {id:'f8',name:'Saumon',emoji:'🐟',cat:'viande',cal:208,prot:20,gluc:0,lip:13,unit:'g'},
   {id:'f9',name:'Patate douce',emoji:'🍠',cat:'feculents',cal:86,prot:1.6,gluc:20,lip:0.1,unit:'g'},
-  {id:'f10',name:'Amandes',emoji:'🥜',cat:'autre',cal:579,prot:21,gluc:22,lip:50,unit:'g'}
+  {id:'f10',name:'Amandes',emoji:'🥜',cat:'autre',cal:579,prot:21,gluc:22,lip:50,unit:'g'},tags:['petit-dej']},
 ];}
 
 function todayStr(){return new Date().toISOString().split('T')[0];}
@@ -1597,19 +1597,31 @@ function openAI(mode){
       return{f:f,score:score};
     }).sort(function(a,b){return b.score-a.score;});
     var mealsEaten={};foods.forEach(function(f){mealsEaten[f.meal]=true;});
-    var allMeals=[{key:'petit-dejeuner',name:'🌅 Petit-déjeuner',calPct:.25,noCat:['viande']},{key:'dejeuner',name:'☀️ Déjeuner',calPct:.40,noCat:[]},{key:'diner',name:'🌙 Dîner',calPct:.35,noCat:[]}];
+    var allMeals=[
+  {key:'petit-dejeuner',name:'🌅 Petit-déjeuner',calPct:.25},
+  {key:'dejeuner',name:'☀️ Déjeuner',calPct:.40},
+  {key:'diner',name:'🌙 Dîner',calPct:.35}
+];
     var remaining=allMeals.filter(function(m){return !mealsEaten[m.key];});if(!remaining.length)remaining=allMeals;
     var suggestions=[];
     remaining.slice(0,3).forEach(function(meal,si){
       var targetCal=Math.min(remCal,Math.round(g.cal*meal.calPct));if(targetCal<100)return;
       var items=[],usedCal=0;
       var seed=new Date().getHours()*10+si;
-      var proteins=scored.filter(function(x){return x.f.cat==='viande'&&meal.noCat.indexOf(x.f.cat)<0;});
-      var carbs=scored.filter(function(x){return x.f.cat==='feculents';});
-      var vegs=scored.filter(function(x){return x.f.cat==='legumes';});
-      var autres=scored.filter(function(x){return(x.f.cat==='autre'||x.f.cat==='produits-laitiers'||x.f.cat==='fruits')&&meal.noCat.indexOf(x.f.cat)<0;});
-      var proteinSource=proteins.length?proteins:autres;
-      var protein=proteinSource.length?proteinSource[seed%proteinSource.length]:null;
+      var isPetitDej=meal.key==='petit-dejeuner';
+      var proteinPool=isPetitDej
+        ? scored.filter(function(x){return x.f.tags&&x.f.tags.indexOf('petit-dej')>=0&&(x.f.cat==='produits-laitiers'||x.f.cat==='autre');})
+        : scored.filter(function(x){return x.f.cat==='viande';});
+      var carbPool=isPetitDej
+        ? scored.filter(function(x){return x.f.tags&&x.f.tags.indexOf('petit-dej')>=0&&x.f.cat==='feculents';})
+        : scored.filter(function(x){return x.f.cat==='feculents';});
+      var fruitPool=isPetitDej
+        ? scored.filter(function(x){return x.f.cat==='fruits'||(x.f.tags&&x.f.tags.indexOf('petit-dej')>=0);})
+        : scored.filter(function(x){return x.f.cat==='legumes'||x.f.cat==='fruits'||x.f.cat==='autre'||x.f.cat==='produits-laitiers';});
+      var protein=proteinPool.length?proteinPool[seed%proteinPool.length]:null;
+      var carbs=carbPool;
+      var vegs=isPetitDej?fruitPool:scored.filter(function(x){return x.f.cat==='legumes';});
+      var autres=fruitPool;
       if(protein){var qp=Math.round(Math.min(200,(targetCal*0.4/protein.f.cal*100))/50)*50||100;var rp=qp/100;items.push({name:protein.f.name,emoji:protein.f.emoji,qty:qp,unit:protein.f.unit,cal:Math.round(protein.f.cal*rp),prot:Math.round(protein.f.prot*rp),gluc:Math.round(protein.f.gluc*rp),lip:Math.round(protein.f.lip*rp),mealKey:meal.key});usedCal+=protein.f.cal*rp;}
       if(obj!=='perte'||remGluc>50){var carb=carbs.length?carbs[(seed+1)%carbs.length]:null;if(carb&&usedCal<targetCal){var qc=Math.round(Math.min(150,((targetCal-usedCal)*0.5/carb.f.cal*100))/50)*50||100;var rc=qc/100;items.push({name:carb.f.name,emoji:carb.f.emoji,qty:qc,unit:carb.f.unit,cal:Math.round(carb.f.cal*rc),prot:Math.round(carb.f.prot*rc),gluc:Math.round(carb.f.gluc*rc),lip:Math.round(carb.f.lip*rc),mealKey:meal.key});usedCal+=carb.f.cal*rc;}}
       var veg=vegs.length?vegs[(seed+2)%vegs.length]:(autres.length?autres[(seed+2)%autres.length]:null);
