@@ -1462,12 +1462,14 @@ function endWorkout(){
   var record={id:'w'+Date.now(),sessionId:s.id,sessionName:s.name,type:s.type,date:todayStr(),duration:workoutSeconds,exercises:[]};
   if(s.type==='musculation'){
     (s.exercises||[]).forEach(function(ex,i){
-      record.exercises.push({
-  id:ex.id,name:ex.name,emoji:ex.emoji||'🏋️',
-  series:ex.series.map(function(s2,si){
-    var wi=document.getElementById('wm-w-'+i+'-'+si),ri=document.getElementById('wm-r-'+i+'-'+si);
-    return{weight:wi?parseFloat(wi.value)||0:0,reps:ri?parseInt(ri.value)||0:0};
-  })
+      (s.exercises||[]).forEach(function(ex,i){
+  record.exercises.push({
+    id:ex.id,name:ex.name,emoji:ex.emoji||'🏋️',
+    series:ex.series.map(function(s2,si){
+      var wi=document.getElementById('wm-w-'+i+'-'+si),ri=document.getElementById('wm-r-'+i+'-'+si);
+      return{weight:wi?parseFloat(wi.value)||0:0,reps:ri?parseInt(ri.value)||0:0};
+    })
+  });
 });
   } else {
     var di=document.getElementById('wm-dist'),duri=document.getElementById('wm-dur'),ali=document.getElementById('wm-allure'),fci=document.getElementById('wm-fc');
