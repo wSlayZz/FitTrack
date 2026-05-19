@@ -1288,9 +1288,9 @@ function csAddEx(id){
   document.getElementById('modal-content').innerHTML=renderCsExercisesStep();
 }
 function saveMusculationSession(){
-  var exs=[];
-  for(var i=0;i<newExercises.length;i++){var e=newExercises[i];var s2=[];for(var j=0;j<e.series.length;j++){s2.push({reps:e.series[j].reps,weight:e.series[j].weight});}exs.push({id:e.id,name:e.name,emoji:e.emoji,muscle:e.muscle,series:s2});}
-  var session={id:'s'+Date.now(),name:window._csName,type:'musculation',cat:window._csCat,restTime:window._csRest,exercises:exs};
+  var session={id:'s'+Date.now(),name:window._csName,type:'musculation',cat:window._csCat,restTime:window._csRest,exercises:newExercises.map(function(e){return Object.assign({},e,{series:e.series.map(function(s){return{reps:s.reps,weight:s.weight};});});})};
+  DB.sessions.push(session);dbSave();newExercises=[];closeModal();renderProgSeances();notif('Séance créée !');
+}
 function saveCourseSession(){
   var session={id:'s'+Date.now(),name:window._csName,type:'course',runMode:_csRunMode};
   if(_csRunMode==='planifiee'){
@@ -1641,6 +1641,20 @@ function openAI(mode){
       var pct=Math.min(100,Math.round(m.val/m.goal*100));var ok=pct>=80&&pct<=120;
       html+='<div style="margin-bottom:10px"><div class="flex justify-between text-sm mb-4"><span>'+m.label+'</span><span style="font-weight:700;color:'+(ok?'var(--green)':'var(--orange)')+'">'+m.val+m.unit+' / '+m.goal+m.unit+'</span></div><div class="prog-bar"><div class="prog-fill" style="width:'+pct+'%;background:'+(ok?'var(--green)':'var(--orange)')+'"></div></div></div>';
     });
+    html+='</div>';
+    var tips=[];
+    var calDiff=avgCal-g.cal,protDiff=avgProt-g.prot;
+    if(calDiff<-200)tips.push('⚠️ Vous mangez en moyenne '+Math.abs(Math.round(calDiff))+' kcal de moins que votre objectif.');
+    else if(calDiff>200)tips.push('📈 Vous dépassez votre objectif calorique de '+Math.round(calDiff)+' kcal en moyenne.');
+    if(protDiff<-20)tips.push('💪 Apports en protéines insuffisants ('+Math.abs(Math.round(protDiff))+'g de moins).');
+    if(avgWater<g.eau*0.8)tips.push('💧 Hydratation insuffisante. Buvez un verre d\'eau à chaque repas.');
+    if(seances<3)tips.push('🏋️ Seulement '+seances+' séance(s) cette semaine. Visez au moins 3 !');
+    if(avgSleep>0&&avgSleep<7)tips.push('😴 Sommeil moyen de '+avgSleep+'h. Visez 7-8h pour mieux récupérer.');
+    if(tips.length){html+='<div style="font-weight:700;margin-bottom:10px">💡 Recommandations</div>';tips.forEach(function(tip){html+='<div class="tip-box mb-8">'+tip+'</div>';});}
+    else{html+='<div class="tip-box">✅ Excellente semaine ! Continuez comme ça.</div>';}
+    content.innerHTML=html;
+  }
+}
     html+='</div>';
     var tips=[];
     if(calDiff<-200)tips.push('⚠️ Vous mangez en moyenne '+Math.abs(Math.round(calDiff))+' kcal de moins que votre objectif. Augmentez légèrement les portions.');
