@@ -1288,7 +1288,13 @@ function csAddEx(id){
   document.getElementById('modal-content').innerHTML=renderCsExercisesStep();
 }
 function saveMusculationSession(){
-  var session={id:'s'+Date.now(),name:window._csName,type:'musculation',cat:window._csCat,restTime:window._csRest,exercises:newExercises.map(function(e){return Object.assign({},e,{series:e.series.map(function(s){return{reps:s.reps,weight:s.weight};});});})};
+  var exs=[];
+for(var i=0;i<newExercises.length;i++){
+  var e=newExercises[i];var s2=[];
+  for(var j=0;j<e.series.length;j++){s2.push({reps:e.series[j].reps,weight:e.series[j].weight});}
+  exs.push({id:e.id,name:e.name,emoji:e.emoji,muscle:e.muscle,series:s2});
+}
+var session={id:'s'+Date.now(),name:window._csName,type:'musculation',cat:window._csCat,restTime:window._csRest,exercises:exs};
   DB.sessions.push(session);dbSave();newExercises=[];closeModal();renderProgSeances();notif('Séance créée !');
 }
 function saveCourseSession(){
