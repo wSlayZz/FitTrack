@@ -238,11 +238,11 @@ select option{background:var(--card)}
   <div id="scanner-status">Pointez la caméra vers un code-barres</div>
 </div>
 <div id="ai-panel" class="hidden">
-  <div class="flex items-center justify-between mb-16" style="position:sticky;top:0;background:var(--bg);padding:1rem 0 .75rem;z-index:10;margin-bottom:0">
+  <div id="ai-panel-header" style="position:fixed;top:calc(var(--safe-top)+56px);left:0;right:0;background:var(--bg);padding:.75rem 1rem;border-bottom:1px solid var(--border);z-index:10;display:flex;align-items:center;justify-content:space-between">
     <div><div style="font-size:1.1rem;font-weight:700" id="ai-panel-title"></div><div class="text-muted text-xs" id="ai-panel-sub"></div></div>
     <button class="btn btn-secondary btn-sm" onclick="closeAI()">✕ Fermer</button>
   </div>
-  <div id="ai-content"></div>
+  <div id="ai-content" style="padding-top:64px"></div>
 </div>
 
 <!-- AUTH -->
@@ -1597,18 +1597,19 @@ function openAI(mode){
       return{f:f,score:score};
     }).sort(function(a,b){return b.score-a.score;});
     var mealsEaten={};foods.forEach(function(f){mealsEaten[f.meal]=true;});
-    var allMeals=[{key:'petit-dejeuner',name:'🌅 Petit-déjeuner',calPct:.25},{key:'dejeuner',name:'☀️ Déjeuner',calPct:.40},{key:'diner',name:'🌙 Dîner',calPct:.35}];
+    var allMeals=[{key:'petit-dejeuner',name:'🌅 Petit-déjeuner',calPct:.25,noCat:['viande']},{key:'dejeuner',name:'☀️ Déjeuner',calPct:.40,noCat:[]},{key:'diner',name:'🌙 Dîner',calPct:.35,noCat:[]}];
     var remaining=allMeals.filter(function(m){return !mealsEaten[m.key];});if(!remaining.length)remaining=allMeals;
     var suggestions=[];
     remaining.slice(0,3).forEach(function(meal,si){
       var targetCal=Math.min(remCal,Math.round(g.cal*meal.calPct));if(targetCal<100)return;
       var items=[],usedCal=0;
       var seed=new Date().getHours()*10+si;
-      var proteins=scored.filter(function(x){return x.f.cat==='viande';});
+      var proteins=scored.filter(function(x){return x.f.cat==='viande'&&meal.noCat.indexOf(x.f.cat)<0;});
       var carbs=scored.filter(function(x){return x.f.cat==='feculents';});
       var vegs=scored.filter(function(x){return x.f.cat==='legumes';});
-      var autres=scored.filter(function(x){return x.f.cat==='autre'||x.f.cat==='produits-laitiers'||x.f.cat==='fruits';});
-      var protein=proteins.length?proteins[seed%proteins.length]:null;
+      var autres=scored.filter(function(x){return(x.f.cat==='autre'||x.f.cat==='produits-laitiers'||x.f.cat==='fruits')&&meal.noCat.indexOf(x.f.cat)<0;});
+      var proteinSource=proteins.length?proteins:autres;
+      var protein=proteinSource.length?proteinSource[seed%proteinSource.length]:null;
       if(protein){var qp=Math.round(Math.min(200,(targetCal*0.4/protein.f.cal*100))/50)*50||100;var rp=qp/100;items.push({name:protein.f.name,emoji:protein.f.emoji,qty:qp,unit:protein.f.unit,cal:Math.round(protein.f.cal*rp),prot:Math.round(protein.f.prot*rp),gluc:Math.round(protein.f.gluc*rp),lip:Math.round(protein.f.lip*rp),mealKey:meal.key});usedCal+=protein.f.cal*rp;}
       if(obj!=='perte'||remGluc>50){var carb=carbs.length?carbs[(seed+1)%carbs.length]:null;if(carb&&usedCal<targetCal){var qc=Math.round(Math.min(150,((targetCal-usedCal)*0.5/carb.f.cal*100))/50)*50||100;var rc=qc/100;items.push({name:carb.f.name,emoji:carb.f.emoji,qty:qc,unit:carb.f.unit,cal:Math.round(carb.f.cal*rc),prot:Math.round(carb.f.prot*rc),gluc:Math.round(carb.f.gluc*rc),lip:Math.round(carb.f.lip*rc),mealKey:meal.key});usedCal+=carb.f.cal*rc;}}
       var veg=vegs.length?vegs[(seed+2)%vegs.length]:(autres.length?autres[(seed+2)%autres.length]:null);
@@ -1634,46 +1635,59 @@ function openAI(mode){
     var seances=(DB.workoutHistory||[]).filter(function(w){return days7.indexOf(w.date)>=0;}).length;
     var sleepArr=DB.sleep.filter(function(s){return days7.indexOf(s.date)>=0;});
     var avgSleep=sleepArr.length?Math.round(sleepArr.reduce(function(s,n){return s+calcSleepDurNum(n.bed,n.wake);},0)/sleepArr.length*10)/10:0;
-    var calDiff=avgCal-g.cal,protDiff=avgProt-g.prot;
-    var html='<div class="card mb-12"><div style="font-weight:700;margin-bottom:12px">📊 Moyennes sur 7 jours</div>';
+    var calDiff=avgCal-g.cal;
+    var protDiff=avgProt-g.prot;
+    var scoreNutri=Math.min(100,Math.round(avgCal/g.cal*100));
+    var scoreEau=Math.min(100,Math.round(avgWater/g.eau*100));
+    var scoreSommeil=avgSleep?Math.min(100,Math.round(avgSleep/8*100)):0;
+    var scoreSeances=Math.min(100,Math.round(seances/4*100));
+    var scoreProt=Math.min(100,Math.round(avgProt/g.prot*100));
+    var global=Math.round((scoreNutri+scoreEau+scoreSommeil+scoreSeances+scoreProt)/5);
+    var globalColor=global>=75?'var(--green)':global>=50?'var(--orange)':'var(--red)';
+    var globalEmoji=global>=75?'🏆':global>=50?'💪':'📈';
+    var html='<div class="card" style="text-align:center;margin-bottom:12px">'
+      +'<div style="font-size:3rem;margin-bottom:6px">'+globalEmoji+'</div>'
+      +'<div style="font-size:2.5rem;font-weight:800;color:'+globalColor+'">'+global+'<span style="font-size:1rem;color:var(--muted)">/100</span></div>'
+      +'<div class="text-muted text-sm mb-10">Score de la semaine</div>'
+      +'<div class="prog-bar" style="height:10px"><div class="prog-fill" style="width:'+global+'%;background:'+globalColor+'"></div></div>'
+      +'</div>';
+    html+='<div class="card mb-12">';
     var metrics=[
-      {label:'Calories',val:avgCal,goal:g.cal,unit:'kcal',color:'var(--orange)'},
-      {label:'Protéines',val:avgProt,goal:g.prot,unit:'g',color:'var(--blue)'},
-      {label:'Hydratation',val:avgWater,goal:g.eau,unit:'ml',color:'var(--blue)'},
-      {label:'Séances',val:seances,goal:4,unit:'',color:'var(--purple)'},
-      {label:'Sommeil',val:avgSleep,goal:8,unit:'h',color:'var(--purple)'}
+      {label:'🍽️ Calories',val:avgCal,goal:g.cal,unit:'kcal',score:scoreNutri,detail:calDiff>0?'+'+Math.round(calDiff)+' kcal/j':calDiff<0?Math.round(calDiff)+' kcal/j':'Parfait'},
+      {label:'💪 Protéines',val:avgProt,goal:g.prot,unit:'g',score:scoreProt,detail:protDiff>0?'+'+Math.round(protDiff)+'g/j':protDiff<0?Math.round(protDiff)+'g/j':'Objectif atteint'},
+      {label:'💧 Hydratation',val:avgWater,goal:g.eau,unit:'ml',score:scoreEau,detail:avgWater>=g.eau?'Objectif atteint':(g.eau-avgWater)+'ml manquants/j'},
+      {label:'🏋️ Entraînements',val:seances,goal:4,unit:'',score:scoreSeances,detail:seances+' séance'+(seances>1?'s':'')+' sur 4 recommandées'},
+      {label:'😴 Sommeil',val:avgSleep||0,goal:8,unit:'h',score:scoreSommeil,detail:avgSleep?avgSleep+'h en moyenne':'Aucune donnée'}
     ];
     metrics.forEach(function(m){
-      var pct=Math.min(100,Math.round(m.val/m.goal*100));var ok=pct>=80&&pct<=120;
-      html+='<div style="margin-bottom:10px"><div class="flex justify-between text-sm mb-4"><span>'+m.label+'</span><span style="font-weight:700;color:'+(ok?'var(--green)':'var(--orange)')+'">'+m.val+m.unit+' / '+m.goal+m.unit+'</span></div><div class="prog-bar"><div class="prog-fill" style="width:'+pct+'%;background:'+(ok?'var(--green)':'var(--orange)')+'"></div></div></div>';
+      var c=m.score>=80?'var(--green)':m.score>=50?'var(--orange)':'var(--red)';
+      html+='<div style="margin-bottom:14px">'
+        +'<div class="flex justify-between items-center mb-4">'
+        +'<span style="font-size:.9rem;font-weight:600">'+m.label+'</span>'
+        +'<div style="text-align:right"><span style="font-weight:800;color:'+c+'">'+m.val+m.unit+'</span><span class="text-muted text-xs"> / '+m.goal+m.unit+'</span></div>'
+        +'</div>'
+        +'<div class="prog-bar" style="height:8px"><div class="prog-fill" style="width:'+m.score+'%;background:'+c+'"></div></div>'
+        +'<div class="text-xs text-muted mt-4">'+m.detail+'</div>'
+        +'</div>';
     });
     html+='</div>';
     var tips=[];
-    var calDiff=avgCal-g.cal,protDiff=avgProt-g.prot;
-    if(calDiff<-200)tips.push('⚠️ Vous mangez en moyenne '+Math.abs(Math.round(calDiff))+' kcal de moins que votre objectif.');
-    else if(calDiff>200)tips.push('📈 Vous dépassez votre objectif calorique de '+Math.round(calDiff)+' kcal en moyenne.');
-    if(protDiff<-20)tips.push('💪 Apports en protéines insuffisants ('+Math.abs(Math.round(protDiff))+'g de moins).');
-    if(avgWater<g.eau*0.8)tips.push('💧 Hydratation insuffisante. Buvez un verre d\'eau à chaque repas.');
-    if(seances<3)tips.push('🏋️ Seulement '+seances+' séance(s) cette semaine. Visez au moins 3 !');
-    if(avgSleep>0&&avgSleep<7)tips.push('😴 Sommeil moyen de '+avgSleep+'h. Visez 7-8h pour mieux récupérer.');
-    if(tips.length){html+='<div style="font-weight:700;margin-bottom:10px">💡 Recommandations</div>';tips.forEach(function(tip){html+='<div class="tip-box mb-8">'+tip+'</div>';});}
-    else{html+='<div class="tip-box">✅ Excellente semaine ! Continuez comme ça.</div>';}
-    content.innerHTML=html;
-
-    html+='</div>';
-    var tips=[];
-    if(calDiff<-200)tips.push('⚠️ Vous mangez en moyenne '+Math.abs(Math.round(calDiff))+' kcal de moins que votre objectif. Augmentez légèrement les portions.');
-    else if(calDiff>200)tips.push('📈 Vous dépassez votre objectif calorique de '+Math.round(calDiff)+' kcal en moyenne.');
-    if(protDiff<-20)tips.push('💪 Vos apports en protéines sont insuffisants ('+Math.abs(Math.round(protDiff))+'g de moins). Ajoutez une source de protéines à chaque repas.');
-    if(avgWater<g.eau*0.8)tips.push('💧 Hydratation insuffisante. Essayez de boire un verre d\'eau à chaque repas.');
-    if(seances<3)tips.push('🏋️ Seulement '+seances+' séance(s) cette semaine. Essayez d\'en faire au moins 3 !');
-    if(avgSleep>0&&avgSleep<7)tips.push('😴 Votre sommeil moyen est de '+avgSleep+'h. Visez 7-8h pour une meilleure récupération.');
-    if(tips.length){html+='<div style="font-weight:700;margin-bottom:10px">💡 Recommandations</div>';tips.forEach(function(tip){html+='<div class="tip-box mb-8">'+tip+'</div>';});}
-    else{html+='<div class="tip-box">✅ Excellente semaine ! Continuez comme ça.</div>';}
+    if(calDiff<-200)tips.push({icon:'⚠️',txt:'Déficit calorique important ('+Math.abs(Math.round(calDiff))+' kcal/j). Augmentez légèrement les portions.'});
+    else if(calDiff>300)tips.push({icon:'📉',txt:'Surplus de '+Math.round(calDiff)+' kcal/j. Réduisez légèrement si votre objectif est la perte de poids.'});
+    if(protDiff<-20)tips.push({icon:'🥩',txt:'Protéines insuffisantes ('+Math.abs(Math.round(protDiff))+'g/j de manque). Ajoutez une source protéinée à chaque repas.'});
+    if(avgWater<g.eau*0.8)tips.push({icon:'💧',txt:'Hydratation à '+scoreEau+'% de l\'objectif. Posez un verre d\'eau sur votre bureau comme rappel visuel.'});
+    if(seances<3)tips.push({icon:'🏋️',txt:'Seulement '+seances+' séance(s) cette semaine. Planifiez vos entraînements dans le calendrier.'});
+    if(avgSleep>0&&avgSleep<7)tips.push({icon:'😴',txt:'Sommeil moyen de '+avgSleep+'h. Visez 7-8h : essentiel pour la récupération musculaire.'});
+    if(avgSleep===0)tips.push({icon:'😴',txt:'Aucune nuit enregistrée. Pensez à tracker votre sommeil pour un suivi complet.'});
+    if(tips.length){
+      html+='<div style="font-weight:700;margin-bottom:10px;font-size:.95rem">💡 Recommandations</div>';
+      tips.forEach(function(tip){html+='<div style="display:flex;gap:10px;background:var(--el);border-radius:12px;padding:12px;margin-bottom:8px"><span style="font-size:1.3rem;flex-shrink:0">'+tip.icon+'</span><div class="text-sm" style="line-height:1.5;color:var(--text2)">'+tip.txt+'</div></div>';});
+    }else{
+      html+='<div style="background:var(--green)15;border:1px solid var(--green)33;border-radius:14px;padding:1rem;text-align:center"><div style="font-size:2rem;margin-bottom:6px">🌟</div><div style="font-weight:700;color:var(--green)">Excellente semaine !</div><div class="text-sm text-muted mt-4">Tous vos objectifs sont dans les clous. Continuez ainsi !</div></div>';
+    }
     content.innerHTML=html;
   }
 }
-
 // ── SCANNER ──
 function startScanner(){if(_scannerActive)return;document.getElementById('scanner-overlay').classList.remove('hidden');document.getElementById('scanner-status').textContent='Pointez la caméra vers un code-barres';_scannerActive=true;html5QrCode=new Html5Qrcode('reader');html5QrCode.start({facingMode:'environment'},{fps:10,qrbox:{width:220,height:220}},function(code){if(!_scannerActive)return;_scannerActive=false;html5QrCode.stop().then(function(){html5QrCode=null;lookupBarcode(code);}).catch(function(){html5QrCode=null;lookupBarcode(code);});},function(){}).catch(function(e){_scannerActive=false;document.getElementById('scanner-status').textContent='Erreur : '+e;});}
 function stopScanner(){_scannerActive=false;if(html5QrCode){html5QrCode.stop().catch(function(){}).finally(function(){html5QrCode=null;document.getElementById('scanner-overlay').classList.add('hidden');document.getElementById('reader').innerHTML='';}); }else{document.getElementById('scanner-overlay').classList.add('hidden');document.getElementById('reader').innerHTML='';}}
