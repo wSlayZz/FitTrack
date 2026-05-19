@@ -103,7 +103,7 @@ select option{background:var(--card)}
 .auth-ok{background:var(--green)22;border:1px solid var(--green)44;color:var(--green);padding:10px 14px;border-radius:10px;font-size:.9rem;margin-bottom:12px;text-align:center}
 .score-bar{height:10px;background:var(--el);border-radius:5px;overflow:hidden;margin-top:6px}
 .score-fill{height:100%;border-radius:5px;transition:width .5s}
-#ai-panel{position:fixed;inset:0;background:var(--bg);z-index:350;overflow-y:auto;padding:calc(var(--safe-top) + 56px + 1rem) 1rem calc(var(--safe-bot) + 2rem);}
+#ai-panel{position:fixed;inset:0;background:var(--bg);z-index:350;overflow-y:auto;padding:calc(var(--safe-top) + 56px + 52px) 1rem calc(var(--safe-bot) + 2rem)}
 #scanner-overlay{position:fixed;inset:0;background:#000;z-index:800;display:flex;flex-direction:column}
 #scanner-header{display:flex;align-items:center;justify-content:space-between;padding:calc(var(--safe-top)+1rem) 1rem 1rem;background:#000}
 #reader{flex:1;width:100%}
@@ -237,12 +237,12 @@ select option{background:var(--card)}
   <div style="position:relative;flex:1"><div id="reader"></div><div class="scan-frame"></div></div>
   <div id="scanner-status">Pointez la caméra vers un code-barres</div>
 </div>
+<div id="ai-panel-header" class="hidden" style="position:fixed;top:calc(var(--safe-top)+56px);left:0;right:0;background:var(--bg);padding:.75rem 1rem;border-bottom:1px solid var(--border);z-index:360;display:flex;align-items:center;justify-content:space-between">
+  <div><div style="font-size:1.1rem;font-weight:700" id="ai-panel-title"></div><div class="text-muted text-xs" id="ai-panel-sub"></div></div>
+  <button class="btn btn-secondary btn-sm" onclick="closeAI()">✕ Fermer</button>
+</div>
 <div id="ai-panel" class="hidden">
-  <div id="ai-panel-header" style="position:fixed;top:calc(var(--safe-top)+56px);left:0;right:0;background:var(--bg);padding:.75rem 1rem;border-bottom:1px solid var(--border);z-index:360;display:flex;align-items:center;justify-content:space-between">
-    <div><div style="font-size:1.1rem;font-weight:700" id="ai-panel-title"></div><div class="text-muted text-xs" id="ai-panel-sub"></div></div>
-    <button class="btn btn-secondary btn-sm" onclick="closeAI()">✕ Fermer</button>
-  </div>
-  <div id="ai-content" style="padding-top:56px"></div>
+  <div id="ai-content"></div>
 </div>
 
 <!-- AUTH -->
@@ -1567,8 +1567,10 @@ function genCoursesFromPlan(){
 }
 
 // ── SUGGESTIONS & ANALYSE ──
-function closeAI(){document.getElementById('ai-panel').classList.add('hidden');}
-
+function closeAI(){
+  document.getElementById('ai-panel').classList.add('hidden');
+  document.getElementById('ai-panel-header').classList.add('hidden');
+}
 // ── FONCTION addSuggestionToJournal (au niveau global) ──
 function addSuggestionToJournal(items,mealKey){
   var today=todayStr();if(!DB.journal[today])DB.journal[today]=[];
@@ -1579,6 +1581,8 @@ function addSuggestionToJournal(items,mealKey){
 }
 
 function openAI(mode){
+  document.getElementById('ai-panel').classList.remove('hidden');
+  document.getElementById('ai-panel-header').classList.remove('hidden');
   document.getElementById('ai-panel').classList.remove('hidden');
   var content=document.getElementById('ai-content');
   var p=DB.profile||{},g=DB.goals||{};
@@ -1724,8 +1728,32 @@ function renderJournal(){var today=todayStr(),foods=DB.journal[today]||[];var me
 function removeFoodEntry(id){var today=todayStr();DB.journal[today]=(DB.journal[today]||[]).filter(function(f){return f.id!==id;});dbSave();renderJournal();renderDashboard();}
 function renderAliments(){var search=(document.getElementById('aliments-search')||{}).value||'';var list=DB.foods.filter(function(f){return(foodFilter==='all'||f.cat===foodFilter)&&(!search||f.name.toLowerCase().indexOf(search.toLowerCase())>=0);});document.getElementById('aliments-count').textContent=list.length+' aliment(s)';document.getElementById('aliments-list').innerHTML=list.map(function(f){return '<div class="food-item" style="cursor:default"><span class="food-emoji">'+f.emoji+'</span><div style="flex:1"><div class="text-sm">'+f.name+'</div><div class="text-xs text-muted">'+f.cal+'kcal P:'+f.prot+'g G:'+f.gluc+'g L:'+f.lip+'g</div></div><button class="btn-icon" onclick="editFood(\''+f.id+'\')">✏️</button><button class="btn-icon" onclick="deleteFood(\''+f.id+'\')">🗑</button></div>';}).join('');}
 function filterFoods(cat,el){foodFilter=cat;document.querySelectorAll('#nutri-tab-aliments .tag').forEach(function(t){t.classList.remove('active');});el.classList.add('active');renderAliments();}
-function openFoodModal(editId){var f=editId?DB.foods.find(function(x){return x.id===editId;}):{id:null,name:'',emoji:'🍽',cat:'autre',cal:0,prot:0,gluc:0,lip:0,unit:'g'};document.getElementById('modal-content').innerHTML='<h2>'+(editId?'Modifier':'Ajouter')+' un aliment</h2><input type="hidden" id="ef-id" value="'+(f.id||'')+'"><div class="form-row"><div class="form-group"><label>Emoji</label><input type="text" id="ef-emoji" value="'+f.emoji+'" class="modal-input" style="width:70px"></div><div class="form-group"><label>Nom</label><input type="text" id="ef-name" value="'+f.name+'" class="modal-input"></div></div><div class="form-row"><div class="form-group"><label>Catégorie</label><select id="ef-cat" class="modal-select"><option value="viande"'+(f.cat==='viande'?' selected':'')+'>Viande</option><option value="feculents"'+(f.cat==='feculents'?' selected':'')+'>Féculents</option><option value="produits-laitiers"'+(f.cat==='produits-laitiers'?' selected':'')+'>Laitiers</option><option value="legumes"'+(f.cat==='legumes'?' selected':'')+'>Légumes</option><option value="fruits"'+(f.cat==='fruits'?' selected':'')+'>Fruits</option><option value="autre"'+(f.cat==='autre'?' selected':'')+'>Autre</option></select></div><div class="form-group"><label>Unité</label><select id="ef-unit" class="modal-select"><option value="g"'+(f.unit==='g'?' selected':'')+'>g</option><option value="ml"'+(f.unit==='ml'?' selected':'')+'>ml</option></select></div></div><div class="form-row"><div class="form-group"><label>Calories</label><input type="number" id="ef-cal" value="'+f.cal+'" class="modal-input" inputmode="decimal"></div><div class="form-group"><label>Protéines</label><input type="number" id="ef-prot" value="'+f.prot+'" class="modal-input" inputmode="decimal"></div></div><div class="form-row"><div class="form-group"><label>Glucides</label><input type="number" id="ef-gluc" value="'+f.gluc+'" class="modal-input" inputmode="decimal"></div><div class="form-group"><label>Lipides</label><input type="number" id="ef-lip" value="'+f.lip+'" class="modal-input" inputmode="decimal"></div></div><div class="flex gap-8 mt-12"><button class="btn btn-secondary" style="flex:.4" onclick="closeModal()">Annuler</button><button class="btn btn-primary" style="flex:1" onclick="saveFood()">Sauvegarder</button></div>';showModal();}
-function saveFood(){var id=document.getElementById('ef-id').value||('f'+Date.now());var f={id:id,name:document.getElementById('ef-name').value,emoji:document.getElementById('ef-emoji').value,cat:document.getElementById('ef-cat').value,cal:parseFloat(document.getElementById('ef-cal').value)||0,prot:parseFloat(document.getElementById('ef-prot').value)||0,gluc:parseFloat(document.getElementById('ef-gluc').value)||0,lip:parseFloat(document.getElementById('ef-lip').value)||0,unit:document.getElementById('ef-unit').value};var idx=DB.foods.findIndex(function(x){return x.id===id;});if(idx>=0)DB.foods[idx]=f;else DB.foods.push(f);dbSave();closeModal();renderAliments();notif('Aliment sauvegardé');}
+function openFoodModal(editId){
+  var f=editId?DB.foods.find(function(x){return x.id===editId;}):{id:null,name:'',emoji:'🍽',cat:'autre',cal:0,prot:0,gluc:0,lip:0,unit:'g',tags:[]};
+  var hasPetitDej=f.tags&&f.tags.indexOf('petit-dej')>=0;
+  document.getElementById('modal-content').innerHTML='<h2>'+(editId?'Modifier':'Ajouter')+' un aliment</h2>'
+    +'<input type="hidden" id="ef-id" value="'+(f.id||'')+'">'
+    +'<div class="form-row"><div class="form-group"><label>Emoji</label><input type="text" id="ef-emoji" value="'+f.emoji+'" class="modal-input" style="width:70px"></div><div class="form-group"><label>Nom</label><input type="text" id="ef-name" value="'+f.name+'" class="modal-input"></div></div>'
+    +'<div class="form-row"><div class="form-group"><label>Catégorie</label><select id="ef-cat" class="modal-select"><option value="viande"'+(f.cat==='viande'?' selected':'')+'>Viande</option><option value="feculents"'+(f.cat==='feculents'?' selected':'')+'>Féculents</option><option value="produits-laitiers"'+(f.cat==='produits-laitiers'?' selected':'')+'>Laitiers</option><option value="legumes"'+(f.cat==='legumes'?' selected':'')+'>Légumes</option><option value="fruits"'+(f.cat==='fruits'?' selected':'')+'>Fruits</option><option value="autre"'+(f.cat==='autre'?' selected':'')+'>Autre</option></select></div><div class="form-group"><label>Unité</label><select id="ef-unit" class="modal-select"><option value="g"'+(f.unit==='g'?' selected':'')+'>g</option><option value="ml"'+(f.unit==='ml'?' selected':'')+'>ml</option></select></div></div>'
+    +'<div class="form-row"><div class="form-group"><label>Calories</label><input type="number" id="ef-cal" value="'+f.cal+'" class="modal-input" inputmode="decimal"></div><div class="form-group"><label>Protéines</label><input type="number" id="ef-prot" value="'+f.prot+'" class="modal-input" inputmode="decimal"></div></div>'
+    +'<div class="form-row"><div class="form-group"><label>Glucides</label><input type="number" id="ef-gluc" value="'+f.gluc+'" class="modal-input" inputmode="decimal"></div><div class="form-group"><label>Lipides</label><input type="number" id="ef-lip" value="'+f.lip+'" class="modal-input" inputmode="decimal"></div></div>'
+    +'<div class="form-group" style="margin-top:4px"><label>Tags</label>'
+    +'<label style="display:flex;align-items:center;gap:10px;background:var(--el);border-radius:10px;padding:10px 12px;cursor:pointer">'
+    +'<input type="checkbox" id="ef-tag-petitdej"'+(hasPetitDej?' checked':'')+' style="width:18px;height:18px;accent-color:var(--purple)">'
+    +'<span style="font-size:.9rem">🌅 Adapté petit-déjeuner</span>'
+    +'</label></div>'
+    +'<div class="flex gap-8 mt-12"><button class="btn btn-secondary" style="flex:.4" onclick="closeModal()">Annuler</button><button class="btn btn-primary" style="flex:1" onclick="saveFood()">Sauvegarder</button></div>';
+  showModal();
+}
+function saveFood(){
+  var id=document.getElementById('ef-id').value||('f'+Date.now());
+  var tags=[];
+  if(document.getElementById('ef-tag-petitdej')&&document.getElementById('ef-tag-petitdej').checked)tags.push('petit-dej');
+  var f={id:id,name:document.getElementById('ef-name').value,emoji:document.getElementById('ef-emoji').value,cat:document.getElementById('ef-cat').value,cal:parseFloat(document.getElementById('ef-cal').value)||0,prot:parseFloat(document.getElementById('ef-prot').value)||0,gluc:parseFloat(document.getElementById('ef-gluc').value)||0,lip:parseFloat(document.getElementById('ef-lip').value)||0,unit:document.getElementById('ef-unit').value,tags:tags};
+  var idx=DB.foods.findIndex(function(x){return x.id===id;});
+  if(idx>=0)DB.foods[idx]=f;else DB.foods.push(f);
+  dbSave();closeModal();renderAliments();notif('Aliment sauvegardé');
+}
 function editFood(id){openFoodModal(id);}
 function deleteFood(id){if(confirm('Supprimer ?')){DB.foods=DB.foods.filter(function(f){return f.id!==id;});dbSave();renderAliments();}}
 function renderRecettes(){document.getElementById('recettes-count').textContent=DB.recipes.length+' recette(s)';document.getElementById('recettes-list').innerHTML=DB.recipes.map(function(r){return '<div class="card"><div class="flex justify-between items-center mb-8"><div><span style="font-size:1.3rem">'+r.emoji+'</span> <strong>'+r.name+'</strong></div><div class="flex gap-8"><button class="btn-icon" onclick="openRecetteModal(\''+r.id+'\')">✏️</button><button class="btn btn-primary btn-sm" onclick="addRecipeToJournal(\''+r.id+'\')">+Journal</button><button class="btn btn-secondary btn-sm" onclick="addRecipeToCourses(\''+r.id+'\')">+Courses</button><button class="btn-icon" onclick="deleteRecipe(\''+r.id+'\')">🗑</button></div></div><div class="text-xs text-muted">'+Math.round(r.totalCal||0)+' kcal · P:'+Math.round(r.totalProt||0)+'g · '+(r.prepTime||0)+'min</div></div>';}).join('')||'<div class="text-muted text-sm">Aucune recette.</div>';}
