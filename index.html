@@ -1613,19 +1613,21 @@ function openAI(mode){
       var items=[],usedCal=0;
       var seed=new Date().getHours()*10+si;
       var isPetitDej=meal.key==='petit-dejeuner';
+      var usedIds=[];
       var proteinPool=isPetitDej
         ? scored.filter(function(x){return x.f.tags&&x.f.tags.indexOf('petit-dej')>=0&&(x.f.cat==='produits-laitiers'||x.f.cat==='autre');})
         : scored.filter(function(x){return x.f.cat==='viande';});
-      var carbPool=isPetitDej
-        ? scored.filter(function(x){return x.f.tags&&x.f.tags.indexOf('petit-dej')>=0&&x.f.cat==='feculents';})
-        : scored.filter(function(x){return x.f.cat==='feculents';});
-      var fruitPool=isPetitDej
-        ? scored.filter(function(x){return x.f.cat==='fruits'||(x.f.tags&&x.f.tags.indexOf('petit-dej')>=0);})
-        : scored.filter(function(x){return x.f.cat==='legumes'||x.f.cat==='fruits'||x.f.cat==='autre'||x.f.cat==='produits-laitiers';});
       var protein=proteinPool.length?proteinPool[seed%proteinPool.length]:null;
-      var carbs=carbPool;
-      var vegs=isPetitDej?fruitPool:scored.filter(function(x){return x.f.cat==='legumes';});
-      var autres=fruitPool;
+      if(protein)usedIds.push(protein.f.id);
+      var carbs=isPetitDej
+        ? scored.filter(function(x){return x.f.tags&&x.f.tags.indexOf('petit-dej')>=0&&x.f.cat==='feculents'&&usedIds.indexOf(x.f.id)<0;})
+        : scored.filter(function(x){return x.f.cat==='feculents'&&usedIds.indexOf(x.f.id)<0;});
+      var vegs=isPetitDej
+        ? scored.filter(function(x){return x.f.cat==='fruits'&&usedIds.indexOf(x.f.id)<0;})
+        : scored.filter(function(x){return x.f.cat==='legumes'&&usedIds.indexOf(x.f.id)<0;});
+      var autres=isPetitDej
+        ? scored.filter(function(x){return x.f.tags&&x.f.tags.indexOf('petit-dej')>=0&&usedIds.indexOf(x.f.id)<0&&x.f.cat!=='feculents';})
+        : scored.filter(function(x){return(x.f.cat==='autre'||x.f.cat==='produits-laitiers'||x.f.cat==='fruits')&&usedIds.indexOf(x.f.id)<0;});
       if(protein){var qp=Math.round(Math.min(200,(targetCal*0.4/protein.f.cal*100))/50)*50||100;var rp=qp/100;items.push({name:protein.f.name,emoji:protein.f.emoji,qty:qp,unit:protein.f.unit,cal:Math.round(protein.f.cal*rp),prot:Math.round(protein.f.prot*rp),gluc:Math.round(protein.f.gluc*rp),lip:Math.round(protein.f.lip*rp),mealKey:meal.key});usedCal+=protein.f.cal*rp;}
       if(obj!=='perte'||remGluc>50){var carb=carbs.length?carbs[(seed+1)%carbs.length]:null;if(carb&&usedCal<targetCal){var qc=Math.round(Math.min(150,((targetCal-usedCal)*0.5/carb.f.cal*100))/50)*50||100;var rc=qc/100;items.push({name:carb.f.name,emoji:carb.f.emoji,qty:qc,unit:carb.f.unit,cal:Math.round(carb.f.cal*rc),prot:Math.round(carb.f.prot*rc),gluc:Math.round(carb.f.gluc*rc),lip:Math.round(carb.f.lip*rc),mealKey:meal.key});usedCal+=carb.f.cal*rc;}}
       var veg=vegs.length?vegs[(seed+2)%vegs.length]:(autres.length?autres[(seed+2)%autres.length]:null);
@@ -1717,6 +1719,17 @@ function removeWater(ml){var today=todayStr();DB.water[today]=Math.max(0,(DB.wat
 function addCustomWater(){var v=parseInt(document.getElementById('custom-water').value)||0;if(v>0){addWater(v);document.getElementById('custom-water').value='';}}
 
 // ── NUTRITION ──
+function togglePetitDejTag(){
+  var cb=document.getElementById('ef-tag-petitdej');
+  var btn=document.getElementById('ef-tag-petitdej-btn');
+  var check=document.getElementById('ef-tag-check');
+  var lbl=btn.querySelectorAll('span')[1];
+  cb.checked=!cb.checked;
+  btn.style.background=cb.checked?'var(--purple)22':'var(--el)';
+  btn.style.borderColor=cb.checked?'var(--purple)':'var(--border)';
+  lbl.style.color=cb.checked?'var(--purple)':'var(--muted)';
+  check.textContent=cb.checked?'✓':'';
+}
 function setMeal(meal,el){currentMeal=meal;document.querySelectorAll('#nutri-tab-journal .tag').forEach(function(t){t.classList.remove('active');});el.classList.add('active');}
 function searchFoods(q){if(!q){document.getElementById('food-results').innerHTML='';return;}var results=DB.foods.filter(function(f){return f.name.toLowerCase().indexOf(q.toLowerCase())>=0;}).slice(0,5);document.getElementById('food-results').innerHTML=results.map(function(f){return '<div class="food-item" onclick="selectFood(\''+f.id+'\')"><span class="food-emoji">'+f.emoji+'</span><div><div class="text-sm">'+f.name+'</div><div class="text-muted text-xs">'+f.cal+'kcal P:'+f.prot+'g G:'+f.gluc+'g L:'+f.lip+'g</div></div></div>';}).join('');}
 function selectFood(id){selectedFood=DB.foods.find(function(f){return f.id===id;});if(!selectedFood)return;document.getElementById('food-add-form').classList.remove('hidden');document.getElementById('food-add-name').textContent=selectedFood.emoji+' '+selectedFood.name;document.getElementById('food-add-macros').textContent=selectedFood.cal+' kcal / 100'+selectedFood.unit;document.getElementById('food-unit-disp').textContent=selectedFood.unit;document.getElementById('food-results').innerHTML='';document.getElementById('food-search').value='';}
@@ -1738,10 +1751,12 @@ function openFoodModal(editId){
     +'<div class="form-row"><div class="form-group"><label>Calories</label><input type="number" id="ef-cal" value="'+f.cal+'" class="modal-input" inputmode="decimal"></div><div class="form-group"><label>Protéines</label><input type="number" id="ef-prot" value="'+f.prot+'" class="modal-input" inputmode="decimal"></div></div>'
     +'<div class="form-row"><div class="form-group"><label>Glucides</label><input type="number" id="ef-gluc" value="'+f.gluc+'" class="modal-input" inputmode="decimal"></div><div class="form-group"><label>Lipides</label><input type="number" id="ef-lip" value="'+f.lip+'" class="modal-input" inputmode="decimal"></div></div>'
     +'<div class="form-group" style="margin-top:4px"><label>Tags</label>'
-    +'<label style="display:flex;align-items:center;gap:10px;background:var(--el);border-radius:10px;padding:10px 12px;cursor:pointer">'
-    +'<input type="checkbox" id="ef-tag-petitdej"'+(hasPetitDej?' checked':'')+' style="width:18px;height:18px;accent-color:var(--purple)">'
-    +'<span style="font-size:.9rem">🌅 Adapté petit-déjeuner</span>'
-    +'</label></div>'
+    +'<div id="ef-tag-petitdej-btn" onclick="togglePetitDejTag()" style="display:flex;align-items:center;gap:10px;background:'+(hasPetitDej?'var(--purple)22':'var(--el)')+';border:2px solid '+(hasPetitDej?'var(--purple)':'var(--border)')+';border-radius:10px;padding:10px 12px;cursor:pointer">'
+    +'<input type="checkbox" id="ef-tag-petitdej"'+(hasPetitDej?' checked':'')+' style="display:none">'
+    +'<span style="font-size:1.1rem">🌅</span>'
+    +'<span style="font-size:.9rem;font-weight:600;color:'+(hasPetitDej?'var(--purple)':'var(--muted)')+'">Adapté petit-déjeuner</span>'
+    +'<span id="ef-tag-check" style="margin-left:auto;color:var(--purple);font-weight:700">'+(hasPetitDej?'✓':'')+'</span>'
+    +'</div>'
     +'<div class="flex gap-8 mt-12"><button class="btn btn-secondary" style="flex:.4" onclick="closeModal()">Annuler</button><button class="btn btn-primary" style="flex:1" onclick="saveFood()">Sauvegarder</button></div>';
   showModal();
 }
