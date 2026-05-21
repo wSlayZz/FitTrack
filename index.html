@@ -827,7 +827,7 @@ function haptic(type){
   else if(type==='medium')navigator.vibrate(30);
   else if(type==='success')navigator.vibrate([20,50,20]);
   else if(type==='error')navigator.vibrate([50,30,50]);
-  
+}
 function initDefaults(){
   if(!DB.goals)DB.goals={cal:2000,eau:2000,prot:150,gluc:250,lip:70};
   if(!DB.foods)DB.foods=defaultFoods();
