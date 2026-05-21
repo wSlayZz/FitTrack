@@ -855,8 +855,9 @@ function todayStr(){return new Date().toISOString().split('T')[0];}
 function last7Days(){var r=[];for(var i=6;i>=0;i--){var d=new Date();d.setDate(d.getDate()-i);r.push(d.toISOString().split('T')[0]);}return r;}
 function daysSince(dateStr){if(!dateStr)return null;var d=new Date(dateStr),now=new Date();now.setHours(0,0,0,0);d.setHours(0,0,0,0);return Math.floor((now-d)/(1000*60*60*24));}
 function notif(msg,type){
-  haptic(type==='error'?'error':'light');
+  if(typeof haptic==='function')haptic(type==='error'?'error':'light');
   var el=document.getElementById('notif');
+  if(!el)return;
   el.textContent=msg;
   el.style.background=type==='error'?'var(--red)':type==='warning'?'var(--orange)':'var(--green)';
   el.classList.add('show');
