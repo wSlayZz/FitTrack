@@ -1536,34 +1536,123 @@ function renderMealPlanGrid(){
   dates.forEach(function(d,i){var isToday=d===today;html+='<div class="meal-plan-header'+(isToday?' today':'')+'" style="'+(isToday?'background:var(--purple)22;color:var(--purple)':'')+'">'+(DAY_NAMES[i]||'')+'<br><span style="font-weight:400;font-size:.6rem">'+d.slice(8)+'</span></div>';});
   MEAL_KEYS.forEach(function(meal){
     html+='<div class="meal-plan-label">'+MEAL_LABELS[meal]+'</div>';
-    dates.forEach(function(d){var key=d+'_'+meal,item=DB.mealPlan[key],isToday=d===today;html+='<div class="meal-plan-cell'+(item?' has-item':'')+(isToday?' today-col':'')+'" onclick="openMealPlanCell(\''+d+'\',\''+meal+'\')">';if(item){html+='<button class="mpc-del" onclick="event.stopPropagation();removeMealPlanItem(\''+key+'\')">✕</button><div class="mpc-content"><div class="mpc-emoji">'+item.emoji+'</div><div style="font-size:.58rem;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">'+item.name+'</div></div>';}else{html+='<div style="font-size:1rem;opacity:.2;text-align:center;padding-top:10px">+</div>';}html+='</div>';});
+    dates.forEach(function(d){
+      var key=d+'_'+meal,items=getMealPlanCell(key),isToday=d===today;
+      html+='<div class="meal-plan-cell'+(items.length?' has-item':'')+(isToday?' today-col':'')+'" onclick="openMealPlanCell(\''+d+'\',\''+meal+'\')">';
+      if(items.length===0){
+        html+='<div style="font-size:1rem;opacity:.2;text-align:center;padding-top:10px">+</div>';
+      }else if(items.length===1){
+        html+='<button class="mpc-del" onclick="event.stopPropagation();removeMealPlanItem(\''+key+'\',0)">✕</button>';
+        html+='<div class="mpc-content"><div class="mpc-emoji">'+items[0].emoji+'</div><div style="font-size:.58rem;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">'+items[0].name+'</div></div>';
+      }else{
+        html+='<div class="mpc-content"><div style="display:flex;align-items:center;gap:3px"><div class="mpc-emoji">'+items[0].emoji+'</div><div style="font-size:.6rem;font-weight:700;color:var(--purple);background:var(--purple)22;border-radius:8px;padding:1px 5px">+'+( items.length-1)+'</div></div><div style="font-size:.58rem;overflow:hidden;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical">'+items[0].name+'</div></div>';
+      }
+      html+='</div>';
+    });
   });
   html+='</div>';el.innerHTML=html;
 }
+
+// ── HELPERS ──
+// Normalise une cellule : toujours un tableau
+function getMealPlanCell(key){
+  var v=DB.mealPlan[key];
+  if(!v)return[];
+  if(!Array.isArray(v))return[v]; // migration ancien format
+  return v;
+} 
 function openMealPlanCell(date,meal){
-  var items=[];DB.recipes.forEach(function(r){items.push({type:'recipe',id:r.id,name:r.name,emoji:r.emoji,cal:Math.round(r.totalCal||0)});});DB.foods.forEach(function(f){items.push({type:'food',id:f.id,name:f.name,emoji:f.emoji,cal:f.cal,unit:f.unit,calPer:f.cal,protPer:f.prot,glucPer:f.gluc,lipPer:f.lip});});
-  var html='<h2>'+MEAL_LABELS[meal]+' — '+date+'</h2><input class="search-bar" id="mpc-search" placeholder="Rechercher..." oninput="filterMpcItems(this.value)" style="margin-bottom:12px"><div id="mpc-list">';
-  items.slice(0,20).forEach(function(item,i){html+='<div class="food-item" onclick="selectMealPlanItem(\''+date+'\',\''+meal+'\','+i+')"><span class="food-emoji">'+item.emoji+'</span><div><div class="text-sm">'+item.name+'</div><div class="text-xs text-muted">'+(item.type==='recipe'?'Recette · '+item.cal+' kcal':'Aliment · '+item.cal+' kcal/100'+(item.unit||'g'))+'</div></div></div>';});
-  html+='</div>';window._mpcItems=items;window._mpcDate=date;window._mpcMeal=meal;
-  document.getElementById('modal-content').innerHTML=html+'<button class="btn btn-secondary mt-8" onclick="closeModal()">Annuler</button>';showModal();
+  var key=date+'_'+meal;
+  var current=getMealPlanCell(key);
+  var html='<h2>'+MEAL_LABELS[meal]+' — '+date+'</h2>';
+
+  // Liste des éléments déjà ajoutés
+  if(current.length){
+    html+='<div style="margin-bottom:12px">';
+    current.forEach(function(item,idx){
+      html+='<div class="food-item" style="cursor:default"><span class="food-emoji">'+item.emoji+'</span><div style="flex:1"><div class="text-sm">'+item.name+'</div><div class="text-xs text-muted">'+item.cal+' kcal</div></div><button class="btn-icon" onclick="removeMealPlanItem(\''+key+'\','+idx+');openMealPlanCell(\''+date+'\',\''+meal+'\')">✕</button></div>';
+    });
+    html+='</div><div style="border-top:1px solid var(--border);padding-top:12px;margin-bottom:12px"><div style="font-size:.8rem;font-weight:700;color:var(--muted);margin-bottom:8px">Ajouter un élément</div></div>';
+  }
+
+  // Sélecteur
+  var allItems=[];
+  DB.recipes.forEach(function(r){allItems.push({type:'recipe',id:r.id,name:r.name,emoji:r.emoji,cal:Math.round(r.totalCal||0)});});
+  DB.foods.forEach(function(f){allItems.push({type:'food',id:f.id,name:f.name,emoji:f.emoji,cal:f.cal,unit:f.unit,calPer:f.cal,protPer:f.prot,glucPer:f.gluc,lipPer:f.lip});});
+
+  html+='<input class="search-bar" id="mpc-search" placeholder="Rechercher..." oninput="filterMpcItems(this.value)" style="margin-bottom:12px"><div id="mpc-list">';
+  allItems.slice(0,20).forEach(function(item,i){
+    html+='<div class="food-item" onclick="selectMealPlanItem(\''+date+'\',\''+meal+'\','+i+')"><span class="food-emoji">'+item.emoji+'</span><div><div class="text-sm">'+item.name+'</div><div class="text-xs text-muted">'+(item.type==='recipe'?'Recette · '+item.cal+' kcal':'Aliment · '+item.cal+' kcal/100'+(item.unit||'g'))+'</div></div></div>';
+  });
+  html+='</div>';
+  window._mpcItems=allItems;window._mpcDate=date;window._mpcMeal=meal;
+  document.getElementById('modal-content').innerHTML=html+'<button class="btn btn-secondary mt-8" onclick="closeModal()">Fermer</button>';
+  showModal();
 }
 function filterMpcItems(q){var items=window._mpcItems||[];var filtered=q?items.filter(function(item){return item.name.toLowerCase().indexOf(q.toLowerCase())>=0;}):items.slice(0,20);var html='';filtered.forEach(function(item){html+='<div class="food-item" onclick="selectMealPlanItem(\''+window._mpcDate+'\',\''+window._mpcMeal+'\','+items.indexOf(item)+')"><span class="food-emoji">'+item.emoji+'</span><div><div class="text-sm">'+item.name+'</div><div class="text-xs text-muted">'+(item.type==='recipe'?'Recette · '+item.cal+' kcal':'Aliment · '+item.cal+' kcal/100'+(item.unit||'g'))+'</div></div></div>';});document.getElementById('mpc-list').innerHTML=html||'<div class="text-muted text-sm">Aucun résultat</div>';}
 function selectMealPlanItem(date,meal,idx){
-  var item=window._mpcItems[idx];if(!item)return;var key=date+'_'+meal;
-  if(item.type==='recipe'){DB.mealPlan[key]={type:'recipe',id:item.id,name:item.name,emoji:item.emoji,cal:item.cal};closeModal();dbSave();renderMealPlanGrid();}
-  else{document.getElementById('modal-content').innerHTML='<h2>'+item.emoji+' '+item.name+'</h2><div class="text-xs text-muted mb-12">'+item.cal+' kcal / 100'+(item.unit||'g')+'</div><div class="form-group"><label>Quantité ('+( item.unit||'g')+')</label><input type="number" id="mpc-qty" value="100" class="modal-input" inputmode="decimal"></div><div class="flex gap-8 mt-12"><button class="btn btn-secondary" style="flex:.4" onclick="closeModal()">Annuler</button><button class="btn btn-primary" style="flex:1" onclick="confirmMpcFood(\''+date+'\',\''+meal+'\','+idx+')">Confirmer</button></div>';}
+  var item=window._mpcItems[idx];if(!item)return;
+  var key=date+'_'+meal;
+  if(item.type==='recipe'){
+    var current=getMealPlanCell(key);
+    current.push({type:'recipe',id:item.id,name:item.name,emoji:item.emoji,cal:item.cal});
+    DB.mealPlan[key]=current;
+    closeModal();dbSave();renderMealPlanGrid();
+  }else{
+    document.getElementById('modal-content').innerHTML='<h2>'+item.emoji+' '+item.name+'</h2><div class="text-xs text-muted mb-12">'+item.cal+' kcal / 100'+(item.unit||'g')+'</div><div class="form-group"><label>Quantité ('+( item.unit||'g')+')</label><input type="number" id="mpc-qty" value="100" class="modal-input" inputmode="decimal"></div><div class="flex gap-8 mt-12"><button class="btn btn-secondary" style="flex:.4" onclick="openMealPlanCell(\''+date+'\',\''+meal+'\')">← Retour</button><button class="btn btn-primary" style="flex:1" onclick="confirmMpcFood(\''+date+'\',\''+meal+'\','+idx+')">Confirmer</button></div>';
+  }
 }
-function confirmMpcFood(date,meal,idx){var item=window._mpcItems[idx];if(!item)return;var qty=parseFloat(document.getElementById('mpc-qty').value)||100,r=qty/100,key=date+'_'+meal;DB.mealPlan[key]={type:'food',id:item.id,name:item.name+'('+qty+(item.unit||'g')+')',emoji:item.emoji,cal:Math.round(item.calPer*r),qty:qty,unit:item.unit||'g',prot:Math.round((item.protPer||0)*r),gluc:Math.round((item.glucPer||0)*r),lip:Math.round((item.lipPer||0)*r),foodId:item.id,qtyVal:qty};closeModal();dbSave();renderMealPlanGrid();}
-function removeMealPlanItem(key){delete DB.mealPlan[key];dbSave();renderMealPlanGrid();}
-function clearMealPlan(){if(!confirm('Effacer tout le planning repas ?'))return;DB.mealPlan={};dbSave();renderMealPlanGrid();}
+function confirmMpcFood(date,meal,idx){
+  var item=window._mpcItems[idx];if(!item)return;
+  var qty=parseFloat(document.getElementById('mpc-qty').value)||100,r=qty/100,key=date+'_'+meal;
+  var current=getMealPlanCell(key);
+  current.push({type:'food',id:item.id,name:item.name+'('+qty+(item.unit||'g')+')',emoji:item.emoji,cal:Math.round(item.calPer*r),qty:qty,unit:item.unit||'g',prot:Math.round((item.protPer||0)*r),gluc:Math.round((item.glucPer||0)*r),lip:Math.round((item.lipPer||0)*r),foodId:item.id,qtyVal:qty});
+  DB.mealPlan[key]=current;
+  closeModal();dbSave();renderMealPlanGrid();
+}
+function removeMealPlanItem(key,idx){
+  var items=getMealPlanCell(key);
+  items.splice(idx,1);
+  if(items.length===0)delete DB.mealPlan[key];
+  else DB.mealPlan[key]=items;
+  dbSave();renderMealPlanGrid();
+}
+function clearMealPlan(){
+  if(!confirm('Effacer tout le planning repas ?'))return;
+  DB.mealPlan={};dbSave();renderMealPlanGrid();
+}
 function applyTodayFromPlan(){
   var today=todayStr();if(!DB.journal[today])DB.journal[today]=[];var added=0;
-  MEAL_KEYS.forEach(function(meal){var key=today+'_'+meal,item=DB.mealPlan[key];if(!item)return;if(item.type==='recipe'){var r=DB.recipes.find(function(x){return x.id===item.id;});if(r){DB.journal[today].push({id:Date.now()+Math.random()+'',name:r.name,emoji:r.emoji,meal:meal,qty:1,unit:'portion',cal:r.totalCal||0,prot:r.totalProt||0,gluc:r.totalGluc||0,lip:r.totalLip||0});added++;}}else{DB.journal[today].push({id:Date.now()+Math.random()+'',name:item.name,emoji:item.emoji,meal:meal,qty:item.qty||100,unit:item.unit||'g',cal:item.cal||0,prot:item.prot||0,gluc:item.gluc||0,lip:item.lip||0});added++;}});
+  MEAL_KEYS.forEach(function(meal){
+    var key=today+'_'+meal,items=getMealPlanCell(key);
+    items.forEach(function(item){
+      if(item.type==='recipe'){
+        var r=DB.recipes.find(function(x){return x.id===item.id;});
+        if(r){DB.journal[today].push({id:Date.now()+Math.random()+'',name:r.name,emoji:r.emoji,meal:meal,qty:1,unit:'portion',cal:r.totalCal||0,prot:r.totalProt||0,gluc:r.totalGluc||0,lip:r.totalLip||0});added++;}
+      }else{
+        DB.journal[today].push({id:Date.now()+Math.random()+'',name:item.name,emoji:item.emoji,meal:meal,qty:item.qty||100,unit:item.unit||'g',cal:item.cal||0,prot:item.prot||0,gluc:item.gluc||0,lip:item.lip||0});added++;
+      }
+    });
+  });
   dbSave();renderJournal();renderDashboard();notif(added>0?added+' repas ajoutés !':'Aucun repas planifié');if(added>0){nav('nutrition');switchTab('nutri','journal');}
 }
 function genCoursesFromPlan(){
   var today=todayStr(),dates=getWeekDates(),remaining=dates.filter(function(d){return d>=today;});if(!remaining.length){notif('Pas de jours restants');return;}
-  var aggregated={};remaining.forEach(function(d){MEAL_KEYS.forEach(function(meal){var key=d+'_'+meal,item=DB.mealPlan[key];if(!item)return;if(item.type==='recipe'){var r=DB.recipes.find(function(x){return x.id===item.id;});if(!r)return;(r.ingredients||[]).forEach(function(ing){var k=ing.name+'__'+(ing.unit||'g');if(!aggregated[k])aggregated[k]={name:ing.name,qty:0,unit:ing.unit||'g'};aggregated[k].qty+=parseFloat(ing.qty)||0;});}else if(item.foodId){var f=DB.foods.find(function(x){return x.id===item.foodId;});if(!f)return;var k2=f.name+'__'+f.unit;if(!aggregated[k2])aggregated[k2]={name:f.name,qty:0,unit:f.unit};aggregated[k2].qty+=item.qtyVal||item.qty||0;}});});
+  var aggregated={};
+  remaining.forEach(function(d){
+    MEAL_KEYS.forEach(function(meal){
+      var key=d+'_'+meal,items=getMealPlanCell(key);
+      items.forEach(function(item){
+        if(item.type==='recipe'){
+          var r=DB.recipes.find(function(x){return x.id===item.id;});if(!r)return;
+          (r.ingredients||[]).forEach(function(ing){var k=ing.name+'__'+(ing.unit||'g');if(!aggregated[k])aggregated[k]={name:ing.name,qty:0,unit:ing.unit||'g'};aggregated[k].qty+=parseFloat(ing.qty)||0;});
+        }else if(item.foodId){
+          var f=DB.foods.find(function(x){return x.id===item.foodId;});if(!f)return;
+          var k2=f.name+'__'+f.unit;if(!aggregated[k2])aggregated[k2]={name:f.name,qty:0,unit:f.unit};aggregated[k2].qty+=item.qtyVal||item.qty||0;
+        }
+      });
+    });
+  });
   var newItems=Object.values(aggregated).map(function(item){return{name:item.name,qty:Math.round(item.qty*10)/10,unit:item.unit,done:false,alreadyHave:0};});if(!newItems.length){notif('Aucun ingrédient trouvé');return;}
   newItems.forEach(function(ni){var existing=DB.courses.find(function(c){return c.name===ni.name&&c.unit===ni.unit;});if(existing)existing.qty=Math.round((existing.qty+ni.qty)*10)/10;else DB.courses.push(ni);});
   dbSave();renderCoursesList();switchTab('nutri','courses');notif('Courses générées !');
