@@ -1916,14 +1916,24 @@ function setMeal(meal,el){currentMeal=meal;document.querySelectorAll('#nutri-tab
 function searchFoods(q){if(!q){document.getElementById('food-results').innerHTML='';return;}var results=DB.foods.filter(function(f){return f.name.toLowerCase().indexOf(q.toLowerCase())>=0;}).slice(0,5);document.getElementById('food-results').innerHTML=results.map(function(f){return '<div class="food-item" onclick="selectFood(\''+f.id+'\')"><span class="food-emoji">'+f.emoji+'</span><div><div class="text-sm">'+f.name+'</div><div class="text-muted text-xs">'+f.cal+'kcal P:'+f.prot+'g G:'+f.gluc+'g L:'+f.lip+'g</div></div></div>';}).join('');}
 function selectFood(id){selectedFood=DB.foods.find(function(f){return f.id===id;});if(!selectedFood)return;document.getElementById('food-add-form').classList.remove('hidden');document.getElementById('food-add-name').textContent=selectedFood.emoji+' '+selectedFood.name;document.getElementById('food-add-macros').textContent=selectedFood.cal+' kcal / 100'+selectedFood.unit;document.getElementById('food-unit-disp').textContent=selectedFood.unit;document.getElementById('food-results').innerHTML='';document.getElementById('food-search').value='';}
 function cancelFoodAdd(){selectedFood=null;document.getElementById('food-add-form').classList.add('hidden');}
-function addFoodToJournal(){if(!selectedFood)return;var qty=parseFloat(document.getElementById('food-qty').value)||100,ratio=qty/100;var today=todayStr();if(!DB.journal[today])DB.journal[today]=[];DB.journal[today].push({id:Date.now()+'',name:selectedFood.name,emoji:selectedFood.emoji,meal:currentMeal,qty:qty,unit:selectedFood.unit,cal:selectedFood.cal*ratio,prot:selectedFood.prot*ratio,gluc:selectedFood.gluc*ratio,lip:selectedFood.lip*ratio});updateStreak();var tCal=DB.journal[today].reduce(function(s,f){return s+f.cal;},0);if(tCal>=DB.goals.cal*0.8&&tCal<=DB.goals.cal*1.1)addXP(5,'Objectif calorique respecté','cal_objectif');dbSave();cancelFoodAdd();renderJournal();renderDashboard();notif('✓ '+selectedFood.name+' ajouté !');haptic('success');}
-  var foodName=selectedFood.name; // sauvegarder avant cancelFoodAdd
+function addFoodToJournal(){
+  if(!selectedFood)return;
+  var qty=parseFloat(document.getElementById('food-qty').value)||100,ratio=qty/100;
+  var today=todayStr();
+  if(!DB.journal[today])DB.journal[today]=[];
+  var foodName=selectedFood.name;
+  var foodEmoji=selectedFood.emoji;
+  DB.journal[today].push({id:Date.now()+'',name:selectedFood.name,emoji:selectedFood.emoji,meal:currentMeal,qty:qty,unit:selectedFood.unit,cal:selectedFood.cal*ratio,prot:selectedFood.prot*ratio,gluc:selectedFood.gluc*ratio,lip:selectedFood.lip*ratio});
+  updateStreak();
+  var tCal=DB.journal[today].reduce(function(s,f){return s+f.cal;},0);
+  if(tCal>=DB.goals.cal*0.8&&tCal<=DB.goals.cal*1.1)addXP(5,'Objectif calorique respecté','cal_objectif');
   dbSave();
   cancelFoodAdd();
   renderJournal();
   renderDashboard();
   notif('✓ '+foodName+' ajouté !');
   haptic('success');
+}
 function openCopyDayModal(){var days=Object.keys(DB.journal).filter(function(d){return d!==todayStr()&&(DB.journal[d]||[]).length>0;}).sort().reverse().slice(0,10);if(!days.length){notif('Aucun jour à copier');return;}document.getElementById('modal-content').innerHTML='<h2>Copier un jour</h2>'+days.map(function(d){var foods=DB.journal[d],cal=foods.reduce(function(s,f){return s+f.cal;},0);return '<div class="food-item" onclick="copyDayJournal(\''+d+'\')"><span class="food-emoji">📅</span><div><div class="text-sm">'+d+'</div><div class="text-muted text-xs">'+foods.length+' aliments · '+Math.round(cal)+' kcal</div></div></div>';}).join('')+'<button class="btn btn-secondary mt-12" onclick="closeModal()">Annuler</button>';showModal();}
 function copyDayJournal(fromDate){var today=todayStr();if(!DB.journal[today])DB.journal[today]=[];DB.journal[today]=DB.journal[today].concat((DB.journal[fromDate]||[]).map(function(f){return Object.assign({},f,{id:Date.now()+Math.random()+''});}));dbSave();closeModal();renderJournal();renderDashboard();notif('Journal copié');}
 function addRecipeToJournal(id){
