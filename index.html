@@ -953,7 +953,7 @@ function switchTab(prefix,tab){
   });
   if(prefix==='prog2'){if(tab==='poids')renderWeightChart();else if(tab==='muscu')renderMuscu();else if(tab==='course')renderCourseHistory();else if(tab==='forme')renderFormeScore();}
   if(prefix==='plus'){if(tab==='hydra')renderHydra();else if(tab==='sommeil')renderSommeil();else if(tab==='profil')renderProfil();else if(tab==='progres')renderWeightChart();else if(tab==='badges')renderAvatarXP();else if(tab==='escouade')renderEscouade();}
-  if(prefix==='nutri'){if(tab==='courses')renderCoursesList();else if(tab==='planning'){renderMealPlanGrid();renderMealPlanSummary();};else if(tab==='recettes')renderRecettes();renderMealPlanSummary()}
+  if(prefix==='nutri'){if(tab==='courses')renderCoursesList();else if(tab==='planning'){renderMealPlanGrid();renderMealPlanSummary();}else if(tab==='recettes')renderRecettes();}
   if(prefix==='prog'){if(tab==='etirements')renderStretches();else if(tab==='progression')renderProgression();else if(tab==='seances')renderProgSeances();}
 }
 
