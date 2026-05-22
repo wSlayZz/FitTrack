@@ -656,6 +656,10 @@ select option{background:var(--card)}
           </div>
         </div>
         <div class="card"><h3>Badges obtenus</h3><div class="badge-grid" id="badges-grid"></div></div>
+        <div class="card mt-12">
+          <h3>📈 Progression XP</h3>
+          <canvas id="xp-chart" height="100"></canvas>
+        </div>
       </div>
       <div id="plus-tab-escouade" class="tab-content">
         <div id="squad-content"></div>
@@ -729,7 +733,12 @@ var BADGES=[
   {id:'recipe_chef',icon:'👨‍🍳',name:'Chef cuisinier',desc:'3 recettes créées'},
   {id:'sleep_master',icon:'😴',name:'Maître du sommeil',desc:'7 nuits enregistrées'},
   {id:'level5',icon:'⭐',name:'Niveau 5',desc:'Atteindre le niveau 5'},
-  {id:'squad_member',icon:'👥',name:'En escouade',desc:'Rejoindre une escouade'}
+  {id:'squad_member',icon:'👥',name:'En escouade',desc:'Rejoindre une escouade'},
+  {id:'streak_30',icon:'🌟',name:'Mois de feu',desc:'30 jours de streak'},
+  {id:'sessions_100',icon:'💯',name:'Centurion',desc:'100 séances terminées'},
+  {id:'hydro_30',icon:'🌊',name:'Océan',desc:'Objectif eau 30j d\'affilée'},
+  {id:'planner',icon:'📅',name:'Planificateur',desc:'7 jours de planning rempli'},
+  {id:'first_recipe',icon:'🍳',name:'Aux fourneaux',desc:'Créer sa première recette'}
 ];
 var LEVELS=[
   {level:1,title:'Débutant',emoji:'🌱',xpNeeded:0},{level:2,title:'Régulier',emoji:'🏃',xpNeeded:100},
@@ -957,7 +966,7 @@ function switchTab(prefix,tab){
     t.classList.toggle('active',t.getAttribute('onclick')==="switchTab('"+prefix+"','"+tab+"')");
   });
   if(prefix==='prog2'){if(tab==='poids')renderWeightChart();else if(tab==='muscu')renderMuscu();else if(tab==='course')renderCourseHistory();else if(tab==='forme')renderFormeScore();}
-  if(prefix==='plus'){if(tab==='hydra')renderHydra();else if(tab==='sommeil')renderSommeil();else if(tab==='profil')renderProfil();else if(tab==='progres')renderWeightChart();else if(tab==='badges')renderAvatarXP();else if(tab==='escouade')renderEscouade();}
+  if(prefix==='plus'){if(tab==='hydra')renderHydra();else if(tab==='sommeil')renderSommeil();else if(tab==='profil')renderProfil();else if(tab==='progres')renderWeightChart();else if(tab==='badges'){renderAvatarXP();renderXPChart();}else if(tab==='escouade')renderEscouade();}
   if(prefix==='nutri'){if(tab==='courses')renderCoursesList();else if(tab==='planning'){renderMealPlanGrid();renderMealPlanSummary();}else if(tab==='recettes')renderRecettes();}
   if(prefix==='prog'){if(tab==='etirements')renderStretches();else if(tab==='progression')renderProgression();else if(tab==='seances')renderProgSeances();}
 }
@@ -980,7 +989,24 @@ function addXP(amount,reason,dailyKey){
     var cutoff=new Date();cutoff.setDate(cutoff.getDate()-7);var cutStr=cutoff.toISOString().split('T')[0];
     Object.keys(DB.gamification.xpDone).forEach(function(k){if(k.slice(0,10)<cutStr)delete DB.gamification.xpDone[k];});
   }
-  DB.gamification.xp=(DB.gamification.xp||0)+amount;notif('+'+amount+' XP — '+reason);checkLevelUp();dbSave();renderAvatarXP();
+  DB.gamification.xp=(DB.gamification.xp||0)+amount;
+  notif('+'+amount+' XP — '+reason);
+  checkLevelUp();
+  dbSave();
+  renderAvatarXP();
+// Historique XP
+if(!DB.gamification.xpHistory)DB.gamification.xpHistory=[];
+var lastEntry=DB.gamification.xpHistory[DB.gamification.xpHistory.length-1];
+if(lastEntry&&lastEntry.date===todayStr()){
+  lastEntry.xp=DB.gamification.xp;
+}else{
+  DB.gamification.xpHistory.push({date:todayStr(),xp:DB.gamification.xp});
+  if(DB.gamification.xpHistory.length>30)DB.gamification.xpHistory.shift();
+}
+}
+  else{
+  DB.gamification.xpHistory.push({date:todayStr(),xp:DB.gamification.xp});
+  if(DB.gamification.xpHistory.length>30)DB.gamification.xpHistory.shift();
 }
 function checkLevelUp(){var g=DB.gamification,prev=getLevelInfo(Math.max(0,(g.xp||0)-10)),curr=getLevelInfo(g.xp||0);if(curr.level>prev.level){showLevelUpModal(curr);checkBadge('level5',curr.level>=5);}}
 function showLevelUpModal(l){document.getElementById('modal-content').innerHTML='<div style="text-align:center;padding:1rem"><div style="font-size:4rem;margin-bottom:1rem">'+l.emoji+'</div><div style="font-size:1.5rem;font-weight:800;color:var(--purple)">Niveau '+l.level+' !</div><div style="color:var(--muted);margin:.5rem 0 1.5rem">'+l.title+'</div><button class="btn btn-primary" onclick="closeModal()">Super !</button></div>';showModal();}
@@ -1016,8 +1042,34 @@ function renderAvatarXP(){
   set('badges-xp-text',(g.xp||0)+'/'+lvl.xpNeeded+' XP');
   var bg=document.getElementById('badges-grid');if(bg)bg.innerHTML=BADGES.map(function(b){var earned=(g.badges||[]).indexOf(b.id)>=0;return '<div class="badge-item'+(earned?' earned':'')+'"><div class="badge-icon">'+b.icon+'</div><div style="font-size:.7rem;font-weight:600;margin-top:4px">'+b.name+'</div></div>';}).join('');
 }
-function checkAllBadges(){if(!DB.gamification)return;checkBadge('first_workout',DB.workoutHistory&&DB.workoutHistory.length>=1);checkBadge('weight_tracker',DB.weight&&DB.weight.length>=5);checkBadge('recipe_chef',DB.recipes&&DB.recipes.length>=3);checkBadge('sleep_master',DB.sleep&&DB.sleep.length>=7);checkBadge('level5',getLevelInfo((DB.gamification.xp)||0).level>=5);}
-
+function renderXPChart(){
+  if(!DB.gamification||!DB.gamification.xpHistory)return;
+  var data=DB.gamification.xpHistory.slice(-30).map(function(e){
+    return{label:e.date.slice(5),val:e.xp};
+  });
+  if(data.length>1)setTimeout(function(){drawLineChart('xp-chart',data,'xp','#7c6cf7');},50);
+}
+function checkAllBadges(){
+  if(!DB.gamification)return;
+  checkBadge('first_workout',DB.workoutHistory&&DB.workoutHistory.length>=1);
+  checkBadge('weight_tracker',DB.weight&&DB.weight.length>=5);
+  checkBadge('recipe_chef',DB.recipes&&DB.recipes.length>=3);
+  checkBadge('first_recipe',DB.recipes&&DB.recipes.length>=1);
+  checkBadge('sleep_master',DB.sleep&&DB.sleep.length>=7);
+  checkBadge('level5',getLevelInfo((DB.gamification.xp)||0).level>=5);
+  checkBadge('sessions_100',DB.workoutHistory&&DB.workoutHistory.length>=100);
+  checkBadge('streak_30',(DB.gamification.streak||0)>=30);
+  // Hydro 30j
+  var last30=[];for(var i=29;i>=0;i--){var d=new Date();d.setDate(d.getDate()-i);last30.push(d.toISOString().split('T')[0]);}
+  var hydro30=last30.filter(function(d){return(DB.water[d]||0)>=(DB.goals&&DB.goals.eau||2000);}).length;
+  checkBadge('hydro_30',hydro30>=30);
+  // Planning 7j
+  var dates=getWeekDates();
+  var planDays=dates.filter(function(d){
+    return MEAL_KEYS.some(function(m){return getMealPlanCell(d+'_'+m).length>0;});
+  }).length;
+  checkBadge('planner',planDays>=7);
+}
 // ── CHECK-IN ──
 function runWeeklyCheckin(){
   if(!DB.profile||!DB.gamification)return;
