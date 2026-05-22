@@ -48,26 +48,9 @@ select option{background:var(--card)}
 .btn-danger{background:var(--red)22;color:var(--red);border:1.5px solid var(--red)44}
 .btn:active{transform:scale(.97)}
 #app{position:fixed;inset:0;display:flex;flex-direction:column;overflow:hidden;background:var(--card)}
-#content{
-  ...
-  padding-bottom:calc(70px + var(--safe-bot));
-  padding-bottom:calc(70px + env(safe-area-inset-bottom, var(--safe-bot)));
-}
+#content{flex:1;overflow-y:scroll;-webkit-overflow-scrolling:touch;padding-top:calc(var(--safe-top) + 56px);padding-bottom:calc(70px + env(safe-area-inset-bottom, 34px));min-height:0;background:var(--bg)}
 #topbar{position:fixed;top:0;left:0;right:0;height:calc(var(--safe-top)+56px);padding-top:var(--safe-top);background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;padding-left:1rem;padding-right:1rem;z-index:100;gap:10px}
-#bottomnav{
-  position:fixed;
-  bottom:0;
-  left:0;
-  right:0;
-  height:calc(70px + var(--safe-bot));
-  padding-bottom:var(--safe-bot);
-  padding-bottom:env(safe-area-inset-bottom, var(--safe-bot)); /* override avec valeur native */
-  background:var(--card);
-  border-top:1px solid var(--border);
-  display:flex;
-  align-items:stretch;
-  z-index:100;
-}
+#bottomnav{position:fixed;bottom:0;left:0;right:0;height:calc(70px + env(safe-area-inset-bottom, 34px));padding-bottom:env(safe-area-inset-bottom, 34px);background:var(--card);border-top:1px solid var(--border);display:flex;align-items:stretch;z-index:100;}
 .nav-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;background:none;border:none;color:var(--muted);font-size:.6rem;padding:4px 2px;transition:.15s;flex:1;min-width:0}
 .nav-btn svg{width:20px;height:20px;stroke-width:1.8}
 .nav-btn.active{color:var(--purple)}
@@ -722,19 +705,6 @@ select option{background:var(--card)}
 </div>
 
 <script>
-(function(){
-  if(window.navigator.standalone===true){
-    // Lire les vraies valeurs via une div de test
-    var testDiv = document.createElement('div');
-    testDiv.style.cssText = 'position:fixed;bottom:0;left:0;right:0;height:env(safe-area-inset-bottom,0px);background:transparent;pointer-events:none;z-index:-1';
-    document.body.appendChild(testDiv);
-    var safeBot = testDiv.offsetHeight || 34;
-    document.body.removeChild(testDiv);
-    document.documentElement.style.setProperty('--safe-bot', safeBot + 'px');
-    document.documentElement.style.setProperty('--safe-top', '47px');
-  }
-})();
-
 var SUPA_URL='https://yvkcoyofnllawjfvlthz.supabase.co';
 var SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2a2NveW9mbmxsYXdqZnZsdGh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxMjQ2MzksImV4cCI6MjA5MzcwMDYzOX0.TmqANNlMVWO25zf658gjpRLmvfGucURtCec7oK7MzdA';
 var currentUser=null,DB={};
