@@ -1002,11 +1002,10 @@ if(lastEntry&&lastEntry.date===todayStr()){
 }else{
   DB.gamification.xpHistory.push({date:todayStr(),xp:DB.gamification.xp});
   if(DB.gamification.xpHistory.length>30)DB.gamification.xpHistory.shift();
-}
-}
-  else{
+}else{
   DB.gamification.xpHistory.push({date:todayStr(),xp:DB.gamification.xp});
   if(DB.gamification.xpHistory.length>30)DB.gamification.xpHistory.shift();
+}
 }
 function checkLevelUp(){var g=DB.gamification,prev=getLevelInfo(Math.max(0,(g.xp||0)-10)),curr=getLevelInfo(g.xp||0);if(curr.level>prev.level){showLevelUpModal(curr);checkBadge('level5',curr.level>=5);}}
 function showLevelUpModal(l){document.getElementById('modal-content').innerHTML='<div style="text-align:center;padding:1rem"><div style="font-size:4rem;margin-bottom:1rem">'+l.emoji+'</div><div style="font-size:1.5rem;font-weight:800;color:var(--purple)">Niveau '+l.level+' !</div><div style="color:var(--muted);margin:.5rem 0 1.5rem">'+l.title+'</div><button class="btn btn-primary" onclick="closeModal()">Super !</button></div>';showModal();}
