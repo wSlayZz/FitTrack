@@ -2004,11 +2004,12 @@ function confirmAddRecipe(meal){
   closeModal();
   nav('nutrition');
   switchTab('nutri','journal');
-  renderJournal();
-  renderDashboard();
-  notif(r.name+' ajouté !');
-  haptic('success');
-}
+  setTimeout(function(){
+    renderJournal();
+    renderDashboard();
+    notif(r.name+' ajouté !');
+    haptic('success');
+  },50);
 function removeFoodEntry(id){var today=todayStr();DB.journal[today]=(DB.journal[today]||[]).filter(function(f){return f.id!==id;});dbSave();renderJournal();renderDashboard();}
 function renderAliments(){var search=(document.getElementById('aliments-search')||{}).value||'';var list=DB.foods.filter(function(f){return(foodFilter==='all'||f.cat===foodFilter)&&(!search||f.name.toLowerCase().indexOf(search.toLowerCase())>=0);});document.getElementById('aliments-count').textContent=list.length+' aliment(s)';document.getElementById('aliments-list').innerHTML=list.map(function(f){return '<div class="food-item" style="cursor:default"><span class="food-emoji">'+f.emoji+'</span><div style="flex:1"><div class="text-sm">'+f.name+'</div><div class="text-xs text-muted">'+f.cal+'kcal P:'+f.prot+'g G:'+f.gluc+'g L:'+f.lip+'g</div></div><button class="btn-icon" onclick="editFood(\''+f.id+'\')">✏️</button><button class="btn-icon" onclick="deleteFood(\''+f.id+'\')">🗑</button></div>';}).join('');}
 function filterFoods(cat,el){foodFilter=cat;document.querySelectorAll('#nutri-tab-aliments .tag').forEach(function(t){t.classList.remove('active');});el.classList.add('active');renderAliments();}
