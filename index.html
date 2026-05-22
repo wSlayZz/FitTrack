@@ -2060,28 +2060,6 @@ function openRecetteModal(editId){var r=editId?DB.recipes.find(function(x){retur
 function addIngredientRow(foodId,qty){var fo=DB.foods.map(function(f){return '<option value="'+f.id+'"'+(foodId===f.id?' selected':'')+'>'+f.emoji+' '+f.name+'</option>';}).join('');var div=document.createElement('div');div.className='flex gap-8 mb-8 items-center';div.innerHTML='<select class="er-ing-food" style="flex:1;background:var(--el);border:1.5px solid var(--border);color:var(--text);padding:10px;border-radius:10px;font-size:.9rem">'+fo+'</select><input type="number" class="er-ing-qty" placeholder="100" value="'+(qty||100)+'" inputmode="numeric" style="width:70px;background:var(--el);border:1.5px solid var(--border);color:var(--text);padding:10px;border-radius:10px;text-align:center"><button class="btn-icon" onclick="this.parentNode.remove()">✕</button>';document.getElementById('er-ingr-list').appendChild(div);}
 function saveRecette(){var editId=document.getElementById('er-id').value;var rows=document.querySelectorAll('#er-ingr-list .er-ing-food'),qtys=document.querySelectorAll('#er-ingr-list .er-ing-qty');var ingredients=[],tCal=0,tProt=0,tGluc=0,tLip=0;rows.forEach(function(sel,i){var fid=sel.value,qty=parseFloat(qtys[i].value)||100,food=DB.foods.find(function(f){return f.id===fid;});if(food){var r=qty/100;ingredients.push({foodId:fid,name:food.name,qty:qty,unit:food.unit});tCal+=food.cal*r;tProt+=food.prot*r;tGluc+=food.gluc*r;tLip+=food.lip*r;}});var rec={id:editId||('r'+Date.now()),name:document.getElementById('er-name').value,emoji:document.getElementById('er-emoji').value,cat:document.getElementById('er-cat').value,prepTime:parseInt(document.getElementById('er-time').value)||30,ingredients:ingredients,totalCal:tCal,totalProt:tProt,totalGluc:tGluc,totalLip:tLip};if(editId){var idx=DB.recipes.findIndex(function(x){return x.id===editId;});if(idx>=0)DB.recipes[idx]=rec;else DB.recipes.push(rec);}else{DB.recipes.push(rec);}dbSave();closeModal();renderRecettes();checkBadge('recipe_chef',DB.recipes.length>=3);if(!editId)addXP(20,'Nouvelle recette créée','recette_'+rec.id);notif(editId?'Recette modifiée':'Recette créée');}
 function deleteRecipe(id){if(confirm('Supprimer ?')){DB.recipes=DB.recipes.filter(function(r){return r.id!==id;});dbSave();renderRecettes();}}
-function addRecipeToJournal(id){
-  var r=DB.recipes.find(function(x){return x.id===id;});
-  if(!r)return;
-  var today=todayStr();
-  if(!DB.journal[today])DB.journal[today]=[];
-  var meal=currentMeal||'dejeuner';
-  DB.journal[today].push({
-    id:Date.now()+'',
-    name:r.name,
-    emoji:r.emoji,
-    meal:meal,
-    qty:1,
-    unit:'portion',
-    cal:r.totalCal||0,
-    prot:r.totalProt||0,
-    gluc:r.totalGluc||0,
-    lip:r.totalLip||0
-  });
-  dbSave();
-  notif(r.name+' ajouté au '+meal);
-  haptic('success');
-}
 function addRecipeToCourses(id){var r=DB.recipes.find(function(x){return x.id===id;});if(!r)return;(r.ingredients||[]).forEach(function(ing){var existing=DB.courses.find(function(c){return c.name===ing.name;});if(existing)existing.qty=Math.round((existing.qty+(ing.qty||0))*10)/10;else DB.courses.push({name:ing.name||'?',qty:ing.qty||0,unit:ing.unit||'g',done:false,alreadyHave:0});});dbSave();notif('Ingrédients ajoutés');}
 
 // ── COURSES ──
