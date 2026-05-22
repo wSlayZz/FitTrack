@@ -1036,7 +1036,30 @@ function renderAvatarXP(){
   set('badges-level',lvl.level);set('badges-avatar-emoji',lvl.emoji);set('badges-name',p.prenom||'');set('badges-title',lvl.title);
   var bxb=document.getElementById('badges-xp-bar');if(bxb)bxb.style.width=lvl.pct+'%';
   set('badges-xp-text',(g.xp||0)+'/'+lvl.xpNeeded+' XP');
-  var bg=document.getElementById('badges-grid');if(bg)bg.innerHTML=BADGES.map(function(b){var earned=(g.badges||[]).indexOf(b.id)>=0;return '<div class="badge-item'+(earned?' earned':'')+'"><div class="badge-icon">'+b.icon+'</div><div style="font-size:.7rem;font-weight:600;margin-top:4px">'+b.name+'</div></div>';}).join('');
+  var bg=document.getElementById('badges-grid');
+if(bg)bg.innerHTML=BADGES.map(function(b){
+  var earned=(g.badges||[]).indexOf(b.id)>=0;
+  return '<div class="badge-item'+(earned?' earned':'')+'" onclick="showBadgeDetail(\''+b.id+'\')" style="cursor:pointer">'
+    +'<div class="badge-icon">'+b.icon+'</div>'
+    +'<div style="font-size:.7rem;font-weight:600;margin-top:4px">'+b.name+'</div>'
+    +'<div style="font-size:.6rem;color:var(--muted);margin-top:2px">'+(earned?'✅ Obtenu':'🔒 À débloquer')+'</div>'
+    +'</div>';
+}).join('');
+}
+function showBadgeDetail(id){
+  var badge=BADGES.find(function(b){return b.id===id;});
+  if(!badge)return;
+  var g=DB.gamification||{};
+  var earned=(g.badges||[]).indexOf(id)>=0;
+  document.getElementById('modal-content').innerHTML=
+    '<div style="text-align:center;padding:1rem">'
+    +'<div style="font-size:4rem;margin-bottom:.5rem;opacity:'+(earned?1:.3)+'">'+badge.icon+'</div>'
+    +'<div style="font-size:1.1rem;font-weight:800;margin-bottom:.25rem">'+badge.name+'</div>'
+    +'<div style="font-size:.85rem;color:var(--muted);margin-bottom:1rem">'+badge.desc+'</div>'
+    +'<div class="badge-pill '+(earned?'badge-green':'badge-purple')+'" style="margin-bottom:1.5rem">'+(earned?'✅ Badge obtenu !':'🔒 Non débloqué')+'</div>'
+    +'<button class="btn btn-secondary" onclick="closeModal()">Fermer</button>'
+    +'</div>';
+  showModal();
 }
 function renderXPChart(){
   if(!DB.gamification||!DB.gamification.xpHistory)return;
