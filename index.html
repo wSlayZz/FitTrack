@@ -1724,7 +1724,7 @@ function applyTodayFromPlan(){
       }
     });
   });
-  dbSave();renderJournal();renderDashboard();notif(added>0?added+' repas ajoutés !':'Aucun repas planifié');if(added>0){nav('nutrition');switchTab('nutri','journal');}
+  dbSave();();renderDashboard();notif(added>0?added+' repas ajoutés !':'Aucun repas planifié');if(added>0){nav('nutrition');switchTab('nutri','journal');}
 }
 function genCoursesFromPlan(){
   var today=todayStr(),dates=getWeekDates(),remaining=dates.filter(function(d){return d>=today;});if(!remaining.length){notif('Pas de jours restants');return;}
@@ -1917,6 +1917,33 @@ function setMeal(meal,el){currentMeal=meal;document.querySelectorAll('#nutri-tab
 function searchFoods(q){if(!q){document.getElementById('food-results').innerHTML='';return;}var results=DB.foods.filter(function(f){return f.name.toLowerCase().indexOf(q.toLowerCase())>=0;}).slice(0,5);document.getElementById('food-results').innerHTML=results.map(function(f){return '<div class="food-item" onclick="selectFood(\''+f.id+'\')"><span class="food-emoji">'+f.emoji+'</span><div><div class="text-sm">'+f.name+'</div><div class="text-muted text-xs">'+f.cal+'kcal P:'+f.prot+'g G:'+f.gluc+'g L:'+f.lip+'g</div></div></div>';}).join('');}
 function selectFood(id){selectedFood=DB.foods.find(function(f){return f.id===id;});if(!selectedFood)return;document.getElementById('food-add-form').classList.remove('hidden');document.getElementById('food-add-name').textContent=selectedFood.emoji+' '+selectedFood.name;document.getElementById('food-add-macros').textContent=selectedFood.cal+' kcal / 100'+selectedFood.unit;document.getElementById('food-unit-disp').textContent=selectedFood.unit;document.getElementById('food-results').innerHTML='';document.getElementById('food-search').value='';}
 function cancelFoodAdd(){selectedFood=null;document.getElementById('food-add-form').classList.add('hidden');}
+function renderJournal(){
+  var today=todayStr(),foods=DB.journal[today]||[];
+  var meals=['petit-dejeuner','dejeuner','diner','collation'];
+  var mealLabels={'petit-dejeuner':'Petit-déjeuner','dejeuner':'Déjeuner','diner':'Dîner','collation':'Collation'};
+  var mealEmojis={'petit-dejeuner':'🌅','dejeuner':'☀️','diner':'🌙','collation':'🍎'};
+  var h='',tCal=0,tProt=0,tGluc=0,tLip=0;
+  meals.forEach(function(m){
+    var items=foods.filter(function(f){return f.meal===m;});
+    if(!items.length)return;
+    var mCal=items.reduce(function(s,f){return s+f.cal;},0);
+    tCal+=mCal;
+    tProt+=items.reduce(function(s,f){return s+f.prot;},0);
+    tGluc+=items.reduce(function(s,f){return s+f.gluc;},0);
+    tLip+=items.reduce(function(s,f){return s+f.lip;},0);
+    h+='<div class="card">';
+    h+='<div class="flex justify-between items-center mb-8"><span style="font-weight:700">'+mealEmojis[m]+' '+mealLabels[m]+'</span><span class="text-xs text-muted">'+Math.round(mCal)+' kcal</span></div>';
+    items.forEach(function(f){
+      h+='<div class="list-item"><div class="flex items-center gap-8"><span>'+f.emoji+'</span><div><div class="text-sm">'+f.name+'</div><div class="text-xs text-muted">'+f.qty+(f.unit||'g')+' · '+Math.round(f.cal)+'kcal</div></div></div><button class="btn-icon" onclick="removeFoodEntry(\''+f.id+'\')">✕</button></div>';
+    });
+    h+='</div>';
+  });
+  if(tCal>0){
+    h+='<div class="card"><div class="flex justify-between items-center"><div><div class="text-xs text-muted">Total</div><div style="font-weight:800;font-size:1.1rem;color:var(--orange)">'+Math.round(tCal)+' kcal</div></div><div class="text-xs text-muted">P:'+Math.round(tProt)+'g G:'+Math.round(tGluc)+'g L:'+Math.round(tLip)+'g</div></div></div>';
+  }
+  var el=document.getElementById('journal-daily');
+  if(el)el.innerHTML=h||'<div class="text-muted text-sm">Aucun aliment enregistré</div>';
+}
 function addFoodToJournal(){
   if(!selectedFood)return;
   var qty=parseFloat(document.getElementById('food-qty').value)||100,ratio=qty/100;
