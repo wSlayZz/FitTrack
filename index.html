@@ -1724,7 +1724,7 @@ function applyTodayFromPlan(){
       }
     });
   });
-  dbSave();();renderDashboard();notif(added>0?added+' repas ajoutés !':'Aucun repas planifié');if(added>0){nav('nutrition');switchTab('nutri','journal');}
+  dbSave();renderJournal();renderDashboard();notif(added>0?added+' repas ajoutés !':'Aucun repas planifié');if(added>0){nav('nutrition');switchTab('nutri','journal');}
 }
 function genCoursesFromPlan(){
   var today=todayStr(),dates=getWeekDates(),remaining=dates.filter(function(d){return d>=today;});if(!remaining.length){notif('Pas de jours restants');return;}
