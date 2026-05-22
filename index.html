@@ -1967,9 +1967,25 @@ function copyDayJournal(fromDate){var today=todayStr();if(!DB.journal[today])DB.
 function addRecipeToJournal(id){
   var r=DB.recipes.find(function(x){return x.id===id;});
   if(!r)return;
+  document.getElementById('modal-content').innerHTML=
+    '<h2>'+r.emoji+' '+r.name+'</h2>'
+    +'<div class="text-xs text-muted mb-12">'+Math.round(r.totalCal||0)+' kcal · P:'+Math.round(r.totalProt||0)+'g</div>'
+    +'<div class="form-group"><label>Ajouter au repas</label>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">'
+    +'<button class="btn btn-secondary" onclick="confirmAddRecipe(\''+id+'\',\'petit-dejeuner\')">🌅 Petit-déj</button>'
+    +'<button class="btn btn-secondary" onclick="confirmAddRecipe(\''+id+'\',\'dejeuner\')">☀️ Déjeuner</button>'
+    +'<button class="btn btn-secondary" onclick="confirmAddRecipe(\''+id+'\',\'diner\')">🌙 Dîner</button>'
+    +'<button class="btn btn-secondary" onclick="confirmAddRecipe(\''+id+'\',\'collation\')">🍎 Collation</button>'
+    +'</div></div>'
+    +'<button class="btn btn-secondary mt-12" onclick="closeModal()">Annuler</button>';
+  showModal();
+}
+
+function confirmAddRecipe(id,meal){
+  var r=DB.recipes.find(function(x){return x.id===id;});
+  if(!r)return;
   var today=todayStr();
   if(!DB.journal[today])DB.journal[today]=[];
-  var meal=currentMeal||'dejeuner';
   DB.journal[today].push({
     id:Date.now()+'',
     name:r.name,
@@ -1983,6 +1999,7 @@ function addRecipeToJournal(id){
     lip:r.totalLip||0
   });
   dbSave();
+  closeModal();
   renderJournal();
   renderDashboard();
   notif(r.name+' ajouté !');
