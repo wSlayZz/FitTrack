@@ -1002,9 +1002,6 @@ if(lastEntry&&lastEntry.date===todayStr()){
 }else{
   DB.gamification.xpHistory.push({date:todayStr(),xp:DB.gamification.xp});
   if(DB.gamification.xpHistory.length>30)DB.gamification.xpHistory.shift();
-}else{
-  DB.gamification.xpHistory.push({date:todayStr(),xp:DB.gamification.xp});
-  if(DB.gamification.xpHistory.length>30)DB.gamification.xpHistory.shift();
 }
 }
 function checkLevelUp(){var g=DB.gamification,prev=getLevelInfo(Math.max(0,(g.xp||0)-10)),curr=getLevelInfo(g.xp||0);if(curr.level>prev.level){showLevelUpModal(curr);checkBadge('level5',curr.level>=5);}}
