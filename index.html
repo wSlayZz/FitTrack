@@ -11,6 +11,9 @@
 <title>FitTrack</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 <style>
+.swipe-item{position:relative;overflow:hidden;border-radius:12px;margin-bottom:2px}
+.swipe-content{display:flex;align-items:center;justify-content:space-between;padding:10px 0;background:var(--card);transition:transform .25s ease;will-change:transform;position:relative;z-index:1}
+.swipe-delete{position:absolute;right:0;top:0;bottom:0;width:80px;background:var(--red);display:flex;align-items:center;justify-content:center;color:#fff;font-size:.85rem;font-weight:700;border-radius:0 12px 12px 0;z-index:0}
 @keyframes foodAdded {
   0%{transform:scale(1);background:var(--el)}
   30%{transform:scale(1.02);background:var(--green)22}
@@ -1928,22 +1931,57 @@ function renderJournal(){
     var items=foods.filter(function(f){return f.meal===m;});
     if(!items.length)return;
     var mCal=items.reduce(function(s,f){return s+f.cal;},0);
-    tCal+=mCal;
-    tProt+=items.reduce(function(s,f){return s+f.prot;},0);
+    tCal+=mCal;tProt+=items.reduce(function(s,f){return s+f.prot;},0);
     tGluc+=items.reduce(function(s,f){return s+f.gluc;},0);
     tLip+=items.reduce(function(s,f){return s+f.lip;},0);
-    h+='<div class="card">';
-    h+='<div class="flex justify-between items-center mb-8"><span style="font-weight:700">'+mealEmojis[m]+' '+mealLabels[m]+'</span><span class="text-xs text-muted">'+Math.round(mCal)+' kcal</span></div>';
+    h+='<div class="card"><div class="flex justify-between items-center mb-8"><span style="font-weight:700">'+mealEmojis[m]+' '+mealLabels[m]+'</span><span class="text-xs text-muted">'+Math.round(mCal)+' kcal</span></div>';
     items.forEach(function(f){
-      h+='<div class="list-item"><div class="flex items-center gap-8"><span>'+f.emoji+'</span><div><div class="text-sm">'+f.name+'</div><div class="text-xs text-muted">'+f.qty+(f.unit||'g')+' · '+Math.round(f.cal)+'kcal</div></div></div><button class="btn-icon" onclick="removeFoodEntry(\''+f.id+'\')">✕</button></div>';
+      h+='<div class="swipe-item" data-id="'+f.id+'">'
+        +'<div class="swipe-delete">🗑 Suppr.</div>'
+        +'<div class="swipe-content"><div class="flex items-center gap-8"><span>'+f.emoji+'</span><div><div class="text-sm">'+f.name+'</div><div class="text-xs text-muted">'+f.qty+(f.unit||'g')+' · '+Math.round(f.cal)+'kcal</div></div></div></div>'
+        +'</div>';
     });
     h+='</div>';
   });
-  if(tCal>0){
-    h+='<div class="card"><div class="flex justify-between items-center"><div><div class="text-xs text-muted">Total</div><div style="font-weight:800;font-size:1.1rem;color:var(--orange)">'+Math.round(tCal)+' kcal</div></div><div class="text-xs text-muted">P:'+Math.round(tProt)+'g G:'+Math.round(tGluc)+'g L:'+Math.round(tLip)+'g</div></div></div>';
-  }
+  if(tCal>0)h+='<div class="card"><div class="flex justify-between items-center"><div><div class="text-xs text-muted">Total</div><div style="font-weight:800;font-size:1.1rem;color:var(--orange)">'+Math.round(tCal)+' kcal</div></div><div class="text-xs text-muted">P:'+Math.round(tProt)+'g G:'+Math.round(tGluc)+'g L:'+Math.round(tLip)+'g</div></div></div>';
   var el=document.getElementById('journal-daily');
-  if(el)el.innerHTML=h||'<div class="text-muted text-sm">Aucun aliment enregistré</div>';
+  if(el){el.innerHTML=h||'<div class="text-muted text-sm">Aucun aliment enregistré</div>';initSwipe();}
+}
+function initSwipe(){
+  document.querySelectorAll('.swipe-item').forEach(function(item){
+    var startX=0,currentX=0,dragging=false;
+    var content=item.querySelector('.swipe-content');
+    item.addEventListener('touchstart',function(e){
+      startX=e.touches[0].clientX;dragging=true;
+    },{passive:true});
+    item.addEventListener('touchmove',function(e){
+      if(!dragging)return;
+      currentX=e.touches[0].clientX-startX;
+      if(currentX>0)currentX=0;
+      if(currentX<-80)currentX=-80;
+      content.style.transform='translateX('+currentX+'px)';
+    },{passive:true});
+    item.addEventListener('touchend',function(){
+      dragging=false;
+      if(currentX<-40){
+        content.style.transform='translateX(-80px)';
+        // Supprimer après 1s si pas annulé
+        item._deleteTimer=setTimeout(function(){
+          var id=item.getAttribute('data-id');
+          removeFoodEntry(id);
+        },1000);
+        // Tap sur le contenu pour annuler
+        content.addEventListener('click',function cancel(){
+          clearTimeout(item._deleteTimer);
+          content.style.transform='translateX(0)';
+          content.removeEventListener('click',cancel);
+        });
+      }else{
+        content.style.transform='translateX(0)';
+      }
+      currentX=0;
+    });
+  });
 }
 function addFoodToJournal(){
   if(!selectedFood)return;
